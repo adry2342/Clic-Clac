@@ -22,7 +22,7 @@ async function run(id,delay,film){
   await p.evaluate(()=>{window.__ft=[];let l=performance.now();const f=t=>{__ft.push(t-l);l=t;requestAnimationFrame(f);};requestAnimationFrame(f);});
   const seen=new Set(),sheets=[];const T0=Date.now();
   while(Date.now()-T0<90000){const sc=await p.evaluate(()=>__cc.Core.scene);if(sc!=='play')break;
-    if(film){const cue=await p.evaluate(()=>document.getElementById('hCue').textContent||'');const k=(cue.match(/^[^·]*/)||[''])[0].trim()||'fase';
+    if(film){const cue=await p.evaluate(()=>document.getElementById('hCue').textContent||'');const k=((cue.match(/^[^·:]*/)||[''])[0].trim()||'fase').split(' ').slice(0,3).join(' ');
       if(!seen.has(k)){seen.add(k);await p.waitForTimeout(2600);const shots=[];
         for(let i=0;i<12;i++){shots.push((await p.screenshot({clip:await (await p.$('#stage')).boundingBox()})).toString('base64'));await p.waitForTimeout(170);}
         sheets.push([k,shots]);continue;}}
