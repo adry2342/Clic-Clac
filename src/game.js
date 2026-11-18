@@ -1911,8 +1911,8 @@ function buildMenu(){
   const wrap=$('cards');wrap.innerHTML='';
   for(const id of Object.keys(GAMES)){
     const g=GAMES[id],b=document.createElement('button');b.className='card';b.dataset.id=id;
-    const th=mk(128,72);const full=mk(W,H);const inst=g.make(mulberry32(5),true);inst.draw(full.getContext('2d'));
-    th.getContext('2d').drawImage(full,g.crop[0],g.crop[1],128,72,0,0,128,72);
+    const th=mk(W*2,H*2);const full=mk(W,H);const inst=g.make(mulberry32(5),true);inst.draw(full.getContext('2d'));
+    th.getContext('2d').drawImage(full,0,0,W,H,0,0,W*2,H*2); // escena entera (se reduce suave en la tarjeta)
     const bs=bestOf(id);
     b.innerHTML='<span class="nm">'+g.name+'</span><span class="best">'+(bs?('Récord '+bs.score+' pts · '+bs.plays+' partidas'):'Sin jugar todavía')+'</span>';
     b.prepend(th);
@@ -2096,7 +2096,7 @@ function demoStep(dt){
   if(D.last){D.last.t+=dt;const L=D.last;demoWord(L.j==='P'?'★ ¡Perfecto!':(JUDGE[L.j].sym+' '+JUDGE[L.j].word.replace(/[¡!]/g,'')+(L.detail?' · '+L.detail:'')),'j'+L.j);}
   else demoWord(D.down||D.flash>0?D.word:'','');
   const fc=demoFull.getContext('2d');D.g.draw(fc);
-  const [vx,vy]=typeof G.view==='function'?G.view(D):G.view;demoCx.clearRect(0,0,128,72);demoCx.drawImage(demoFull,vx,vy,128,72,0,0,128,72);
+  demoCx.clearRect(0,0,W*2,H*2);demoCx.drawImage(demoFull,0,0,W,H,0,0,W*2,H*2); // el vídeo enseña la escena entera
 }
 let last=performance.now(),lastCue='';
 function frame(now){

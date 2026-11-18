@@ -25,6 +25,7 @@ body{
 #stage{position:relative; flex:none; --u:2; width:960px; height:540px; overflow:hidden; border-radius:calc(var(--u)*3px); box-shadow:0 0 0 calc(var(--u)*1px) var(--ink), 0 calc(var(--u)*4px) 0 calc(var(--u)*1px) #1a1426}
 #stage.menubg{background-color:#f0ebff; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='12' height='12' rx='3' fill='%23e4dcff'/%3E%3Crect x='12' y='12' width='12' height='12' rx='3' fill='%23e4dcff'/%3E%3C/svg%3E"); background-size:calc(var(--s)*24px) calc(var(--s)*24px); animation:drift 9s linear infinite}
 @keyframes drift{from{background-position:0 0}to{background-position:calc(var(--s)*24px) calc(var(--s)*24px)}}
+@media (max-height:520px){ .demo-box{width:calc(var(--u)*208px); height:calc(var(--u)*117px)} .panel{padding:calc(var(--u)*5px) calc(var(--u)*12px); gap:calc(var(--u)*3px)} }
 @media (prefers-reduced-motion: reduce){#stage.menubg{animation:none}}
 #c{position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; display:block}
 .ov{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
@@ -44,7 +45,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .cards{display:grid; grid-template-columns:repeat(5, calc(var(--u)*86px)); gap:calc(var(--u)*6px)}
 .tag.cue{background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*8px)); align-self:flex-start}
 .card{position:relative; background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*4px); padding:calc(var(--u)*4px); box-shadow:0 calc(var(--u)*3px) 0 var(--ink); display:flex; flex-direction:column; gap:calc(var(--u)*4px); text-align:left}
-.card canvas{width:100%; aspect-ratio:16/9; image-rendering:pixelated; border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*2px); display:block; background:var(--lavL)}
+.card canvas{width:100%; aspect-ratio:16/9; image-rendering:auto; border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*2px); display:block; background:var(--lavL)}
 .card .nm{font-size:max(10px,calc(var(--u)*7px)); line-height:1.15; min-height:2.3em}
 .card .best{font-size:max(9px,calc(var(--u)*5.5px)); color:#6b5c80}
 .card:not(:disabled):hover{transform:translateY(calc(var(--u)*-1px))}
@@ -64,8 +65,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .panel h2{margin:0; font-weight:400; font-size:calc(var(--u)*14px)}
 .hint{font-size:max(11px,calc(var(--u)*7.5px)); text-wrap:balance}
 .go{font-size:max(10px,calc(var(--u)*6.5px)); color:#6b5c80; animation:blink 1.2s steps(2) infinite}
-.demo-box{position:relative; width:calc(var(--u)*192px); height:calc(var(--u)*108px); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*4px); overflow:hidden; background:var(--lavL)}
-#demo{display:block; width:100%; height:100%; image-rendering:pixelated}
+.demo-box{position:relative; width:calc(var(--u)*256px); height:calc(var(--u)*144px); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*4px); overflow:hidden; background:var(--lavL)}
+#demo{display:block; width:100%; height:100%; image-rendering:auto}
 .demo-tag{position:absolute; left:calc(var(--u)*3px); top:calc(var(--u)*3px); background:var(--ink); color:var(--cream); font-size:max(9px,calc(var(--u)*5.5px)); padding:calc(var(--u)*.5px) calc(var(--u)*3px); border-radius:calc(var(--u)*2px)}
 #demoNow{position:absolute; right:calc(var(--u)*4px); top:calc(var(--u)*4px); background:var(--pink); color:var(--ink); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); font-size:max(11px,calc(var(--u)*9px)); padding:calc(var(--u)*1px) calc(var(--u)*6px); box-shadow:0 calc(var(--u)*1.5px) 0 var(--ink); white-space:nowrap}
 #hand{position:absolute; right:calc(var(--u)*5px); bottom:calc(var(--u)*5px); width:calc(var(--u)*24px); height:calc(var(--u)*24px); image-rendering:pixelated; transition:transform .06s; filter:drop-shadow(0 calc(var(--u)*2px) 0 rgba(45,31,56,.35))}
@@ -132,6 +133,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 #pause{background:rgba(42,34,56,.6)}
 #rotate{position:fixed; left:50%; bottom:calc(12px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--butter); color:var(--ink); border:2px solid var(--ink); border-radius:8px; padding:6px 10px; font-size:13px; white-space:nowrap}
 @media (max-width:520px){ .card .nm,.card .best,.menu-foot span,.toggle,.soon{font-size:calc(var(--u)*6px)} .card .nm{min-height:0} }
+@media (max-height:520px){ .demo-box{width:calc(var(--u)*208px); height:calc(var(--u)*117px)} .panel{padding:calc(var(--u)*5px) calc(var(--u)*12px); gap:calc(var(--u)*3px)} }
 @media (prefers-reduced-motion: reduce){ .pop,.go,#hand,.rank,.tally li,.pop.P::after{animation-duration:0s !important; animation-iteration-count:1 !important} }
 </style>
 
@@ -152,7 +154,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
     <div class="panel">
       <h2 id="inName">Minijuego</h2>
       <div class="demo-box">
-        <canvas id="demo" width="128" height="72" aria-hidden="true"></canvas>
+        <canvas id="demo" width="640" height="360" aria-hidden="true"></canvas>
         <div id="demoNow" hidden></div>
         <canvas id="hand" width="12" height="12" aria-hidden="true"></canvas>
         <span class="demo-tag" id="demoTag">Así: ¡perfecto!</span>
