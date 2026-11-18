@@ -222,8 +222,8 @@ function Fotos(rng,preview){
   const balloons=[];for(let k=0;k<2;k++)balloons.push({t0:3+k*9+rng()*4,x:60+rng()*200,col:[C.pink,C.sky,C.butter][Math.floor(rng()*3)]});
   let time=0,flash=0,pressT=0,shotPending=null,endT=0,ended=false,film=FILM,emptyT=0,done=0;
   const roll=[];
-  const bg=mk(W,H);drawStreetBg(bg.getContext('2d'));
-  const room=mk(W,H);drawDarkroomBg(room.getContext('2d'));
+  const bg=mk(W,H);drawStreetBg(bg.getContext('2d'));grain(bg.getContext('2d'),12,4);
+  const room=mk(W,H);drawDarkroomBg(room.getContext('2d'));grain(room.getContext('2d'),13,6);
   const tone=mk(64,40),toneX=tone.getContext('2d');
   if(preview){time=cars[2].arrive-0.25;}
   const err=car=>(car.dir>0?VFX-car.x:car.x-VFX)/car.v; // >0: todavía no ha llegado al centro
@@ -281,7 +281,7 @@ function Fotos(rng,preview){
         return;}
       // fase 3
       if(sw)sw.t+=dt;
-      for(const h of hung)h.t+=dt;
+      for(const h of hung){h.t+=dt;h.sp&&h.sp.step(dt);}
       if(hst==='wait'){if(swapT>2.1){hst='in';hT=0;newSwing();}return;}
       hT+=dt;
       if(hst==='in'){sw.L=DR.L*ease(Math.min(1,hT/0.6));if(hT>0.6){hst='swing';hT=0;}}
@@ -302,7 +302,7 @@ function Fotos(rng,preview){
       if(phase===3&&hst==='swing'){
         const th=theta(),w=sw.w,A=sw.A,vel=A*w*Math.cos(sw.w*sw.t+sw.ph);
         const a=Math.asin(Math.min(1,Math.abs(th)/A))/w,j=J(a),late=th*vel>0;
-        const p=dev[hi];hung.push({p,x:DR.slots[hi]+Math.round(DR.L*Math.sin(th)),t:0,j});done++;hst='clip';hT=0;Snd.cap();
+        const p=dev[hi];hung.push({p,x:DR.slots[hi]+Math.round(DR.L*Math.sin(th)),t:0,j,sp:Spring(0,60,2.2).kick(vel*DR.L*0.5)});done++;hst='clip';hT=0;Snd.cap();
         Core.judge(j,DR.slots[hi],76,false,j==='P'?'':(late?'Tarde ▶':'◀ Pronto'));
       }
     },
@@ -358,7 +358,7 @@ function Fotos(rng,preview){
       if(!h){obj(c,l=>{rr(l,sx-2,LY-5,5,10,C.woodD,1);});R(c,sx,LY-4,1,8,C.woodDD);if(cur){const b=Math.floor(Core.time*4)%2;R(c,sx-1,LY-10-b,3,1,C.pinkD);px(c,sx,LY-9-b,C.pinkD);}}});
     // fotos colgadas secándose (gotean un rato)
     for(const h of hung){const x=Math.round(h.x),off=x-DR.slots[dev.indexOf(h.p)],tilt=h.j==='P'?0:Math.max(-3,Math.min(3,Math.round(off/4)));
-      drawHanging(c,h.p,x,LY+1,tilt);
+      drawHanging(c,h.p,x,LY+1,tilt,h.sp?Math.max(-6,Math.min(6,h.sp.x)):0);
       obj(c,l=>{rr(l,x-2,LY-5,5,10,C.woodD,1);});R(c,x,LY-4,1,8,C.woodDD);
       if(h.t<6){const ph=(h.t*1.4+h.x*0.01)%1;if(ph<0.8){const yy=LY+27+Math.round(ph*ph*60);R(c,x+(h.x%7)-3,yy,1,2,'rgba(255,214,220,0.9)');}}}
     // foto colgando del hilo en fase 3
@@ -401,9 +401,12 @@ function Fotos(rng,preview){
     c.save();c.globalCompositeOperation='multiply';c.fillStyle='#ffd2cc';c.fillRect(0,0,W,H);c.restore();
     dith(c,0,0,W,6,'#3a1a24');dith(c,0,174,W,6,'#3a1a24');
   }
-  function drawHanging(c,p,x,y,tilt){
-    const img=p.half||null;obj(c,l=>{R(l,x-18,y,36,24,C.paper);});
-    if(img)c.drawImage(img,x-16,y+2);else{const k=mk(32,20),kx=k.getContext('2d');kx.imageSmoothingEnabled=true;kx.drawImage(p.img,0,0,32,20);toneOver(kx,0,0,32,20,p.d);p.half=k;c.drawImage(k,x-16,y+2);}
+  // foto colgada por arriba: si se balancea (sw = desplazamiento abajo), cada franja se desplaza más cuanto más abajo
+  function drawHanging(c,p,x,y,tilt,sw){
+    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');kx.imageSmoothingEnabled=true;kx.drawImage(p.img,0,0,32,20);toneOver(kx,0,0,32,20,p.d);p.half=k;}
+    const off=r=>Math.round(sw*r/24);
+    obj(c,l=>{for(let r=0;r<24;r+=3)R(l,x-18+off(r+1.5),y+r,36,3,C.paper);});
+    for(let r=0;r<20;r+=2)c.drawImage(p.half,0,r,32,2,x-16+off(r+3),y+2+r,32,2);
     if(tilt){R(c,x-18,y+23,36,1,'rgba(58,24,36,0.25)');}
   }
   return self;

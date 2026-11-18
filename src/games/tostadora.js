@@ -96,7 +96,7 @@ function Toaster(rng,preview){
     items.push({B,mode,tt:0.45+rng()*0.6,el:0,target:Math.max(B.base+0.2,shade),rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
   }
   let cur=0,st='insert',t=0,lever=0,endT=0,ended=false,holding=false;const stack=[];let fly=null;const smoke=[];
-  const bg=mk(W,H);drawKitchenBg(bg.getContext('2d'));
+  const bg=mk(W,H);drawKitchenBg(bg.getContext('2d'));grain(bg.getContext('2d'),15,4);
   if(preview){st='toast';items[0].p=0.5;lever=1;}
   const it=()=>items[cur];
   function pop(j,det){const b=it();b.j=j;st='pop';t=0;Snd.boing();done++;Core.judge(j,TX,62,b.practice,det);}

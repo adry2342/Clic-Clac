@@ -62,3 +62,10 @@ const Feel={stopT:0,fx:[],iris:null,
   },
   reset(){this.stopT=0;this.fx=[];this.iris=null;Anim.clear();}
 };
+// textura sutil para fondos estáticos: variación de luz en bloques de 2x1 píxeles (como papel o madera)
+function grain(c,seed,amt){
+  const im=c.getImageData(0,0,W,H),d=im.data;let s=(seed||7)>>>0;const rnd=()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return (s>>>0)/4294967296;};
+  for(let y=0;y<H;y++)for(let x=0;x<W;x+=2){const v=rnd();if(v<0.55)continue;const k=(v<0.78?-1:1)*(amt||5);
+    for(let q=0;q<2&&x+q<W;q++){const i=(y*W+x+q)*4;if(d[i]+d[i+1]+d[i+2]<180)continue;d[i]=Math.max(0,Math.min(255,d[i]+k));d[i+1]=Math.max(0,Math.min(255,d[i+1]+k));d[i+2]=Math.max(0,Math.min(255,d[i+2]+k));}}
+  c.putImageData(im,0,0);
+}

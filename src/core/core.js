@@ -15,7 +15,9 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
     else if(j==='F'){Feel.puff(x,y+16,5,'#d8d0e6');}
     if(j==='F'&&!reduce)this.shake=0.12;
     if(practice)return;
-    const r=this.run;r.counts[j]++;r.n++;r.pts+=JUDGE[j].pts;r.streak=(j==='P')?r.streak+1:0;r.best=Math.max(r.best,r.streak);
+    const r=this.run;r.counts[j]++;
+    // tendencia: ¿sueles adelantarte o pasarte?
+    if(detail&&j!=='P'){if(/[◀▼]/.test(detail))r.early=(r.early||0)+1;else if(/[▶▲]/.test(detail))r.late=(r.late||0)+1;}r.n++;r.pts+=JUDGE[j].pts;r.streak=(j==='P')?r.streak+1:0;r.best=Math.max(r.best,r.streak);
   },
   sparkle(x,y){if(DEMO)return;for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*0.4,s=22+Math.random()*28;this.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-12,g:30,life:.55+Math.random()*.3,t:0,kind:'star',col:i%3?C.butter:C.white});}},
   drops(x,y,n){if(DEMO)return;for(let i=0;i<n;i++){this.parts.push({x:x+(Math.random()-.5)*6,y,vx:(Math.random()-.5)*70,vy:-30-Math.random()*45,g:240,life:.8,t:0,kind:'drop',col:'#9fd5ff'});}},

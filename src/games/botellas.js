@@ -225,7 +225,7 @@ function Bottles(rng,preview){
     prev=t;
   }
   let cur=0,belt=0,bv=0,endT=0,ended=false,phase=1,swapT=0,v2=60,cap=null,reload=0,kick=0,done=0,shiftT=9,turns=0,puffT=9;const fly=[];
-  const bg=mk(W,H);drawBottlesBg(bg.getContext('2d'));
+  const bg=mk(W,H);drawBottlesBg(bg.getContext('2d'));grain(bg.getContext('2d'),11,4);
   if(preview){const b=bs[0];b.x=FX;b.st='fill';b.vol=b.t.V[Math.max(0,b.target-3)];b.level=levelFromVol(b.t,b.vol);bs[1].x=FX-b.t.hw-bs[1].t.hw-16;}
   function moveAll(mv){for(const o of bs)o.x+=mv;belt+=mv;}
   function lineUp(){ // las botellas llenas vuelven por la izquierda, en otro orden y más juntas

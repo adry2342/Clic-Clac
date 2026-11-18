@@ -176,8 +176,8 @@ function Stapler(rng,preview){
   const gaps=[];let cl=false;
   for(let i=0;i<N;i++){const r=rng();if(cl&&rng()<0.5){gaps.push(46+rng()*10);continue;}cl=r<0.22;gaps.push(cl?46+rng()*10:(r<0.74?68+rng()*32:96+rng()*30));}
   const ps=[];let spawned=0,pressT=0,endT=0,ended=false,T=0,done=0;const air=[];
-  const bg=mk(W,H);drawDeskBg(bg.getContext('2d'));
-  const pressK=()=>{if(pressT<=0)return 0;const k=1-pressT/0.26;return k<0.27?ease(k/0.27):1-ease((k-0.27)/0.73);};
+  const bg=mk(W,H);drawDeskBg(bg.getContext('2d'));grain(bg.getContext('2d'),14,5);
+  const pressK=()=>{if(pressT<=0)return 0;const k=1-pressT/0.26;return k<0.27?ease(k/0.27):1-Ease.outElastic((k-0.27)/0.73);}; // baja de golpe y rebota al subir
   // la cinta va un poco a oleadas cuando avanzas: acelera y frena suavemente
   const speed=()=>{const pr=done/TOTAL;return (58+50*pr)*(1+0.22*pr*Math.sin(T*1.25));};
   function spawn(){
@@ -200,7 +200,7 @@ function Stapler(rng,preview){
       for(const u of units0()){const d=(u.p.x+u.o)-HX;
         if(u.no&&d>v*0.2){mark(u,'P','Bien: sin marca no se grapa');Snd.cap();}
         else if(!u.no&&d>v*0.16)mark(u,'F','Se fue sin grapa');}
-      pressT=Math.max(0,pressT-dt);for(const a of air)a.t+=dt;for(const p of ps)if(p.sq)p.sq=Math.max(0,p.sq-dt);
+      pressT=Math.max(0,pressT-dt*0.62);for(const a of air)a.t+=dt;for(const p of ps)if(p.sq)p.sq=Math.max(0,p.sq-dt);
       if(spawned>=N&&done>=TOTAL&&ps.every(p=>p.x>W+6)){endT+=dt;if(endT>0.2&&!ended){ended=true;Core.finish();}}
     },
     press(){

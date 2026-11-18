@@ -127,6 +127,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .tally{list-style:none; margin:0; padding:0; display:grid; gap:calc(var(--u)*2px); font-size:max(10px,calc(var(--u)*7px)); min-width:calc(var(--u)*110px)}
 .tally li{display:flex; justify-content:space-between; gap:calc(var(--u)*10px); border-bottom:calc(var(--u)*1px) dotted #b9a8f0; font-variant-numeric:tabular-nums}
 .meta{font-size:max(9px,calc(var(--u)*5.5px)); color:#6b5c80; margin-top:calc(var(--u)*2px)}
+.meta.tip{color:var(--ink); background:var(--pinkL,#ffe2ee); border-radius:calc(var(--u)*2px); padding:calc(var(--u)*1px) calc(var(--u)*3px); display:inline-block}
 .record{background:var(--pink); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); padding:0 calc(var(--u)*4px); font-size:max(10px,calc(var(--u)*6.5px)); justify-self:start}
 .actions{grid-column:1/-1; display:flex; gap:calc(var(--u)*6px); justify-content:center}
 
@@ -190,6 +191,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
       <div>
         <ul class="tally" id="rTally"></ul>
         <div class="meta" id="rMeta"></div>
+        <div class="meta tip" id="rTip" hidden></div>
         <div class="record" id="rRec" hidden>¡Nuevo récord!</div>
       </div>
       <div class="actions"><button class="btn" id="again">Otra vez</button><button class="btn alt" id="toMenu">Menú</button></div>

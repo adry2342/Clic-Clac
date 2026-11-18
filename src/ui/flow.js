@@ -67,6 +67,9 @@ function showResults(){
   const rr_=$('rRank');rr_.textContent=rk;rr_.dataset.r=rk;$('rMsg').textContent=RMSG[rk];
   $('rTally').innerHTML=['P','B','R','F'].map(j=>'<li><span>'+JUDGE[j].sym+' '+JUDGE[j].word.replace(/[¡!]/g,'')+'</span><b>'+r.counts[j]+'</b></li>').join('');
   $('rMeta').textContent='Precisión '+pct.toFixed(1).replace('.',',')+' % · '+r.pts+' pts · Racha máx. '+r.best+' · Semilla '+r.seed;
+  const e=r.early||0,l=r.late||0;let tip='';
+  if(e+l>=2){tip=e>l*1.5?'Tiendes a adelantarte: espera un pelín más.':l>e*1.5?'Tiendes a llegar tarde: anticípate un poco.':'Tus fallos se reparten entre pronto y tarde: vas bien encaminado.';}
+  $('rTip').textContent=tip?('Pronto '+e+' · Tarde '+l+' · '+tip):'';$('rTip').hidden=!tip;
   $('rRec').hidden=!(better&&prev);
   setScene('results');
   if(rk==='S+'||rk==='S')setTimeout(()=>Snd.fanfare(rk),350);
