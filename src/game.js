@@ -361,26 +361,65 @@ function drawBottlesBg(c){
   R(c,0,135,W,1,C.beltD);R(c,0,143,W,1,C.beltD);
 }
 // máquina llenadora (se dibuja aparte para poder retirarla al cambiar de fase)
-function drawFiller(c,oy){
-  obj(c,l=>{R(l,155,-2,10,26+oy,C.metal);rr(l,138,20+oy,44,28,C.lav,3);R(l,154,48+oy,12,6,C.metal);rr(l,156,53+oy,8,8,C.metal,1);});
-  R(c,157,0,2,20+oy,C.metalL);R(c,163,0,1,20+oy,C.metalD);
-  R(c,141,44+oy,38,2,C.lavD);R(c,141,23+oy,38,1,C.lavL);
-  ell(c,150,33+oy,6,6,C.out);ell(c,150,33+oy,5,5,C.cream);R(c,150,29+oy,1,4,C.pinkDD);px(c,151,30+oy,C.pinkDD);
-  for(const [x,y] of [[141,23],[178,23],[141,44],[178,44]])px(c,x,y+oy,C.lavDD);
-  R(c,158,59+oy,4,2,C.metalDD);
+// llenadora: depósito con el líquido, manómetro, engranaje y llave; todo se anima mientras sale líquido
+function drawFiller(c,oy,S){
+  S=S||{};const T=Core.time,on=!!S.on,L=S.L||[C.sky,C.skyD,C.skyL,C.skyD],hum=on&&Math.floor(T*28)%2?1:0,y=oy+hum;
+  obj(c,l=>{R(l,155,-2,10,18+y,C.metal);rr(l,136,14+y,58,36,C.lav,6);rr(l,150,48+y,20,6,C.metalD,2);R(l,155,53+y,10,4,C.metal);rr(l,156,56+y,8,4,C.metal,1);
+    rr(l,188,34+y,10,10,C.metalD,5);},{sel:true});
+  // tubo de entrada: flechitas de líquido bajando cuando está abierto
+  R(c,157,0,2,14+y,C.metalL);R(c,163,0,1,14+y,C.metalD);
+  if(on){for(let k=0;k<4;k++){const yy=Math.round((T*40+k*5)%18)-2;if(yy+y<14+y&&yy>=0){px(c,159,yy+y,L[0]);px(c,160,yy+y+1,L[0]);px(c,161,yy+y,L[0]);}}}
+  // cuerpo: brillo arriba, sombra abajo, tornillos
+  R(c,139,17+y,52,1,C.lavL);R(c,139,46+y,52,2,C.lavD);for(const [x,yy] of [[139,17],[190,17],[139,46],[190,46]])px(c,x,yy+y,C.lavDD);
+  // depósito de cristal con el líquido de la botella que toca
+  rr(c,140,20+y,14,24,'#eef3ff',3);const lvl=Math.round(15+Math.sin(T*0.7)*2-(on?((T*3)%4):0)),top=42+y-lvl;
+  R(c,141,top,12,42+y-top,L[0]);R(c,151,top,2,42+y-top,L[1]);
+  for(let x=141;x<153;x++)px(c,x,top+(Math.sin(T*(on?9:3)+x*0.8)>0.3?0:-1),L[2]);
+  if(on)for(let k=0;k<4;k++){const by=42+y-Math.round(((T*14+k*6)%lvl));if(by>top)px(c,143+((k*5)%8),by,'rgba(255,255,255,0.85)');}
+  R(c,141,21+y,1,22,'rgba(255,255,255,0.9)');R(c,140,30+y,3,1,C.lavDD);R(c,140,36+y,3,1,C.lavDD);
+  // manómetro: la aguja tiembla con el chorro
+  ell(c,180,25+y,6,6,C.out);ell(c,180,25+y,5,5,C.cream);
+  const ang=-2.4+(on?1.6+Math.sin(T*23)*0.18+(S.mul||1)*0.6:0.2+Math.sin(T*1.5)*0.05);
+  for(let r=1;r<=4;r++)px(c,180+Math.round(Math.cos(ang)*r),25+y+Math.round(Math.sin(ang)*r),C.pinkDD);px(c,180,25+y,C.out);
+  for(let k=0;k<5;k++){const a=-2.6+k*0.95;px(c,180+Math.round(Math.cos(a)*4),25+y+Math.round(Math.sin(a)*4),C.lavD);}
+  // luz de estado
+  const blink=Math.floor(T*6)%2;ell(c,186,16+y,2,2,on?(blink?'#7fe0a8':C.mintDD):C.pinkD);if(on&&blink){c.save();c.globalAlpha=0.35;ell(c,186,16+y,4,4,'#bff5d6');c.restore();}
+  // engranaje lateral
+  const ga=on?T*6:T*0.4;ell(c,193,39+y,3,3,C.metal);for(let k=0;k<6;k++){const a=ga+k*Math.PI/3;px(c,193+Math.round(Math.cos(a)*4),39+y+Math.round(Math.sin(a)*4),C.metalDD);}px(c,193,39+y,C.metalDD);
+  // llave del grifo: gira al abrir
+  const va=on?T*5:0;R(c,152,51+y,16,1,C.metalL);for(let k=0;k<4;k++){const a=va+k*Math.PI/2;px(c,160+Math.round(Math.cos(a)*3),51+y+Math.round(Math.sin(a)*1),C.metalDD);}
+  R(c,158,59+y,4,2,C.metalDD);
+  // gotita al cerrar
+  if(S.stopT!=null&&S.stopT<0.7){const k=S.stopT/0.7;const dy=Math.round(k*k*40);if(k<0.85){px(c,160,61+y+dy,L[0]);px(c,160,62+y+dy,L[1]);}}
+  // vaho de la bomba
+  if(on)for(let k=0;k<3;k++){const ph=(T*1.2+k/3)%1;c.save();c.globalAlpha=0.6*(1-ph);ell(c,196+Math.round(ph*8),30+y-Math.round(ph*10),1+Math.round(ph*2),1+Math.round(ph*2),C.white);c.restore();}
 }
 // taponadora: tubo con tapones de colores, cuerpo rosa y boquilla que suelta el tapón
 const CAPY=66,CAPG=760;
-function drawCapper(c,oy,cols,load,kick){
-  obj(c,l=>{rr(l,150,-4+oy,20,30,'rgba(236,244,255,0.9)',4);rr(l,136,22+oy,48,26,C.pink,4);rr(l,152,47+oy+kick,16,8,C.metal,2);rr(l,148,54+oy+kick,24,5,C.metalD,2);});
-  // tapones apilados dentro del tubo
-  for(let k=0;k<5;k++){const col=cols[k%cols.length];rr(c,153,20+oy-k*5,14,4,col,1);R(c,154,20+oy-k*5,12,1,'rgba(255,255,255,0.6)');}
-  R(c,151,-2+oy,1,26,'rgba(255,255,255,0.9)');
-  R(c,139,24+oy,42,1,C.pinkL);R(c,139,44+oy,42,2,C.pinkD);
-  ell(c,148,34+oy,5,5,C.cream);ell(c,148,34+oy,3,3,C.pinkD);px(c,147,33+oy,C.white);
-  rr(c,158,30+oy,20,8,C.pinkL,2);for(let k=0;k<3;k++)R(c,160+k*6,33+oy,4,2,k===0?C.pinkDD:C.pinkD);
-  if(load){const col=cols[0];rr(c,155,59+oy+kick,10,4,col,1);R(c,156,59+oy+kick,8,1,'rgba(255,255,255,0.6)');}
-  R(c,153,48+oy+kick,14,1,C.metalL);
+function drawCapper(c,oy,cols,load,kick,S){
+  S=S||{};const T=Core.time,sh=S.shift||0,ready=load;
+  obj(c,l=>{rr(l,150,-4+oy,20,26,'rgba(236,244,255,0.9)',4);rr(l,136,20+oy,58,30,C.pink,6);rr(l,152,49+oy,16,5,C.metalD,2);rr(l,152,52+oy+kick,16,6,C.metal,2);rr(l,148,57+oy+kick,24,5,C.metalD,2);
+    rr(l,188,26+oy,10,18,C.pinkD,3);},{sel:true});
+  // tubo de cristal con los tapones: bajan un hueco cada vez que sueltas uno
+  c.save();c.beginPath();c.rect(151,-4+oy,18,26);c.clip();
+  for(let k=0;k<6;k++){const col=cols[k%cols.length],yy=Math.round(18+oy-k*5+ (1-ease(Math.min(1,sh)))*-5*0);const dropY=Math.round((1-ease(Math.min(1,sh)))*-5);
+    rr(c,153,yy+dropY,14,4,col,1);R(c,154,yy+dropY,12,1,'rgba(255,255,255,0.6)');R(c,154,yy+dropY+3,12,1,'rgba(60,40,90,0.18)');}
+  c.restore();R(c,152,-2+oy,1,24,'rgba(255,255,255,0.9)');R(c,167,-2+oy,1,24,'rgba(150,170,210,0.5)');
+  R(c,139,23+oy,52,1,C.pinkL);R(c,139,46+oy,52,2,C.pinkDD);for(const [x,y] of [[139,23],[190,23],[139,46],[190,46]])px(c,x,y+oy,C.pinkDD);
+  // rueda clasificadora: gira un cuarto de vuelta por tapón
+  const wa=(S.turns||0)*Math.PI/2+(1-ease(Math.min(1,sh)))*-Math.PI/2;
+  ell(c,147,35+oy,8,8,C.pinkD);ell(c,147,35+oy,7,7,C.pinkL);
+  for(let k=0;k<4;k++){const a=wa+k*Math.PI/2,x=147+Math.round(Math.cos(a)*4),y=35+oy+Math.round(Math.sin(a)*4);rr(c,x-2,y-1,4,3,cols[(k+1)%cols.length],1);}
+  ell(c,147,35+oy,2,2,C.cream);px(c,147,35+oy,C.pinkDD);
+  // panel con lucecitas: verde = listo, ámbar = recargando
+  rr(c,162,28+oy,22,10,C.pinkL,2);
+  for(let k=0;k<3;k++){const on=ready?(Math.floor(T*4)%3===k):k===0;ell(c,166+k*7,33+oy,2,2,on?(ready?'#7fe0a8':C.butterD):'#e7b9cb');}
+  // muelle del pistón y su resorte al disparar
+  const cz=Math.max(0,kick);for(let k=0;k<4;k++)R(c,190,29+oy+k*(3+Math.round(cz/2)),6,1,C.metalD);R(c,192,27+oy,2,16,'rgba(255,255,255,0.4)');
+  if(ready){const col=cols[0];rr(c,155,62+oy+kick,10,4,col,1);R(c,156,62+oy+kick,8,1,'rgba(255,255,255,0.6)');}
+  R(c,153,53+oy+kick,14,1,C.metalL);
+  // bufido de aire al soltar
+  if(S.puff!=null&&S.puff<0.35){const k=S.puff/0.35;c.save();c.globalAlpha=0.8*(1-k);for(const d of [-1,1])ell(c,160+d*Math.round(10+k*10),62+oy,2+Math.round(k*3),1+Math.round(k*2),C.white);c.restore();}
 }
 function sqOf(b){if(b.an==null)return 1;const t=b.an;return 1-0.13*Math.exp(-7*t)*Math.cos(20*t);}
 // saltitos de alegría al acertar de lleno: dos botes con aplastamiento suave al caer
@@ -448,7 +487,7 @@ function Bottles(rng,preview){
       capCol:[C.pink,C.mintDD,C.butterD,C.lavD,C.skyD,C.peachD][Math.floor(rng()*6)],cj:null});
     prev=t;
   }
-  let cur=0,belt=0,bv=0,endT=0,ended=false,phase=1,swapT=0,v2=60,cap=null,reload=0,kick=0,done=0;const fly=[];
+  let cur=0,belt=0,bv=0,endT=0,ended=false,phase=1,swapT=0,v2=60,cap=null,reload=0,kick=0,done=0,shiftT=9,turns=0,puffT=9;const fly=[];
   const bg=mk(W,H);drawBottlesBg(bg.getContext('2d'));
   if(preview){const b=bs[0];b.x=FX;b.st='fill';b.vol=b.t.V[Math.max(0,b.target-3)];b.level=levelFromVol(b.t,b.vol);bs[1].x=FX-b.t.hw-bs[1].t.hw-16;}
   function moveAll(mv){for(const o of bs)o.x+=mv;belt+=mv;}
@@ -470,7 +509,7 @@ function Bottles(rng,preview){
       for(const o of bs){if(o.an!=null)o.an+=dt;if(o.hop!=null)o.hop+=dt;for(const q of o.bub){q.y+=q.v*dt;}o.bub=o.bub.filter(q=>q.y<o.level-1);}
       if(phase===2){
         if(swapT<1.9){swapT+=dt;return;}
-        moveAll(v2*dt);reload=Math.max(0,reload-dt);kick=Math.max(0,kick-dt);
+        moveAll(v2*dt);reload=Math.max(0,reload-dt);kick=Math.max(0,kick-dt);shiftT+=dt;puffT+=dt;
         if(cap){cap.vy+=CAPG*dt;cap.y+=cap.vy*dt;
           if(cap.b&&cap.y>=topY(cap.b)){const b=cap.b,dx=FX-b.x,a=Math.abs(dx);
             const ta=a/v2,j=a<=1.1||ta<=0.05?'P':a<=2.3||ta<=0.1?'B':a<=3.7||ta<=0.16?'R':'F'; // mismo margen en tiempo que el resto de juegos
@@ -503,7 +542,7 @@ function Bottles(rng,preview){
     press(){
       if(phase===2){
         if(swapT<1.9||cap||reload>0)return;
-        reload=0.32;kick=0.12;Snd.burst(1200,.04,.2,2);
+        reload=0.32;kick=0.12;shiftT=0;turns++;puffT=0;Snd.burst(1200,.04,.2,2);
         let best=null,bd=1e9;
         for(const b of bs){if(b.cj||b.x>FX+4)continue;const px=b.x+v2*landT(b),d=Math.abs(FX-px);if(d<bd){bd=d;best=b;}}
         const col=best?best.capCol:C.pink;
@@ -526,8 +565,8 @@ function Bottles(rng,preview){
       for(let k=0;k<9;k++){const t=(Core.time*0.05+k*0.137)%1;const y=78+t*50,x=200-(y-74)*1.2+((k*37)%90)+Math.sin(Core.time*0.8+k)*3;px(c,x,y,(k%3)?'rgba(255,255,255,0.75)':'rgba(255,248,220,0.9)');}
       // máquinas: la llenadora sube y baja la taponadora en el cambio de fase
       const sw=phase===2?inout(Math.min(1,swapT/1.3)):0;
-      if(sw<1)drawFiller(c,-Math.round(sw*80));
-      if(sw>0)drawCapper(c,Math.round((1-sw)*-80),[...new Set(bs.filter(b=>!b.cj).map(b=>b.capCol).concat([C.pink]))],!cap&&reload<=0.1,kick>0?3:0);
+      if(sw<1){const fb=bs[cur],L=fb?fb.t.L:null;drawFiller(c,-Math.round(sw*80),{on:!!(fb&&fb.st==='fill'),L:L||undefined,mul:fb?fb.mul:1,stopT:fb&&fb.st==='stop'?fb.time:null});}
+      if(sw>0)drawCapper(c,Math.round((1-sw)*-80),[...new Set(bs.filter(b=>!b.cj).map(b=>b.capCol).concat([C.pink]))],!cap&&reload<=0.1,kick>0?Math.round(3*Math.sin(kick/0.12*Math.PI)+1):0,{shift:shiftT/0.3,turns,puff:puffT});
       const bvis=belt+Core.time*6,off=((bvis%10)+10)%10;for(let x=off-10;x<W;x+=10){R(c,x,133,5,1,C.beltL);R(c,x+1,134,5,1,C.beltD);}
       const ro=Math.floor(bvis/3)%4;
       for(let x=10;x<W;x+=24){ell(c,x,139,3,3,C.beltD);ell(c,x,139,2,2,C.metal);const a=ro*Math.PI/4;px(c,x+Math.round(Math.cos(a)*2),139+Math.round(Math.sin(a)*2),C.metalDD);px(c,x,139,C.metalDD);}
@@ -693,16 +732,32 @@ function drawPaperArt(c,x,p){
 }
 // impresora: escupe los folios ya de camino; tapa la cola para que no se vea lo que viene
 const PRX=104;
-function drawPrinter(c,busy){
-  const j=busy&&Math.floor(Core.time*30)%2?1:0;
-  obj(c,l=>{rr(l,-8,74+j,PRX+8,74,C.lav,8);rr(l,6,64+j,PRX-26,14,C.lavL,4);rr(l,10,58+j,PRX-34,8,C.paper,2);},{sel:true});
+function drawPrinter(c,busy,left){
+  const T=Core.time,j=busy&&Math.floor(T*30)%2?1:0,L=left==null?1:left;
+  // bandeja de entrada con el taco de folios (baja según se gastan)
+  const stack=Math.max(1,Math.round(L*8));
+  obj(c,l=>{rr(l,-8,74+j,PRX+8,74,C.lav,8);rr(l,10,46+j,PRX-34,26,C.lavL,4);rr(l,6,66+j,PRX-26,12,C.lavL,4);
+    rr(l,16,62+j-stack*2,PRX-50,stack*2+4,C.paper,1);},{sel:true});
+  R(c,13,49+j,PRX-40,1,C.white);R(c,13,52+j,2,14,C.lavD);R(c,PRX-29,52+j,2,14,C.lavD);for(let k=0;k<stack;k++)R(c,17,63+j-stack*2+k*2+1,PRX-52,1,'#e6e0ef');R(c,20,63+j-stack*2,20,1,C.lavD);
   R(c,-4,78+j,PRX,1,C.lavL);R(c,-4,140+j,PRX+2,3,C.lavD);
-  R(c,12,60+j,PRX-38,1,'#e2dcef');R(c,12,62+j,PRX-46,1,'#e2dcef');
-  rr(c,PRX-6,PY-3,6,PH+6,'#7d6ea6',2);R(c,PRX-4,PY-2,2,PH+4,C.out);
-  rr(c,12,92+j,48,22,C.lavL,4);R(c,16,97+j,30,2,C.lavD);R(c,16,102+j,22,2,C.lavD);R(c,16,107+j,26,2,C.lavD);
-  ell(c,76,98+j,5,5,C.pinkD);ell(c,76,98+j,3,3,C.pink);px(c,75,97+j,C.white);
-  ell(c,76,114+j,3,3,busy&&Math.floor(Core.time*6)%2?C.mintDD:C.mint);
+  // ventanita con el cabezal que va y viene mientras imprime
+  rr(c,8,82+j,PRX-26,8,'#5b4a6b',3);R(c,10,83+j,PRX-30,1,'#7a6890');
+  const hx=busy?Math.round(12+(PRX-40)*(0.5+0.5*Math.sin(T*9))):12;
+  rr(c,hx,83+j,12,6,C.metal,1);R(c,hx+1,84+j,10,1,C.metalL);for(let k=0;k<4;k++)R(c,hx+1+k*3,87+j,2,2,[C.skyD,C.pinkD,C.butterD,C.out][k]);
+  // rodillos de salida: giran mientras sale papel
+  rr(c,PRX-7,PY-5,7,PH+10,'#7d6ea6',2);
+  for(const yy of [PY-3,PY+PH+1]){ell(c,PRX-4,yy,2,2,C.metalD);const a=busy?T*16:0;px(c,PRX-4+Math.round(Math.cos(a)*1),yy+Math.round(Math.sin(a)*1),C.metalL);}
+  R(c,PRX-4,PY-1,2,PH+2,C.out);
+  // pantalla: barra de progreso y ondita
+  rr(c,10,94+j,52,22,C.lavL,4);rr(c,13,97+j,46,16,'#d6f2e6',2);
+  if(busy){const w=Math.round(((T*1.6)%1)*40);R(c,16,108+j,40,2,C.mintD);R(c,16,108+j,w,2,C.mintDD);for(let x=0;x<40;x+=2)px(c,16+x,101+j+Math.round(Math.sin(T*8+x*0.4)*2),C.mintDD);}
+  else{R(c,16,104+j,24,1,C.mintD);R(c,16,107+j,16,1,C.mintD);}
+  // botones y luz
+  ell(c,76,100+j,5,5,C.pinkD);ell(c,76,100+j,3,3,C.pink);px(c,75,99+j,C.white);
+  const led=busy&&Math.floor(T*6)%2;ell(c,76,114+j,3,3,led?'#7fe0a8':C.mint);if(led){c.save();c.globalAlpha=0.35;ell(c,76,114+j,5,5,'#bff5d6');c.restore();}
   R(c,4,128+j,PRX-14,1,C.lavD);for(let k=0;k<5;k++)R(c,10+k*16,132+j,8,2,C.lavD);
+  // aire caliente de la rejilla
+  if(busy)for(let k=0;k<3;k++){const ph=(T*1.3+k/3)%1;c.save();c.globalAlpha=0.55*(1-ph);R(c,14+k*20+Math.round(Math.sin(T*3+k)*2),126-Math.round(ph*14),6,1,C.white);c.restore();}
 }
 function Stapler(rng,preview){
   // Los folios salen de la impresora ya de camino a la grapadora: no hay cola a la vista.
@@ -778,7 +833,7 @@ function Stapler(rng,preview){
             R(c,mx,PY+8,3,1,C.pinkD);R(c,mx,PY+6,1,3,C.pinkD);R(c,mx+8,PY+8,3,1,C.pinkD);R(c,mx+10,PY+6,1,3,C.pinkD);}
           if(m.j&&m.rel!=null)drawStaple(c,p.x+m.rel,m.j);}
       }
-      drawPrinter(c,ps.some(p=>p.x+p.w>PRX-2&&p.x<PRX));
+      drawPrinter(c,ps.some(p=>p.x+p.w>PRX-2&&p.x<PRX),1-spawned/N);
       drawStaplerDetail(c,pressK());
       for(let k=0;k<3;k++){const t=(Core.time*0.6+k/3)%1;const y=46-t*22,x=44+k*3+Math.round(Math.sin(t*6+k)*2);if(t<0.85){dith(c,x,y,3,4,'rgba(255,255,255,'+(0.9-t)+')',k);}}
       for(const a of air){if(a.t<0.45){const y=PY+5+a.t*50;R(c,a.x-2,Math.round(y),4,1,C.metalDD);}}
