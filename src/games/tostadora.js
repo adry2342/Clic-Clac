@@ -163,12 +163,16 @@ function Toaster(rng,preview){
         if(bb>x0+w)rr(c,x0+w-3,y0+12,bb-(x0+w)+3,UTH-24,u.top.d,4);
         if(on1>on0){rr(c,on0,y0+3,on1-on0,UTH-6,u.top.d,5);rr(c,on0+1,y0+4,on1-on0-2,UTH-8,u.top.col,4);R(c,on0+3,y0+7,Math.max(0,on1-on0-8),1,u.top.l);
           for(let yy=y0+12;yy<y0+UTH-6;yy+=8)for(let xx=on0+4+(yy%16?0:6);xx<on1-6;xx+=12)R(c,xx,yy,6,1,u.top.d);
-          if(u.top.seeds)for(let yy=y0+8;yy<y0+UTH-6;yy+=7)for(let xx=on0+3+((yy*5)%9);xx<on1-3;xx+=11)px(c,xx,yy,u.top.d);}}}
+          if(u.top.seeds)for(let yy=y0+8;yy<y0+UTH-6;yy+=7)for(let xx=on0+3+((yy*5)%9);xx<on1-3;xx+=11)px(c,xx,yy,u.top.d);
+          // borde de avance ondulado: la crema se arrastra delante de la espátula
+          if(u.ex==null&&on1<x0+w-3)for(let yy=y0+5;yy<y0+UTH-5;yy++){const e=Math.round(1.5+Math.sin(yy*0.55+Core.time*9)*1.5);R(c,on1-1,yy,e+1,1,u.top.col);px(c,on1+e,yy,u.top.d);}}}}
     // espátula: cruza de izquierda a derecha; baja y unta mientras mantienes
     if(swapT>=2&&U()&&(u.st!=='out'||u.t<0.35)){const kxx=Math.round(kx)+0,lift=Math.round((1-u.dip)*8),ky=y0-20+lift;
       c.save();c.globalAlpha=0.35;R(c,kxx-3,y0+6,8,UTH-12,'#7a5a4a');c.restore();
-      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);rr(l,kxx-3,ky-22,7,24,C.pinkD,3);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
-      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);R(c,kxx-2,ky-20,1,18,C.pinkL);}
+      // el mango se queda un poco atrás mientras arrastra (inercia) y vuelve al soltar
+      const ln=Math.round(u.dip*3);
+      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);l.fillStyle=C.pinkD;for(let k=0;k<24;k++)l.fillRect(kxx-3-Math.round(ln*k/23),ky-22+(23-k),7,1);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
+      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);for(let k=2;k<20;k++)px(c,kxx-2-Math.round(ln*k/23),ky-22+(23-k),C.pinkL);}
   }
   return {_dbg:()=>({st,b:items[cur],phase,kx,u:U(),swapT,e:U()&&stack.length?edges():[0,0],h2}),unit:'Paso',total:TOTAL,mood:'tostadora',hold:true,
     inPractice(){return false;},

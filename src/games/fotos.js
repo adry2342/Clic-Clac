@@ -23,7 +23,7 @@ const MOVES=(()=>{const sp={normal:()=>1,frena:t=>1-0.62*Math.exp(-Math.pow(t/0.
   for(const k in sp){const f=new Float32Array(2*n+1);f[n]=0;for(let i=1;i<=n;i++){f[n+i]=f[n+i-1]+sp[k]((i-0.5)*dt)*dt;f[n-i]=f[n-i+1]-sp[k](-(i-0.5)*dt)*dt;}out[k]=f;}
   out.off=(k,t)=>{const f=out[k],x=Math.max(-n,Math.min(n,t*240))+n,i=Math.floor(x),u=x-i;return f[i]+(f[Math.min(2*n,i+1)]-f[i])*u;};
   return out;})();
-const CARCOL=[[C.pink,C.pinkD,C.pinkL],[C.sky,C.skyD,C.skyL],[C.mint,C.mintD,C.mintL],[C.butter,C.butterD,'#fff8d0'],[C.lav,C.lavD,C.lavL],[C.peach,C.peachD,C.peachL]];
+const CARCOL=[[C.pink,C.pinkD,C.pinkL],[C.sky,C.skyD,C.skyL],[C.mint,C.mintD,C.mintL],[C.butter,C.butterD,'#fff8d0'],['#ff8f80','#e0645a','#ffc6bc'],[C.peach,C.peachD,C.peachL]];
 function drawStreetBg(c){
   // cielo en bandas con difuminado
   R(c,0,0,W,40,C.skyD);dith(c,0,38,W,4,C.sky);R(c,0,42,W,30,C.sky);dith(c,0,70,W,4,C.skyL);R(c,0,74,W,40,C.skyL);
@@ -369,13 +369,21 @@ function Fotos(rng,preview){
     const [sx,sy,sw2,sh]=DR.strip;
     obj(c,l=>{R(l,sx-2,sy-2,sw2+4,sh+4,C.paper);});
     for(let i=0;i<8;i++)R(c,sx+i*12,sy,12,sh,TONE[i]);
-    const tX=sx+Math.round(1/1.5*sw2);R(c,tX-2,sy-3,5,1,C.pinkD);R(c,tX-2,sy+sh+2,5,1,C.pinkD);R(c,tX-2,sy-2,1,sh+4,C.pinkD);R(c,tX+2,sy-2,1,sh+4,C.pinkD);
+    const tX=sx+Math.round(1/1.5*sw2),tp=Math.sin(Core.time*6)>0?C.white:C.pinkL;
+    // tono objetivo: marco blanco que late, bien visible bajo la luz roja
+    R(c,tX-4,sy-4,9,2,tp);R(c,tX-4,sy+sh+2,9,2,tp);R(c,tX-4,sy-4,2,sh+8,tp);R(c,tX+3,sy-4,2,sh+8,tp);
+    R(c,tX-3,sy-3,7,1,C.pinkD);R(c,tX-3,sy+sh+2,7,1,C.pinkD);
     R(c,sx+4,sy-4,8,3,'rgba(255,248,220,0.8)');R(c,sx+sw2-12,sy-4,8,3,'rgba(255,248,220,0.8)');
     const p=dev[Math.min(di,N2-1)];
-    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);obj(c,l=>{l.fillStyle=C.white;for(let k=0;k<5;k++)l.fillRect(cx-4+k,sy+sh+3+k,9-2*k,1);rr(l,cx-5,sy-12,11,8,C.white,2);});const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-4,sy-11,9,6,TONE[ti]);}
+    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
+      // puntero grande con contorno: triángulo debajo de la tira y muestra del tono actual encima
+      obj(c,l=>{l.fillStyle=C.butter;for(let k=0;k<6;k++)l.fillRect(cx-5+k,sy+sh+9-k,11-2*k,1);l.fillRect(cx-5,sy+sh+10,11,2);rr(l,cx-7,sy-15,15,11,C.white,2);});
+      R(c,cx-4,sy+sh+10,9,1,C.butterL||C.white);const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-5,sy-13,11,7,TONE[ti]);R(c,cx-5,sy-13,11,1,'rgba(255,255,255,0.35)');}
     // cubeta de revelado: líquido que se mece mientras mantienes
     const [tx,ty,tw,th2]=DR.tray,rock=holding?Math.sin(rockT*9):Math.sin(rockT*9)*0.25,rx=Math.round(rock*2);
     rr(c,tx+4,ty+3,tw-8,th2-7,'#c97c8a',3);
+    // la superficie del líquido se inclina con el vaivén
+    for(let i=2;i<tw-10;i++){const yy=ty+5+Math.round(rock*2.2*((i/(tw-12))*2-1));px(c,tx+4+i,yy,'#e3a0ad');}
     let px0=128,py0=128,inTray=false,sc=1;
     if(phase===2&&p){
       if(dst==='in'){const k=ease(Math.min(1,dT/0.7));px0=Math.round(30+(128-30)*k);py0=Math.round(116+(128-116)*k-Math.sin(k*Math.PI)*24);}

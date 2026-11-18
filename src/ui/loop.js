@@ -1,4 +1,4 @@
-let last=performance.now(),lastCue='';
+let last=performance.now(),lastCue='',cueT=0;
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;Core.time+=dt;pollPads();
   if(Core.scene==='play'&&!Core.paused&&Core.ready>0){Core.ready-=dt;const el=$('ready');
@@ -19,7 +19,8 @@ function frame(now){
   if(Core.scene==='play'){
     const g=Core.game,txt=g.unit+' '+Math.min(g.total,g.progress()+1)+' / '+g.total+(Core.run.streak>=3?'  ·  Racha '+Core.run.streak:'');
     const prac=g.inPractice();const key=txt+prac;
-    const cue=g.cue?g.cue():'';if(cue!==lastCue){lastCue=cue;$('hCue').textContent=cue;$('hCue').hidden=!cue;}
+    const cue=g.cue?g.cue():'';if(cue!==lastCue){lastCue=cue;cueT=0;const e=$('hCue');e.textContent=cue;e.hidden=!cue;e.classList.remove('dim');void e.offsetWidth;e.style.animation='none';void e.offsetWidth;e.style.animation='';}
+    else if(cue&&(cueT+=dt)>3&&cueT-dt<=3)$('hCue').classList.add('dim');
     if(key!==lastHud){lastHud=key;$('hProg').textContent=prac?'Práctica':txt;$('hPrac').hidden=!prac;}
   }
   requestAnimationFrame(frame);

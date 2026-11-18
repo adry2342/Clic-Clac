@@ -43,7 +43,9 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   text-shadow: calc(var(--u)*-1px) 0 var(--ink), calc(var(--u)*1px) 0 var(--ink), 0 calc(var(--u)*-1px) var(--ink), 0 calc(var(--u)*1px) var(--ink), calc(var(--u)*2px) calc(var(--u)*2px) 0 var(--pinkD), calc(var(--u)*3px) calc(var(--u)*3px) 0 var(--ink)}
 .logo span{font-size:max(10px,calc(var(--u)*7px)); background:var(--ink); color:var(--butter); padding:calc(var(--u)*1px) calc(var(--u)*4px); border-radius:calc(var(--u)*2px)}
 .cards{display:grid; grid-template-columns:repeat(5, calc(var(--u)*86px)); gap:calc(var(--u)*6px)}
-.tag.cue{background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*8px)); align-self:flex-start}
+.tag.cue{position:absolute; left:50%; bottom:calc(var(--u)*5px); transform:translateX(-50%); background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*7.5px)); white-space:nowrap; max-width:92%; overflow:hidden; text-overflow:ellipsis; box-shadow:0 calc(var(--u)*2px) 0 var(--ink); transition:opacity .5s, transform .5s; animation:cuein .35s cubic-bezier(.2,1.5,.4,1) backwards}
+.tag.cue.dim{opacity:.55; transform:translateX(-50%) scale(.92)}
+@keyframes cuein{from{opacity:0; transform:translateX(-50%) translateY(calc(var(--u)*6px))}}
 .card{position:relative; background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*4px); padding:calc(var(--u)*4px); box-shadow:0 calc(var(--u)*3px) 0 var(--ink); display:flex; flex-direction:column; gap:calc(var(--u)*4px); text-align:left}
 .card canvas{width:100%; aspect-ratio:16/9; image-rendering:auto; border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*2px); display:block; background:var(--lavL)}
 .card .nm{font-size:max(10px,calc(var(--u)*7px)); line-height:1.15; min-height:2.3em}
@@ -89,8 +91,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .demo-tag.mal{background:var(--pinkL,#ffe2ee)!important}
 #demoNow.jP{background:var(--butter)} #demoNow.jB{background:var(--mint)} #demoNow.jR{background:var(--peach)} #demoNow.jF{background:#e3dbe9}
 /* HUD */
-#hud{position:absolute; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:flex-start; padding:calc(var(--u)*4px) calc(var(--u)*5px); pointer-events:none}
-.tag{background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); padding:calc(var(--u)*1px) calc(var(--u)*5px); font-size:max(10px,calc(var(--u)*7px)); font-variant-numeric:tabular-nums}
+#hud{position:absolute; left:0; right:0; top:0; bottom:0; display:flex; justify-content:space-between; align-items:flex-start; padding:calc(var(--u)*4px) calc(var(--u)*5px); pointer-events:none}
+.tag{white-space:nowrap; background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); padding:calc(var(--u)*1px) calc(var(--u)*5px); font-size:max(10px,calc(var(--u)*7px)); font-variant-numeric:tabular-nums}
 .tag.prac{background:var(--butter)}
 .hud-l{display:flex; flex-direction:column; gap:calc(var(--u)*3px); align-items:flex-start}
 .hud-r{display:flex; gap:calc(var(--u)*4px); align-items:flex-start}
@@ -142,7 +144,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <canvas id="c" width="320" height="180" aria-label="Escena del minijuego"></canvas>
 
   <div id="menu" class="ov">
-    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.1</span></div>
+    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.2</span></div>
     <div class="cards" id="cards"></div>
     <div class="menu-foot">
       <button class="toggle" id="tSfx" aria-pressed="true">Sonido</button>
@@ -169,9 +171,9 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <div id="ready" hidden></div>
   <div id="phase" hidden><span></span><b></b><small></small></div>
   <div id="hud" hidden>
-    <div class="hud-l"><div class="tag" id="hName"></div><div class="tag prac" id="hPrac">Práctica: no puntúa</div></div>
     <div class="tag cue" id="hCue" hidden></div>
-    <div class="hud-r"><div class="tag" id="hProg"></div><button id="pauseBtn" aria-label="Pausa">II</button></div>
+    <div class="hud-l"><div class="tag" id="hName"></div><div class="tag prac" id="hPrac">Práctica: no puntúa</div></div>
+        <div class="hud-r"><div class="tag" id="hProg"></div><button id="pauseBtn" aria-label="Pausa">II</button></div>
   </div>
 
   <div id="pause" class="ov" hidden>
@@ -204,7 +206,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 (()=>{
 'use strict';
 /* =====================================================================
-   Clic Clac · prototipo 1.1
+   Clic Clac · prototipo 1.2
    Mundo de 320x180 píxeles. Todo el arte se dibuja con primitivas
    redondeadas + un compositor que añade contorno, luz y sombra.
    ===================================================================== */
@@ -517,7 +519,9 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
     if(DEMO){if(Demo&&!Demo.last)Demo.last={j,detail:detail||'',t:0};return;}
     Snd.judge(j);
     const el=document.createElement('div');el.className='pop '+j+(practice?' prac':'');
-    el.style.left=(x*this.s)+'px';el.style.top=(y*this.s)+'px';
+    // el cartel sube y se aparta del punto de impacto para no tapar lo que acabas de hacer
+    const px_=Math.max(34,Math.min(W-34,x)),py_=Math.max(40,y-14);
+    el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';
     el.innerHTML='<b>'+JUDGE[j].sym+' '+JUDGE[j].word+'</b>'+(detail?'<small>'+detail+'</small>':'');
     $('stage').appendChild(el);setTimeout(()=>el.remove(),1300);
     if(j==='P'){this.sparkle(x,y+12);buzz(12);Feel.stop(0.055);Feel.ring(x,y+14,C.butter,18);if(this.run&&this.run.streak>0&&(this.run.streak+1)%5===0)Feel.confetti(x,y+10,22);}
@@ -1106,8 +1110,11 @@ function Stapler(rng,preview){
         for(let k=0;k<5;k++){R(c,x+w-5,PY+k,k+1,1,C.paperD);}px(c,x+w-5,PY+4,C.metalD);
         drawPaperArt(c,x,p);
         if(p.kind==='no'){if(p.rel!=null)drawStaple(c,p.x+p.rel,'F');continue;}
+        // tira rosa arriba: los folios que se grapan se reconocen de un vistazo
+        R(c,x+1,PY,w-7,2,C.pink);R(c,x+1,PY+2,w-7,1,C.pinkL);
         for(const m of p.marks){const mx=x+m.o-5;
-          if(!m.j){R(c,mx,PY+2,3,1,C.pinkD);R(c,mx,PY+2,1,3,C.pinkD);R(c,mx+8,PY+2,3,1,C.pinkD);R(c,mx+10,PY+2,1,3,C.pinkD);
+          if(!m.j){R(c,mx+1,PY+3,9,5,C.pinkL);const pl=Math.sin(Core.time*7+m.o)>0.2;if(pl){R(c,mx-1,PY+1,13,1,C.pinkL);R(c,mx-1,PY+10,13,1,C.pinkL);}
+            R(c,mx+1,PY+3,2,1,C.pinkD);R(c,mx+8,PY+3,2,1,C.pinkD);R(c,mx+1,PY+7,2,1,C.pinkD);R(c,mx+8,PY+7,2,1,C.pinkD);R(c,mx,PY+2,3,1,C.pinkD);R(c,mx,PY+2,1,3,C.pinkD);R(c,mx+8,PY+2,3,1,C.pinkD);R(c,mx+10,PY+2,1,3,C.pinkD);
             R(c,mx,PY+8,3,1,C.pinkD);R(c,mx,PY+6,1,3,C.pinkD);R(c,mx+8,PY+8,3,1,C.pinkD);R(c,mx+10,PY+6,1,3,C.pinkD);}
           if(m.j&&m.rel!=null)drawStaple(c,p.x+m.rel,m.j);}
       }
@@ -1284,12 +1291,16 @@ function Toaster(rng,preview){
         if(bb>x0+w)rr(c,x0+w-3,y0+12,bb-(x0+w)+3,UTH-24,u.top.d,4);
         if(on1>on0){rr(c,on0,y0+3,on1-on0,UTH-6,u.top.d,5);rr(c,on0+1,y0+4,on1-on0-2,UTH-8,u.top.col,4);R(c,on0+3,y0+7,Math.max(0,on1-on0-8),1,u.top.l);
           for(let yy=y0+12;yy<y0+UTH-6;yy+=8)for(let xx=on0+4+(yy%16?0:6);xx<on1-6;xx+=12)R(c,xx,yy,6,1,u.top.d);
-          if(u.top.seeds)for(let yy=y0+8;yy<y0+UTH-6;yy+=7)for(let xx=on0+3+((yy*5)%9);xx<on1-3;xx+=11)px(c,xx,yy,u.top.d);}}}
+          if(u.top.seeds)for(let yy=y0+8;yy<y0+UTH-6;yy+=7)for(let xx=on0+3+((yy*5)%9);xx<on1-3;xx+=11)px(c,xx,yy,u.top.d);
+          // borde de avance ondulado: la crema se arrastra delante de la espátula
+          if(u.ex==null&&on1<x0+w-3)for(let yy=y0+5;yy<y0+UTH-5;yy++){const e=Math.round(1.5+Math.sin(yy*0.55+Core.time*9)*1.5);R(c,on1-1,yy,e+1,1,u.top.col);px(c,on1+e,yy,u.top.d);}}}}
     // espátula: cruza de izquierda a derecha; baja y unta mientras mantienes
     if(swapT>=2&&U()&&(u.st!=='out'||u.t<0.35)){const kxx=Math.round(kx)+0,lift=Math.round((1-u.dip)*8),ky=y0-20+lift;
       c.save();c.globalAlpha=0.35;R(c,kxx-3,y0+6,8,UTH-12,'#7a5a4a');c.restore();
-      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);rr(l,kxx-3,ky-22,7,24,C.pinkD,3);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
-      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);R(c,kxx-2,ky-20,1,18,C.pinkL);}
+      // el mango se queda un poco atrás mientras arrastra (inercia) y vuelve al soltar
+      const ln=Math.round(u.dip*3);
+      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);l.fillStyle=C.pinkD;for(let k=0;k<24;k++)l.fillRect(kxx-3-Math.round(ln*k/23),ky-22+(23-k),7,1);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
+      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);for(let k=2;k<20;k++)px(c,kxx-2-Math.round(ln*k/23),ky-22+(23-k),C.pinkL);}
   }
   return {_dbg:()=>({st,b:items[cur],phase,kx,u:U(),swapT,e:U()&&stack.length?edges():[0,0],h2}),unit:'Paso',total:TOTAL,mood:'tostadora',hold:true,
     inPractice(){return false;},
@@ -1603,8 +1614,8 @@ function Tortilla(rng,preview){
       // rodajas: caen de lado y se tumban en un abanico a la izquierda
       const sc=A.scoop>0?inout(Math.min(1,A.scoop/0.6)):0;
       for(const s of A.slices){const k=ease(Math.min(1,s.t/0.28)),tx=o0+96-s.i*13+sc*150,x=Math.round((o0+s.x)+(tx-(o0+s.x))*k),hh=Math.round(30*(1-k)+7*k),ww=Math.round(s.w*(1-k)+22*k);
-        if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14,11,4,POT.c);},{sel:true});
-        if(k>=1&&sc<1){ell(c,Math.round(x+9),TCT-15,5,1,'#ffffff');R(c,x+2,TCT-12,18,1,POT.d);}}
+        if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14+(s.t<0.36?1:0),11+(s.t<0.36?1:0),4-(s.t<0.36?1:0),POT.a);},{sel:true});
+        if(k>=1&&sc<1){ell(c,Math.round(x+10),TCT-15,6,2,POT.c);px(c,x+7,TCT-16,C.white);R(c,x+2,TCT-12,18,1,POT.d);}}
       if(A.pot&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
         const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30;
         obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip),{sel:true});
@@ -1620,8 +1631,11 @@ function Tortilla(rng,preview){
       if(p.k==='cortar'&&p.cuts<p.n){
         // guía rosa: grosor que debe asomar a la izquierda del cuchillo
         const g=kx-p.T,pulse=Math.sin(Core.time*5)>0;
-        R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,1,5,pulse?C.pinkDD:C.pinkD);R(c,g-1,TCT-49,3,1,C.pinkD);px(c,g,TCT-50,C.pinkD);
-        for(let yy=TCT-46;yy<TCT-10;yy+=3)px(c,g,yy,pulse?C.pinkDD:C.pinkD);
+        const gc=pulse?C.pinkDD:C.pinkD;
+        R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,2,5,gc);
+        // triangulitos arriba y abajo y línea de 2 px: se lee de un vistazo sobre la patata
+        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
+        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy,2,3,gc);
       }
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
       const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36);
@@ -1759,7 +1773,7 @@ const MOVES=(()=>{const sp={normal:()=>1,frena:t=>1-0.62*Math.exp(-Math.pow(t/0.
   for(const k in sp){const f=new Float32Array(2*n+1);f[n]=0;for(let i=1;i<=n;i++){f[n+i]=f[n+i-1]+sp[k]((i-0.5)*dt)*dt;f[n-i]=f[n-i+1]-sp[k](-(i-0.5)*dt)*dt;}out[k]=f;}
   out.off=(k,t)=>{const f=out[k],x=Math.max(-n,Math.min(n,t*240))+n,i=Math.floor(x),u=x-i;return f[i]+(f[Math.min(2*n,i+1)]-f[i])*u;};
   return out;})();
-const CARCOL=[[C.pink,C.pinkD,C.pinkL],[C.sky,C.skyD,C.skyL],[C.mint,C.mintD,C.mintL],[C.butter,C.butterD,'#fff8d0'],[C.lav,C.lavD,C.lavL],[C.peach,C.peachD,C.peachL]];
+const CARCOL=[[C.pink,C.pinkD,C.pinkL],[C.sky,C.skyD,C.skyL],[C.mint,C.mintD,C.mintL],[C.butter,C.butterD,'#fff8d0'],['#ff8f80','#e0645a','#ffc6bc'],[C.peach,C.peachD,C.peachL]];
 function drawStreetBg(c){
   // cielo en bandas con difuminado
   R(c,0,0,W,40,C.skyD);dith(c,0,38,W,4,C.sky);R(c,0,42,W,30,C.sky);dith(c,0,70,W,4,C.skyL);R(c,0,74,W,40,C.skyL);
@@ -2105,13 +2119,21 @@ function Fotos(rng,preview){
     const [sx,sy,sw2,sh]=DR.strip;
     obj(c,l=>{R(l,sx-2,sy-2,sw2+4,sh+4,C.paper);});
     for(let i=0;i<8;i++)R(c,sx+i*12,sy,12,sh,TONE[i]);
-    const tX=sx+Math.round(1/1.5*sw2);R(c,tX-2,sy-3,5,1,C.pinkD);R(c,tX-2,sy+sh+2,5,1,C.pinkD);R(c,tX-2,sy-2,1,sh+4,C.pinkD);R(c,tX+2,sy-2,1,sh+4,C.pinkD);
+    const tX=sx+Math.round(1/1.5*sw2),tp=Math.sin(Core.time*6)>0?C.white:C.pinkL;
+    // tono objetivo: marco blanco que late, bien visible bajo la luz roja
+    R(c,tX-4,sy-4,9,2,tp);R(c,tX-4,sy+sh+2,9,2,tp);R(c,tX-4,sy-4,2,sh+8,tp);R(c,tX+3,sy-4,2,sh+8,tp);
+    R(c,tX-3,sy-3,7,1,C.pinkD);R(c,tX-3,sy+sh+2,7,1,C.pinkD);
     R(c,sx+4,sy-4,8,3,'rgba(255,248,220,0.8)');R(c,sx+sw2-12,sy-4,8,3,'rgba(255,248,220,0.8)');
     const p=dev[Math.min(di,N2-1)];
-    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);obj(c,l=>{l.fillStyle=C.white;for(let k=0;k<5;k++)l.fillRect(cx-4+k,sy+sh+3+k,9-2*k,1);rr(l,cx-5,sy-12,11,8,C.white,2);});const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-4,sy-11,9,6,TONE[ti]);}
+    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
+      // puntero grande con contorno: triángulo debajo de la tira y muestra del tono actual encima
+      obj(c,l=>{l.fillStyle=C.butter;for(let k=0;k<6;k++)l.fillRect(cx-5+k,sy+sh+9-k,11-2*k,1);l.fillRect(cx-5,sy+sh+10,11,2);rr(l,cx-7,sy-15,15,11,C.white,2);});
+      R(c,cx-4,sy+sh+10,9,1,C.butterL||C.white);const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-5,sy-13,11,7,TONE[ti]);R(c,cx-5,sy-13,11,1,'rgba(255,255,255,0.35)');}
     // cubeta de revelado: líquido que se mece mientras mantienes
     const [tx,ty,tw,th2]=DR.tray,rock=holding?Math.sin(rockT*9):Math.sin(rockT*9)*0.25,rx=Math.round(rock*2);
     rr(c,tx+4,ty+3,tw-8,th2-7,'#c97c8a',3);
+    // la superficie del líquido se inclina con el vaivén
+    for(let i=2;i<tw-10;i++){const yy=ty+5+Math.round(rock*2.2*((i/(tw-12))*2-1));px(c,tx+4+i,yy,'#e3a0ad');}
     let px0=128,py0=128,inTray=false,sc=1;
     if(phase===2&&p){
       if(dst==='in'){const k=ease(Math.min(1,dT/0.7));px0=Math.round(30+(128-30)*k);py0=Math.round(116+(128-116)*k-Math.sin(k*Math.PI)*24);}
@@ -2383,7 +2405,7 @@ function demoStep(dt){
   const fc=demoFull.getContext('2d');D.g.draw(fc);
   demoCx.clearRect(0,0,W*2,H*2);demoCx.drawImage(demoFull,0,0,W,H,0,0,W*2,H*2); // el vídeo enseña la escena entera
 }
-let last=performance.now(),lastCue='';
+let last=performance.now(),lastCue='',cueT=0;
 function frame(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;Core.time+=dt;pollPads();
   if(Core.scene==='play'&&!Core.paused&&Core.ready>0){Core.ready-=dt;const el=$('ready');
@@ -2404,7 +2426,8 @@ function frame(now){
   if(Core.scene==='play'){
     const g=Core.game,txt=g.unit+' '+Math.min(g.total,g.progress()+1)+' / '+g.total+(Core.run.streak>=3?'  ·  Racha '+Core.run.streak:'');
     const prac=g.inPractice();const key=txt+prac;
-    const cue=g.cue?g.cue():'';if(cue!==lastCue){lastCue=cue;$('hCue').textContent=cue;$('hCue').hidden=!cue;}
+    const cue=g.cue?g.cue():'';if(cue!==lastCue){lastCue=cue;cueT=0;const e=$('hCue');e.textContent=cue;e.hidden=!cue;e.classList.remove('dim');void e.offsetWidth;e.style.animation='none';void e.offsetWidth;e.style.animation='';}
+    else if(cue&&(cueT+=dt)>3&&cueT-dt<=3)$('hCue').classList.add('dim');
     if(key!==lastHud){lastHud=key;$('hProg').textContent=prac?'Práctica':txt;$('hPrac').hidden=!prac;}
   }
   requestAnimationFrame(frame);

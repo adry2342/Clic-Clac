@@ -1,5 +1,5 @@
 /* =====================================================================
-   Clic Clac · prototipo 1.1
+   Clic Clac · prototipo 1.2
    Mundo de 320x180 píxeles. Todo el arte se dibuja con primitivas
    redondeadas + un compositor que añade contorno, luz y sombra.
    ===================================================================== */

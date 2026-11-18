@@ -229,8 +229,11 @@ function Stapler(rng,preview){
         for(let k=0;k<5;k++){R(c,x+w-5,PY+k,k+1,1,C.paperD);}px(c,x+w-5,PY+4,C.metalD);
         drawPaperArt(c,x,p);
         if(p.kind==='no'){if(p.rel!=null)drawStaple(c,p.x+p.rel,'F');continue;}
+        // tira rosa arriba: los folios que se grapan se reconocen de un vistazo
+        R(c,x+1,PY,w-7,2,C.pink);R(c,x+1,PY+2,w-7,1,C.pinkL);
         for(const m of p.marks){const mx=x+m.o-5;
-          if(!m.j){R(c,mx,PY+2,3,1,C.pinkD);R(c,mx,PY+2,1,3,C.pinkD);R(c,mx+8,PY+2,3,1,C.pinkD);R(c,mx+10,PY+2,1,3,C.pinkD);
+          if(!m.j){R(c,mx+1,PY+3,9,5,C.pinkL);const pl=Math.sin(Core.time*7+m.o)>0.2;if(pl){R(c,mx-1,PY+1,13,1,C.pinkL);R(c,mx-1,PY+10,13,1,C.pinkL);}
+            R(c,mx+1,PY+3,2,1,C.pinkD);R(c,mx+8,PY+3,2,1,C.pinkD);R(c,mx+1,PY+7,2,1,C.pinkD);R(c,mx+8,PY+7,2,1,C.pinkD);R(c,mx,PY+2,3,1,C.pinkD);R(c,mx,PY+2,1,3,C.pinkD);R(c,mx+8,PY+2,3,1,C.pinkD);R(c,mx+10,PY+2,1,3,C.pinkD);
             R(c,mx,PY+8,3,1,C.pinkD);R(c,mx,PY+6,1,3,C.pinkD);R(c,mx+8,PY+8,3,1,C.pinkD);R(c,mx+10,PY+6,1,3,C.pinkD);}
           if(m.j&&m.rel!=null)drawStaple(c,p.x+m.rel,m.j);}
       }

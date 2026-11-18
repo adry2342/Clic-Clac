@@ -7,7 +7,9 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
     if(DEMO){if(Demo&&!Demo.last)Demo.last={j,detail:detail||'',t:0};return;}
     Snd.judge(j);
     const el=document.createElement('div');el.className='pop '+j+(practice?' prac':'');
-    el.style.left=(x*this.s)+'px';el.style.top=(y*this.s)+'px';
+    // el cartel sube y se aparta del punto de impacto para no tapar lo que acabas de hacer
+    const px_=Math.max(34,Math.min(W-34,x)),py_=Math.max(40,y-14);
+    el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';
     el.innerHTML='<b>'+JUDGE[j].sym+' '+JUDGE[j].word+'</b>'+(detail?'<small>'+detail+'</small>':'');
     $('stage').appendChild(el);setTimeout(()=>el.remove(),1300);
     if(j==='P'){this.sparkle(x,y+12);buzz(12);Feel.stop(0.055);Feel.ring(x,y+14,C.butter,18);if(this.run&&this.run.streak>0&&(this.run.streak+1)%5===0)Feel.confetti(x,y+10,22);}

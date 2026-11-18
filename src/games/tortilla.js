@@ -202,8 +202,8 @@ function Tortilla(rng,preview){
       // rodajas: caen de lado y se tumban en un abanico a la izquierda
       const sc=A.scoop>0?inout(Math.min(1,A.scoop/0.6)):0;
       for(const s of A.slices){const k=ease(Math.min(1,s.t/0.28)),tx=o0+96-s.i*13+sc*150,x=Math.round((o0+s.x)+(tx-(o0+s.x))*k),hh=Math.round(30*(1-k)+7*k),ww=Math.round(s.w*(1-k)+22*k);
-        if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14,11,4,POT.c);},{sel:true});
-        if(k>=1&&sc<1){ell(c,Math.round(x+9),TCT-15,5,1,'#ffffff');R(c,x+2,TCT-12,18,1,POT.d);}}
+        if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14+(s.t<0.36?1:0),11+(s.t<0.36?1:0),4-(s.t<0.36?1:0),POT.a);},{sel:true});
+        if(k>=1&&sc<1){ell(c,Math.round(x+10),TCT-15,6,2,POT.c);px(c,x+7,TCT-16,C.white);R(c,x+2,TCT-12,18,1,POT.d);}}
       if(A.pot&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
         const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30;
         obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip),{sel:true});
@@ -219,8 +219,11 @@ function Tortilla(rng,preview){
       if(p.k==='cortar'&&p.cuts<p.n){
         // guía rosa: grosor que debe asomar a la izquierda del cuchillo
         const g=kx-p.T,pulse=Math.sin(Core.time*5)>0;
-        R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,1,5,pulse?C.pinkDD:C.pinkD);R(c,g-1,TCT-49,3,1,C.pinkD);px(c,g,TCT-50,C.pinkD);
-        for(let yy=TCT-46;yy<TCT-10;yy+=3)px(c,g,yy,pulse?C.pinkDD:C.pinkD);
+        const gc=pulse?C.pinkDD:C.pinkD;
+        R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,2,5,gc);
+        // triangulitos arriba y abajo y línea de 2 px: se lee de un vistazo sobre la patata
+        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
+        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy,2,3,gc);
       }
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
       const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36);

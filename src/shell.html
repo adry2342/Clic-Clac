@@ -43,7 +43,9 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   text-shadow: calc(var(--u)*-1px) 0 var(--ink), calc(var(--u)*1px) 0 var(--ink), 0 calc(var(--u)*-1px) var(--ink), 0 calc(var(--u)*1px) var(--ink), calc(var(--u)*2px) calc(var(--u)*2px) 0 var(--pinkD), calc(var(--u)*3px) calc(var(--u)*3px) 0 var(--ink)}
 .logo span{font-size:max(10px,calc(var(--u)*7px)); background:var(--ink); color:var(--butter); padding:calc(var(--u)*1px) calc(var(--u)*4px); border-radius:calc(var(--u)*2px)}
 .cards{display:grid; grid-template-columns:repeat(5, calc(var(--u)*86px)); gap:calc(var(--u)*6px)}
-.tag.cue{background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*8px)); align-self:flex-start}
+.tag.cue{position:absolute; left:50%; bottom:calc(var(--u)*5px); transform:translateX(-50%); background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*7.5px)); white-space:nowrap; max-width:92%; overflow:hidden; text-overflow:ellipsis; box-shadow:0 calc(var(--u)*2px) 0 var(--ink); transition:opacity .5s, transform .5s; animation:cuein .35s cubic-bezier(.2,1.5,.4,1) backwards}
+.tag.cue.dim{opacity:.55; transform:translateX(-50%) scale(.92)}
+@keyframes cuein{from{opacity:0; transform:translateX(-50%) translateY(calc(var(--u)*6px))}}
 .card{position:relative; background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*4px); padding:calc(var(--u)*4px); box-shadow:0 calc(var(--u)*3px) 0 var(--ink); display:flex; flex-direction:column; gap:calc(var(--u)*4px); text-align:left}
 .card canvas{width:100%; aspect-ratio:16/9; image-rendering:auto; border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*2px); display:block; background:var(--lavL)}
 .card .nm{font-size:max(10px,calc(var(--u)*7px)); line-height:1.15; min-height:2.3em}
@@ -89,8 +91,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .demo-tag.mal{background:var(--pinkL,#ffe2ee)!important}
 #demoNow.jP{background:var(--butter)} #demoNow.jB{background:var(--mint)} #demoNow.jR{background:var(--peach)} #demoNow.jF{background:#e3dbe9}
 /* HUD */
-#hud{position:absolute; left:0; right:0; top:0; display:flex; justify-content:space-between; align-items:flex-start; padding:calc(var(--u)*4px) calc(var(--u)*5px); pointer-events:none}
-.tag{background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); padding:calc(var(--u)*1px) calc(var(--u)*5px); font-size:max(10px,calc(var(--u)*7px)); font-variant-numeric:tabular-nums}
+#hud{position:absolute; left:0; right:0; top:0; bottom:0; display:flex; justify-content:space-between; align-items:flex-start; padding:calc(var(--u)*4px) calc(var(--u)*5px); pointer-events:none}
+.tag{white-space:nowrap; background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*3px); padding:calc(var(--u)*1px) calc(var(--u)*5px); font-size:max(10px,calc(var(--u)*7px)); font-variant-numeric:tabular-nums}
 .tag.prac{background:var(--butter)}
 .hud-l{display:flex; flex-direction:column; gap:calc(var(--u)*3px); align-items:flex-start}
 .hud-r{display:flex; gap:calc(var(--u)*4px); align-items:flex-start}
@@ -142,7 +144,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <canvas id="c" width="320" height="180" aria-label="Escena del minijuego"></canvas>
 
   <div id="menu" class="ov">
-    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.1</span></div>
+    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.2</span></div>
     <div class="cards" id="cards"></div>
     <div class="menu-foot">
       <button class="toggle" id="tSfx" aria-pressed="true">Sonido</button>
@@ -169,9 +171,9 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <div id="ready" hidden></div>
   <div id="phase" hidden><span></span><b></b><small></small></div>
   <div id="hud" hidden>
-    <div class="hud-l"><div class="tag" id="hName"></div><div class="tag prac" id="hPrac">Práctica: no puntúa</div></div>
     <div class="tag cue" id="hCue" hidden></div>
-    <div class="hud-r"><div class="tag" id="hProg"></div><button id="pauseBtn" aria-label="Pausa">II</button></div>
+    <div class="hud-l"><div class="tag" id="hName"></div><div class="tag prac" id="hPrac">Práctica: no puntúa</div></div>
+        <div class="hud-r"><div class="tag" id="hProg"></div><button id="pauseBtn" aria-label="Pausa">II</button></div>
   </div>
 
   <div id="pause" class="ov" hidden>
