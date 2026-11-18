@@ -1,0 +1,14 @@
+core/base.js
+core/anim.js
+core/audio.js
+core/core.js
+games/botellas.js
+games/grapadora.js
+games/tostadora.js
+games/tortilla.js
+games/fotos.js
+games/registry.js
+ui/flow.js
+ui/menufx.js
+ui/demo.js
+ui/loop.js
