@@ -16,3 +16,7 @@ El juego es un único `index.html`. El código está en `src/`:
 - `src/game.js`: todo el juego.
 
 `./build.sh` junta los dos en `index.html`. Abre `index.html` en el navegador para jugar.
+
+## Créditos
+
+Idea, dirección y pruebas: **Adri** ([@adry2342](https://github.com/adry2342)). Programación y pixel art con Claude.
