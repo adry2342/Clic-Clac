@@ -170,9 +170,23 @@ function drawLensBuddy(c,b,t){
 // cuarto oscuro: tonos, fondo y piezas
 const TONE=['#fbf1ec','#efdcd4','#ddc0b6','#c49c92','#a77c75','#86595a','#633c41','#432630'];
 const DR={tray:[108,122,104,50],fix:[222,128,86,40],box:[14,130,80,34],strip:[112,103,96,9],lamp:[36,20],line:40,slots:[72,128,184,240],L:38};
-function toneOver(c,x,y,w,h,d){
-  if(d<1){c.fillStyle='rgba(251,241,236,'+Math.min(0.97,Math.pow(1-Math.max(0,d),0.75)*0.97).toFixed(3)+')';c.fillRect(x,y,w,h);}
-  else if(d>1){c.fillStyle='rgba(58,24,36,'+Math.min(0.88,(d-1)*1.7).toFixed(3)+')';c.fillRect(x,y,w,h);}
+// revelado de verdad: la foto empieza en blanco y van saliendo primero las sombras y luego los claros.
+// Si te pasas, todo se oscurece a manchas hasta que la imagen se pierde.
+const DEVN=(()=>{const g=mulberry32(77),a=new Float32Array(64*40);for(let i=0;i<a.length;i++)a[i]=g();
+  // ruido suave (manchas): media de vecinos
+  const b=new Float32Array(a.length);for(let y=0;y<40;y++)for(let x=0;x<64;x++){let s=0,n=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=64||yy>=40)continue;s+=a[yy*64+xx];n++;}b[y*64+x]=s/n;}
+  let lo=1,hi=0;for(const v of b){lo=Math.min(lo,v);hi=Math.max(hi,v);}for(let i=0;i<b.length;i++)b[i]=(b[i]-lo)/(hi-lo);return b;})();
+function devSrc(p){if(p.src)return p.src;const k=mk(64,40),x=k.getContext('2d');x.drawImage(p.img,0,0);const d=x.getImageData(0,0,64,40).data,lum=new Float32Array(64*40);
+  for(let i=0;i<lum.length;i++)lum[i]=(d[i*4]*0.3+d[i*4+1]*0.55+d[i*4+2]*0.15)/255;return p.src={d,lum};}
+function develop(c,p,d,w,h){
+  const S=devSrc(p),im=c.createImageData(64,40),o=im.data,PW=[251,244,240],DK=[42,20,24];
+  const over=Math.max(0,Math.min(1,(d-1)/0.45));
+  for(let i=0;i<S.lum.length;i++){const l=S.lum[i],st=0.05+0.4*l,v=Math.max(0,Math.min(1,(d-st)/0.55)),e=v*v*(3-2*v);
+    let r=PW[0]+(S.d[i*4]-PW[0])*e,g=PW[1]+(S.d[i*4+1]-PW[1])*e,b=PW[2]+(S.d[i*4+2]-PW[2])*e;
+    if(over>0){const k=Math.max(0,Math.min(1,over*(1.25+0.6*(1-l))-0.25+(DEVN[i]-0.5)*0.7*over));r+=(DK[0]-r)*k;g+=(DK[1]-g)*k;b+=(DK[2]-b)*k;}
+    o[i*4]=r;o[i*4+1]=g;o[i*4+2]=b;o[i*4+3]=255;}
+  if(w&&w!==64){const t=mk(64,40);t.getContext('2d').putImageData(im,0,0);const x=c;x.save();x.imageSmoothingEnabled=true;x.drawImage(t,0,0,w,h);x.restore();}
+  else c.putImageData(im,0,0);
 }
 function drawDarkroomBg(c){
   const WA='#8a4456',WD='#743849',WL='#9c5266',BN='#5a2c38',BL='#7a3c4a',BD='#45212b';
@@ -238,10 +252,12 @@ function Fotos(rng,preview){
     obj(x,l=>drawCar(l,x,car,false),{sel:true});drawCar(null,x,car,true);return crop(cv,VFX-32,FCY-22);}
   // --- fase 2 y 3 ---
   let phase=1,swapT=0;const dev=[],hung=[];let di=0,dst='wait',dT=0,holding=false,rockT=0,hi=0,hst='wait',hT=0,sw=null;
-  const rate0=()=>0.52+rng()*0.22;
+  // cada foto se revela a su ritmo: unas tardan más y otras menos (de 1,1 a 2,6 s hasta el punto justo)
+  const rate0=()=>1.059/(1.1+rng()*1.5);
   function setupDev(list){
-    list.forEach((img,k)=>dev.push({img,d:0,rate:rate0()*(k>=2?1.12:1),fast:k>=1&&rng()<0.45,j:null,print:null}));
+    list.forEach((img,k)=>dev.push({img,d:0,rate:rate0(),j:null,print:null}));
   }
+  let stripA=1;
   function goPhase2(){
     // las mejores fotos del carrete (en el orden en que se hicieron) pasan al cuarto oscuro
     const rk={P:0,B:1,R:2,F:3,E:4};const best=roll.map((r,i)=>({r,i})).sort((a,b)=>rk[a.r.j]-rk[b.r.j]||a.i-b.i).slice(0,N2).sort((a,b)=>a.i-b.i).map(o=>o.r.img);
@@ -251,7 +267,7 @@ function Fotos(rng,preview){
   function goPhase3(){phase=3;swapT=0;hst='wait';hi=0;}
   function newSwing(){const P=1.15+rng()*0.4-hi*0.06;sw={A:0.42+rng()*0.16,w:2*Math.PI/P,t:0,ph:Math.PI/2,L:0};}
   const theta=()=>sw.A*Math.sin(sw.w*sw.t+sw.ph);
-  function bake(p){const k=mk(64,40),x=k.getContext('2d');x.drawImage(p.img,0,0);toneOver(x,0,0,64,40,p.d);
+  function bake(p){const k=mk(64,40),x=k.getContext('2d');develop(x,p,p.d);
     const h=mk(32,20),hx=h.getContext('2d');hx.imageSmoothingEnabled=true;hx.drawImage(k,0,0,32,20);p.print=k;p.half=h;}
   const st=TDEMO;TDEMO=null;
   if(st==='revelar'||st==='tender'){for(const c of cars)c.j='P';const imgs=[0,1,2,3].map(fakeShot);setupDev(imgs);phase=2;swapT=9;dst='in';dT=0;
@@ -260,23 +276,23 @@ function Fotos(rng,preview){
   const self={_cars:cars,_ph:()=>({phase,dst,hst,p:dev[di],sw,th:sw?theta():0,hi}),unit:'Paso',total:TOTAL,mood:'fotos',hold:true,
     inPractice(){return false;},
     progress(){return done;},
-    cue(){return phase===1?'Fase 1 · Foto cuando el coche esté en el centro · carrete: '+film:phase===2?'Fase 2 · Mantén para mecer la cubeta; suelta cuando la foto tenga el tono de la muestra':'Fase 3 · Toca cuando la foto pase justo bajo la pinza';},
+    cue(){return phase===1?'Fase 1 · Foto cuando el coche esté en el centro · carrete: '+film:phase===2?'Fase 2 · Mantén para revelar; suelta cuando la foto se vea bien':'Fase 3 · Toca cuando la foto pase justo bajo la pinza';},
     update(dt){
       swapT+=dt;flash=Math.max(0,flash-dt);pressT=Math.max(0,pressT-dt);emptyT=Math.max(0,emptyT-dt);
       for(const r of roll)r.t+=dt;
       if(phase===1){
         time+=dt;place();
         for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,150,false,film>0?'Se escapó':'Sin carrete');}}
-        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén pulsado para mecer la cubeta y que salga la foto. Suelta cuando tenga el tono de la muestra.',2.2);}}
+        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4);}}
         return;}
       if(phase===2){
-        rockT+=dt*(holding?1:0.25);
+        rockT+=dt*(holding?1:0.25);if(di>=1||(di===0&&dst==='out'))stripA=Math.max(0,stripA-dt*1.5);
         const p=dev[di];
         if(dst==='wait'){if(swapT>2.2){dst='in';dT=0;}return;}
         dT+=dt;
         if(dst==='in'){if(dT>0.7){dst='ready';dT=0;}}
-        else if(dst==='dev'&&p){p.d+=p.rate*(0.55+0.75*Math.min(1.3,p.d))*(p.fast&&p.d>0.55?1.35:1)*dt;if(p.d>=1.45)judge2('F','▲ Se veló: muy oscura');}
-        else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';}
+        else if(dst==='dev'&&p){p.d+=p.rate*(0.6+0.8*Math.min(1.3,p.d))*dt;if(p.d>=1.45)judge2('F','▲ Te pasaste: se quemó');}
+        else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';if(di===1&&dst==='in')Core.note(160,62,'Ahora sin guía: suelta cuando se vea bien');}
         else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.1);}
         return;}
       // fase 3
@@ -309,7 +325,7 @@ function Fotos(rng,preview){
     release(){
       if(phase!==2||dst!=='dev')return;holding=false;
       const p=dev[di],d=p.d-1,a=Math.abs(d),j=a<=0.05?'P':a<=0.1?'B':a<=0.17?'R':'F';
-      judge2(j,j==='P'?'':(d<0?'▼ Muy clara':'▲ Muy oscura'));
+      judge2(j,j==='P'?'':(d<0?'▼ Te quedaste corto: no se ve':'▲ Te pasaste: muy oscura'));
     },
     draw(c){
       if(phase===1){drawStreet(c);return;}
@@ -366,7 +382,9 @@ function Fotos(rng,preview){
       pline(c,sx,11,tx,ty-1,'#f0e0d0');drawHanging(c,dev[hi],Math.round(tx),Math.round(ty),0);
       obj(c,l=>{rr(l,sx-9,-4,19,9,C.lavD,3);rr(l,sx-6,4,13,7,'#ffe1cc',3);rr(l,sx-2,9,5,3,'#ffe1cc',1);},{sel:true});R(c,sx-8,1,17,1,C.lav);R(c,sx-8,4,17,1,C.lavDD);R(c,sx-4,7,9,1,'#f2b9a0');R(c,sx-4,5,3,1,'#fff3ea');}
     // tira de prueba con el tono objetivo
-    const [sx,sy,sw2,sh]=DR.strip;
+    const [sx,sy,sw2,sh]=DR.strip;const p=dev[Math.min(di,N2-1)];
+    // indicador de cuándo soltar: solo con la primera foto; luego se desvanece y toca revelar a ojo
+    if(phase===2&&stripA>0){c.save();c.globalAlpha=stripA;
     obj(c,l=>{R(l,sx-2,sy-2,sw2+4,sh+4,C.paper);});
     for(let i=0;i<8;i++)R(c,sx+i*12,sy,12,sh,TONE[i]);
     const tX=sx+Math.round(1/1.5*sw2),tp=Math.sin(Core.time*6)>0?C.white:C.pinkL;
@@ -374,11 +392,11 @@ function Fotos(rng,preview){
     R(c,tX-4,sy-4,9,2,tp);R(c,tX-4,sy+sh+2,9,2,tp);R(c,tX-4,sy-4,2,sh+8,tp);R(c,tX+3,sy-4,2,sh+8,tp);
     R(c,tX-3,sy-3,7,1,C.pinkD);R(c,tX-3,sy+sh+2,7,1,C.pinkD);
     R(c,sx+4,sy-4,8,3,'rgba(255,248,220,0.8)');R(c,sx+sw2-12,sy-4,8,3,'rgba(255,248,220,0.8)');
-    const p=dev[Math.min(di,N2-1)];
-    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
+    if(p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
       // puntero grande con contorno: triángulo debajo de la tira y muestra del tono actual encima
       obj(c,l=>{l.fillStyle=C.butter;for(let k=0;k<6;k++)l.fillRect(cx-5+k,sy+sh+9-k,11-2*k,1);l.fillRect(cx-5,sy+sh+10,11,2);rr(l,cx-7,sy-15,15,11,C.white,2);});
       R(c,cx-4,sy+sh+10,9,1,C.butterL||C.white);const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-5,sy-13,11,7,TONE[ti]);R(c,cx-5,sy-13,11,1,'rgba(255,255,255,0.35)');}
+    c.restore();}
     // cubeta de revelado: líquido que se mece mientras mantienes
     const [tx,ty,tw,th2]=DR.tray,rock=holding?Math.sin(rockT*9):Math.sin(rockT*9)*0.25,rx=Math.round(rock*2);
     rr(c,tx+4,ty+3,tw-8,th2-7,'#c97c8a',3);
@@ -393,7 +411,7 @@ function Fotos(rng,preview){
         const x=px0+(inTray?rx:0);
         const w64=Math.round(64*sc),h40=Math.round(40*sc);obj(c,l=>{R(l,x-1,py0-1,w64+2,h40+2,C.paper);});
         if(dst==='in')R(c,x,py0,64,40,TONE[0]);
-        else{toneX.clearRect(0,0,64,40);toneX.drawImage(p.img,0,0);toneOver(toneX,0,0,64,40,p.d);c.drawImage(tone,0,0,64,40,x,py0,w64,h40);}
+        else{develop(toneX,p,p.d);c.drawImage(tone,0,0,64,40,x,py0,w64,h40);}
         if(dst==='in'||dst==='out'){const cx=x+w64-4,cy=py0+2;for(let k=0;k<2;k++)pline(c,cx+k*3,cy,cx+30+k*3,cy-26,k?'#d8b678':'#ecd29a');}
       }
     }
@@ -411,7 +429,7 @@ function Fotos(rng,preview){
   }
   // foto colgada por arriba: si se balancea (sw = desplazamiento abajo), cada franja se desplaza más cuanto más abajo
   function drawHanging(c,p,x,y,tilt,sw){
-    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');kx.imageSmoothingEnabled=true;kx.drawImage(p.img,0,0,32,20);toneOver(kx,0,0,32,20,p.d);p.half=k;}
+    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');develop(kx,p,p.d,32,20);p.half=k;}
     const off=r=>Math.round(sw*r/24);
     obj(c,l=>{for(let r=0;r<24;r+=3)R(l,x-18+off(r+1.5),y+r,36,3,C.paper);});
     for(let r=0;r<20;r+=2)c.drawImage(p.half,0,r,32,2,x-16+off(r+3),y+2+r,32,2);

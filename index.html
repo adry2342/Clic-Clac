@@ -107,6 +107,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .pop.F b{background:#d9d3e3}
 .pop small{display:table; margin:calc(var(--u)*1.5px) auto 0; font-size:max(11px,calc(var(--u)*8px)); color:var(--cream); background:var(--ink); border-radius:calc(var(--u)*2px); padding:0 calc(var(--u)*3px)}
 .pop.prac b{opacity:.75}
+.pop.N b{background:var(--lavL); font-size:max(11px,calc(var(--u)*8px))}
 @keyframes pop{0%{transform:translate(-50%,-80%) scale(.7); opacity:0}12%{transform:translate(-50%,-100%) scale(1.06); opacity:1}24%{transform:translate(-50%,-100%) scale(1)}78%{transform:translate(-50%,-108%); opacity:1}100%{transform:translate(-50%,-122%); opacity:0}}
 
 /* Results */
@@ -539,6 +540,11 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   // cartel de cambio de fase: bloquea los clics mientras se lee
   bannerT:0,
   banner(tag,title,sub,dur){if(DEMO)return;dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.className='';el.hidden=false;void el.offsetWidth;Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();},
+  // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
+  note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);
+    el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';el.innerHTML='<b>'+txt+'</b>';$('stage').appendChild(el);setTimeout(()=>el.remove(),1300);},
+  // pistas que se desvanecen: la primera vez se ven las marcas rosas; después se apagan y se juega a ojo
+  hint(){return {a:1,f:-1,fade(){if(this.f<0&&this.a>0)this.f=0;},step(dt){if(this.f>=0){this.f+=dt;this.a=Math.max(0,1-this.f/0.9);}return this.a;}};},
   // clic de más (sin nada que acertar): cuenta como fallo para que no compense aporrear
   waste(x,y,det){this.judge('F',x,y,false,det);}
 };
@@ -881,15 +887,17 @@ function drawCapShine(c,b){const T=b.t,cx=Math.round(b.x)+(b.capDx||0),sy=sqOf(b
 
 /* =====================================================================
    MINIJUEGO 2 · GRAPADORA
-   Fase 1 · Grapar: llega un montón de folios cada vez. Cae sobre la mesa,
-     tienes un momento para mirarlo y luego una mano lo empuja hacia la
-     grapadora. Grapa solo los montones con marca rosa; los dibujos, las
-     fotos, los que no tienen marca y los que ya llevan clip se dejan pasar.
-   Fase 2 · Apilar: los montones grapados cuelgan de una pinza que se
-     balancea. Suéltalos encima de la torre: si quedan torcidos la torre se
-     inclina y, si se pasa, se cae.
+   Fase 1 · Grapar: cada montón cae sobre una cinta transportadora que pasa
+     por debajo de la grapadora. Todos se grapan: pulsa cuando cada marca
+     rosa quede bajo la cabeza. Lo difícil es que nada es igual: grosor,
+     número y sitio de las marcas, y la cinta acelera, frena o va a tirones.
+   Fase 2 · Apilar: un compañero en silla de oficina cruza de lado a lado con
+     el montón en la cabeza (el pistón de gas sube con la torre). Toca para
+     soltarlo encima de la torre: si la torre se inclina demasiado, gira entera
+     sobre la esquina, se cae y se acaba la fase.
    ===================================================================== */
-const SHX=164,SBASE=146,SSD=34,SSW=92,SDEP=14,SAY=SBASE-SSD+SDEP,SHL=70,SSTOP=SHX+46,SSTART=12,SREST=24;
+const SHX=164,SBASE=146,SSD=34,SSW=92,SDEP=14,SAY=SBASE-SSD+SDEP,SHL=70,SSTART=12,SREST=24;
+const BLT0=106,BLT1=148,BLT2=154;// cinta: borde de atrás, canto delantero y suelo
 const SW2=64,SGY=160,SL2=118,SBG2=330;
 const SPAPER=[['#fffdf7','#efe9f3','#d6cce3'],['#fbf8ff','#ebe5f6','#d2c8e4'],['#fffaf0','#f3e9da','#dccbb8']];
 const STINT=[[C.pinkL,C.pink,C.pinkD],[C.mintL,C.mint,C.mintD],[C.skyL,C.sky,C.skyD],['#fff6c8',C.butter,C.butterD],[C.lavL,C.lav,C.lavD]];
@@ -935,12 +943,14 @@ function drawDesk3(c){
     for(let k=0;k<3;k++){const gx=gw()*W,gl=20+gw()*60;R(c,gx,y+2+Math.floor(gw()*(h-3)),gl,1,C.woodD);}}
   // luz cálida de la ventana sobre la mesa
   for(let y=49;y<172;y++){const s=(y-49)*0.7;dith4(c,190-s,y,70,1,C.woodL);dith4(c,268-s,y,26,1,C.woodL);}
-  // alfombrilla de corte (menta, con cuadrícula)
-  dith(c,6,90,248,72,C.woodDD);
-  obj(c,l=>{rr(l,2,84,248,74,C.mint,3);});
-  for(let x=10;x<248;x+=10)R(c,x,86,1,70,C.mintD);for(let y=90;y<156;y+=5)R(c,4,y,244,1,C.mintD);
-  for(let x=10;x<248;x+=50)R(c,x,86,1,70,C.mintDD);R(c,4,86,244,1,C.mintL);R(c,4,155,244,1,C.mintDD);
-  for(let x=14;x<240;x+=10)R(c,x,86,1,2,C.mintDD);
+  // cinta transportadora de lado a lado (la banda que se mueve se pinta en cada fotograma)
+  dith(c,0,BLT2,W,4,C.woodDD);
+  obj(c,l=>{R(l,-4,BLT0-3,W+8,BLT2-BLT0+3,C.beltD);},{sel:true});
+  R(c,0,BLT0-3,W,1,C.beltL);R(c,0,BLT0-2,W,1,C.belt);R(c,0,BLT0-1,W,1,C.beltD);
+  R(c,0,BLT0,W,BLT1-BLT0,C.belt);dith4(c,0,BLT0,W,8,C.beltD);
+  R(c,0,BLT1,W,1,C.beltL);R(c,0,BLT1+1,W,BLT2-BLT1-2,C.beltD);R(c,0,BLT2-1,W,1,'#8a7cb0');
+  // patas de la cinta
+  for(const x of [24,140,292]){R(c,x,BLT2,4,6,'#8a7cb0');R(c,x,BLT2,1,6,C.beltD);R(c,x-2,BLT2+5,8,2,'#8a7cb0');}
   // taza de café al fondo
   dith(c,24,70,24,6,C.woodDD);
   obj(c,l=>{rr(l,22,52,20,22,C.cream,4);rr(l,40,57,8,11,C.cream,3);l.clearRect(42,60,3,5);});
@@ -954,10 +964,6 @@ function drawDesk3(c){
   dith(c,268,74,40,6,C.woodDD);
   obj(c,l=>{rr(l,264,60,40,14,C.pinkD,2);R(l,264,56,40,5,C.pink);});
   R(c,266,57,36,1,C.pinkL);R(c,270,64,14,6,C.white);for(let k=0;k<4;k++)R(c,271+k*3,66,2,2,C.metalD);R(c,288,64,12,2,C.white);R(c,288,68,9,1,C.white);
-  // bandeja de los montones grapados
-  dith(c,260,124,58,30,C.woodDD);
-  obj(c,l=>{rr(l,256,100,60,50,C.lavD,3);});
-  R(c,259,103,54,36,C.lav);dith(c,259,103,54,10,C.lavDD);for(let x=262;x<313;x+=6)R(c,x,139,1,10,C.lavDD);R(c,256,138,60,1,C.lavL);R(c,258,148,56,1,C.lavDD);
   // cosas de la parte de delante
   dith(c,24,170,50,3,C.woodDD);
   obj(c,l=>{l.fillStyle=C.out;l.fillRect(20,166,2,2);R(l,22,165,2,4,C.woodL);R(l,24,164,3,6,C.woodL);R(l,27,164,30,6,C.butter);R(l,57,164,5,6,C.metal);R(l,62,164,5,6,C.pink);});
@@ -976,32 +982,8 @@ function drawDesk3(c){
 
 /* ---------- montones en 3/4 ---------- */
 // contenido de la hoja de arriba (se pinta sobre la cara de arriba del montón: SSW x SSD)
-function drawDoodle(c,cx,cy,art){
-  if(art==='gato'){for(const [dx,dy] of [[-6,-6],[-5,-7],[-4,-6],[4,-6],[5,-7],[6,-6]])px(c,cx+dx,cy+dy,C.lavDD);
-    c.save();c.strokeStyle=C.lavDD;c.lineWidth=1;c.beginPath();c.ellipse(cx+0.5,cy+0.5,7,6,0,0,Math.PI*2);c.stroke();c.restore();
-    px(c,cx-3,cy-1,C.out);px(c,cx+3,cy-1,C.out);px(c,cx,cy+1,C.pinkDD);R(c,cx-10,cy+1,4,1,C.lavD);R(c,cx+7,cy+1,4,1,C.lavD);ell(c,cx-4,cy+2,1,1,C.pinkL);ell(c,cx+4,cy+2,1,1,C.pinkL);}
-  else if(art==='flor'){R(c,cx,cy+2,1,10,C.greenDD);ell(c,cx-3,cy+8,3,1,C.greenD);ell(c,cx+3,cy+6,3,1,C.greenD);
-    for(let k=0;k<5;k++){const a=k/5*Math.PI*2;ell(c,cx+Math.round(Math.cos(a)*4),cy-3+Math.round(Math.sin(a)*4),2,2,k%2?C.pinkD:C.pink);}ell(c,cx,cy-3,2,2,C.butterD);}
-  else if(art==='casa'){rr(c,cx-7,cy-1,15,11,C.peach,1);for(let k=0;k<7;k++)R(c,cx-8+k,cy-2-k,17-2*k,1,C.pinkD);R(c,cx-1,cy+4,4,6,C.woodDD);R(c,cx+4,cy+1,3,3,C.skyD);R(c,cx-6,cy+1,3,3,C.skyD);}
-  else if(art==='sol'){ell(c,cx,cy,5,5,C.butterD);ell(c,cx,cy,4,4,C.butter);for(let k=0;k<8;k++){const a=k/8*Math.PI*2;px(c,cx+Math.round(Math.cos(a)*8),cy+Math.round(Math.sin(a)*8),C.butterDD);px(c,cx+Math.round(Math.cos(a)*7),cy+Math.round(Math.sin(a)*7),C.butterD);}
-    px(c,cx-2,cy-1,C.out);px(c,cx+2,cy-1,C.out);R(c,cx-1,cy+2,3,1,C.peachDD);}
-  else if(art==='corazon'){ell(c,cx-3,cy-2,4,4,C.pinkD);ell(c,cx+3,cy-2,4,4,C.pinkD);for(let k=0;k<7;k++)R(c,cx-7+k,cy+k,15-2*k,1,C.pinkD);px(c,cx-4,cy-4,C.white);}
-  else if(art==='pez'){ell(c,cx-1,cy,7,4,C.skyD);ell(c,cx-1,cy-1,6,2,C.sky);for(let k=0;k<5;k++)R(c,cx+6+k,cy-k,1,2*k+1,C.skyD);px(c,cx-5,cy-1,C.out);for(let k=0;k<3;k++)ell(c,cx-11+k*2,cy-6-k*3,1,1,C.skyL);}
-  else{for(let k=0;k<6;k++)R(c,cx-k,cy-6+k,2*k+1,1,C.butterD);R(c,cx-8,cy,17,2,C.butterD);for(let k=0;k<5;k++){R(c,cx-6+k,cy+2+k,4,1,C.butterD);R(c,cx+3-k,cy+2+k,4,1,C.butterD);}px(c,cx-1,cy-2,C.out);px(c,cx+1,cy-2,C.out);}
-}
 function drawTopSheet(c,x,y,s){
-  const w=SSW,L='#ddd5ea',k=s.kind,sd=s.seed;
-  if(k==='dibujo'){
-    // dibujo con ceras: garabatos de colores y un sol o un gato en el centro
-    const arts=s.arts;for(let i=0;i<arts.length;i++)drawDoodle(c,x+20+i*30,y+16+((i+sd)%2?2:-1),arts[i]);
-    R(c,x+4,y+30,w-8,1,C.greenD);for(let xx=x+5;xx<x+w-5;xx+=3)px(c,xx,y+29-((xx+sd)%2),C.greenDD);
-    return;}
-  if(k==='foto'){
-    R(c,x+3,y+2,w-6,SSD-5,C.skyL);R(c,x+3,y+2,w-6,10,C.sky);ell(c,x+w-20,y+9,4,3,C.butter);
-    ell(c,x+24,y+28,26,9,C.green);ell(c,x+62,y+29,22,7,C.greenD);ell(c,x+18,y+8,6,1,C.white);ell(c,x+44,y+6,5,1,C.white);
-    R(c,x+3,y+30,w-6,1,C.greenDD);
-    for(let i=0;i<10;i++)px(c,x+w-26+i*2,y+3+i,'rgba(255,255,255,0.75)');
-    return;}
+  const w=SSW,L='#ddd5ea',sd=s.seed;
   const f=s.fmt,hd=s.hd,lw=w-30;
   if(f==='carta'){R(c,x+6,y+4,24,2,hd);ell(c,x+w-26,y+5,2,1,hd);
     [[10,lw],[14,lw-8],[18,lw-2],[22,lw-14],[26,lw-5]].forEach(([dy,ww],i)=>R(c,x+6,y+dy,ww-((sd*3+i*7)%10),1,L));
@@ -1011,9 +993,6 @@ function drawTopSheet(c,x,y,s){
     for(let q=0;q<7;q++){const h=5+((sd*7+q*13)%15);R(c,x+11+q*8,y+30-h,5,h,cols[q%cols.length]);}}
   else if(f==='lista'){R(c,x+6,y+4,24,2,hd);for(let r=0;r<5;r++){const yy=y+10+r*4;R(c,x+6,yy-1,3,3,C.lavD);if((sd+r)%3)R(c,x+7,yy,1,1,C.paper);else{px(c,x+7,yy,C.mintDD);}R(c,x+11,yy,Math.min(lw-6,20+((sd+r*5)%24)),1,L);}}
   else{R(c,x+w/2-20,y+4,22,2,hd);for(let r=0;r<4;r++){R(c,x+14,y+10+r*4,28,1,L);R(c,x+w-40,y+10+r*4,10,1,L);}for(let q=x+10;q<x+w-26;q+=3)px(c,q,y+26,C.lavD);R(c,x+14,y+29,16,1,C.lavDD);R(c,x+w-40,y+29,10,1,C.lavDD);}
-  if(k==='clip'){// ya va sujeto con un clip: no se grapa
-    const cx=x+w-16;R(c,cx,y-3,10,1,C.metalDD);R(c,cx,y+9,10,1,C.metalDD);R(c,cx-1,y-2,1,11,C.metalDD);R(c,cx+10,y-2,1,10,C.metalDD);
-    R(c,cx+2,y-1,7,1,C.metalD);R(c,cx+2,y+6,7,1,C.metalD);R(c,cx+2,y,1,6,C.metalD);R(c,cx+1,y-2,8,1,C.metalL);}
 }
 // marca rosa (esquina doblada + diana donde va la grapa)
 function drawMarks(c,x,y,s){
@@ -1031,18 +1010,17 @@ function drawStaple3(c,sx,sy,j){
   if(j==='F'){R(c,sx,sy-3,2,3,C.metalDD);R(c,sx+1,sy,2,3,C.metalDD);px(c,sx,sy-3,C.metalL);}
   else{R(c,sx,sy-3,2,6,C.metalDD);R(c,sx,sy-2,1,4,C.metalL);px(c,sx+1,sy-3,C.white);if(j==='P'){px(c,sx-1,sy-4,C.butter);px(c,sx+2,sy+3,C.butter);}}
 }
-function mkSheets(rng,n,kind){
+function mkSheets(rng,n){
   const sh=[];for(let k=0;k<n;k++){const tint=rng()<0.13;const p=tint?STINT[Math.floor(rng()*STINT.length)]:SPAPER[Math.floor(rng()*SPAPER.length)];
     sh.push({dx:Math.round((rng()-0.5)*3.6),col:p[0],e1:p[1],e2:p[2],off:0});}
   const top=sh[n-1];top.dx=Math.round((rng()-0.5)*3);
-  if(kind==='dibujo'){const p=STINT[Math.floor(rng()*STINT.length)];top.col=p[0];top.e1=p[1];top.e2=p[2];}
-  else{top.col=SPAPER[0][0];top.e1=SPAPER[0][1];top.e2=SPAPER[0][2];}
+  top.col=SPAPER[0][0];top.e1=SPAPER[0][1];top.e2=SPAPER[0][2];
   return sh;
 }
 function drawStack3(c,s,x0,yo){
   // cada folio es su cara de arriba y dos filas de canto: al apilarlos se ven todas las hojas
   const n=s.n,sq=s.sq>0?1:0,lg=k=>n>1?Math.round(s.lag.x*k/(n-1)):0;yo=yo||0;
-  dith(c,Math.round(x0)+3,SBASE-SSD+2+yo,SSW+1,SSD,C.mintDD);
+  dith(c,Math.round(x0)+3,SBASE-SSD+2+yo,SSW+1,SSD,C.beltD);
   obj(c,l=>{for(let k=0;k<n;k++){const h=s.sh[k],x=Math.round(x0+h.dx)+lg(k),y=Math.round(SBASE-SSD-2*(k+1)-h.off+yo+(k>0?sq:0));
     R(l,x,y,SSW,SSD,h.col);R(l,x,y+SSD,SSW,1,h.e1);R(l,x,y+SSD+1,SSW,1,h.e2);}},{sel:true});
   // sombrita entre hojas en el canto derecho e izquierdo para que se lean como láminas
@@ -1113,19 +1091,6 @@ function drawStaplerArm(c,lift,flash){
   if(flash>0){const y=SAY-3-Math.round(lift);c.save();c.globalAlpha=Math.min(1,flash*6);
     for(const [a,b,w] of [[-17,-3,6],[-16,1,5],[10,-3,6],[10,1,5]])R(c,SHX+a,y+b,w,1,C.white);px(c,SHX-19,y-7,C.butter);px(c,SHX+16,y-7,C.butter);px(c,SHX-18,y-8,C.white);c.restore();}
 }
-function drawHand(c,x,y,push){
-  // mano con manga de jersey que empuja el montón desde la izquierda
-  x=Math.round(x);y=Math.round(y);
-  obj(c,l=>{
-    R(l,x-90,y-5,78,12,C.lav);rr(l,x-16,y-6,6,14,C.mint,2);
-    rr(l,x-12,y-4,11,10,C.peach,3);rr(l,x-3,y-4,4,3,C.peach,1);rr(l,x-3,y-1,3,3,C.peach,1);rr(l,x-4,y+2,3,3,C.peach,1);
-  },{sel:true});
-  for(let k=x-88;k<x-16;k+=4)R(c,k,y-4,2,10,C.lavL);R(c,x-90,y+5,74,1,C.lavD);
-  R(c,x-15,y-5,4,1,C.mintL);R(c,x-15,y-2,4,1,C.mintD);R(c,x-15,y+1,4,1,C.mintD);R(c,x-15,y+4,4,1,C.mintD);
-  R(c,x-11,y-3,6,1,C.peachL);R(c,x-2,y-4,2,1,C.peachL);px(c,x-3,y-2,C.peachD);px(c,x-3,y+1,C.peachD);R(c,x-10,y+4,7,1,C.peachD);
-  if(push)px(c,x+1,y-5,C.white);
-}
-
 /* ---------- fase 2: montones vistos de lado para la torre ---------- */
 function sideSprite(s){
   // de lado cada hoja ocupa 3 filas (canto claro, medio y sombra): el montón se ve gordito
@@ -1137,7 +1102,7 @@ function sideSprite(s){
   },{sel:true});
   for(let k=0;k<n;k++){const y=Y0+3*(n-1-k)+1;px(x,X0+5+dx(k),y,C.metalDD);px(x,X0+11+dx(k),y,C.metalDD);}
   R(x,X0+6+dx(n-1),Y0-2,5,1,C.metalL);R(x,X0+3+dx(n-1),Y0,SW2-6,1,'rgba(255,255,255,0.7)');
-  if(s.hd&&!s.trap)R(x,X0+SW2-20+dx(n-1),Y0,12,1,s.hd);
+  if(s.hd)R(x,X0+SW2-20+dx(n-1),Y0,12,1,s.hd);
   const sp=mk(SW2+14,hh+8),sx=sp.getContext('2d');sx.drawImage(t,X0-4,Y0-4,SW2+14,hh+8,0,0,SW2+14,hh+8);
   sp.ax=4;sp.ay=4;sp.hh=hh;return sp;
 }
@@ -1168,8 +1133,10 @@ function drawTower2Bg(c){
   // cinta métrica en la pared, al lado de la torre
   R(c,212,10,7,HT-30,C.butter);R(c,218,10,1,HT-30,C.butterDD);
   for(let y=HT-21;y>12;y-=4){const big=(HT-21-y)%20===0;R(c,212,y,big?5:2,1,C.butterDD);if(big)R(c,212,y-1,2,1,C.pinkD);}
-  // mesa con la bandeja
-  const gy=o+SGY;
+}
+function drawTower2Desk(c){
+  // mesa con la bandeja, en su propia capa: tapa la parte de abajo de la silla del compañero
+  const HT=H+SBG2,o=SBG2,gy=o+SGY;
   R(c,0,gy,W,HT-gy,C.wood);R(c,0,gy,W,1,C.woodL);R(c,0,gy+1,W,1,C.woodL);R(c,0,gy+6,W,1,C.woodD);R(c,0,gy+12,W,HT-gy-12,C.woodDD);R(c,0,gy+12,W,1,C.woodD);
   for(let x=20;x<W;x+=70)R(c,x,gy+2,30,1,C.woodD);
   objAt(c,o,l=>{rr(l,112,SGY-8,96,10,C.lavD,2);});
@@ -1178,63 +1145,94 @@ function drawTower2Bg(c){
   objAt(c,o,l=>{rr(l,24,SGY-16,18,16,C.peachD,3);ell(l,28,SGY-22,6,8,C.greenD);ell(l,38,SGY-24,6,9,C.green);ell(l,33,SGY-30,4,8,C.greenD);});
   objAt(c,o,l=>{rr(l,262,SGY-18,18,18,C.cream,4);rr(l,278,SGY-14,7,10,C.cream,3);l.clearRect(280,SGY-12,3,6);});R(c,264,gy-12,14,4,C.pinkL);
 }
-function drawClip(c,x,y,open){
-  // pinza de oficina (binder clip) que sujeta el montón por arriba
-  x=Math.round(x);y=Math.round(y);const o=Math.round(open*3);
-  obj(c,l=>{rr(l,x-7,y-1,15,6,'#5b4a6b',1);},{sel:true});
-  R(c,x-6,y,13,1,'#7a6890');R(c,x-6,y+4+0,13,1,'#3d3150');
-  // asas de alambre: al abrir se juntan
-  line(c,x-5,y-1,x-2+o,y-7,C.metalD);line(c,x+5,y-1,x+2-o,y-7,C.metalD);R(c,x-2+o,y-8,5-2*o>0?5-2*o:1,1,C.metal);
-  px(c,x-4,y-2,C.metalL);px(c,x+4,y-2,C.metalL);
-  if(open>0){R(c,x-8,y+5,2,o+1,'#5b4a6b');R(c,x+7,y+5,2,o+1,'#5b4a6b');}
+/* ---------- fase 2: el compañero de la silla de oficina ---------- */
+// Vista de frente. sb = fila de arriba de la cabeza (donde se apoya el montón). La silla tiene un pistón
+// de gas cromado que se estira cuando la torre crece: cuanto más alta la torre, más larguísimo.
+function drawCoworker(c,x,sb,o){
+  x=Math.round(x);sb=Math.round(sb);const SK='#ffe1cc',SKD='#f2b9a0',HAIR=C.coffeeD,PANT='#6f5b8a';
+  const lg=o.legs||0,up=Math.round(o.up||0),hop=o.hop>0?1:0,rod=o.rod||8;
+  // pistón de gas: cromo arriba, funda oscura abajo, palanquita bajo el asiento
+  const pt=sb+26;R(c,x-2,pt+rod,5,Math.max(0,H-pt-rod),'#5b4a6b');R(c,x-1,pt,3,rod,C.metal);
+  R(c,x-1,pt,1,rod,C.metalL);R(c,x+1,pt,1,rod,C.metalD);R(c,x-3,pt+rod,7,2,'#4a3c5c');
+  // respaldo, asiento y patas colgando
+  obj(c,l=>{rr(l,x-9,sb+5,19,18,C.lavD,4);rr(l,x-11,sb+21,23,5,C.lavD,2);R(l,x+4,sb+26,6,1,C.metalD);R(l,x+9,sb+25,2,3,C.pinkD);},{sel:true});
+  R(c,x-8,sb+6,17,1,C.lavL);R(c,x-10,sb+22,21,1,C.lavL);
+  obj(c,l=>{R(l,x-5+lg,sb+24,3,8,PANT);R(l,x+3-lg,sb+24,3,8,PANT);R(l,x-6+lg,sb+31,4,2,C.out);R(l,x+3-lg,sb+31,4,2,C.out);},{sel:true});
+  // cuerpo: camisa con corbata
+  obj(c,l=>{rr(l,x-6,sb+10,13,13,C.sky,3);},{sel:true});
+  R(c,x-5,sb+11,3,1,C.skyL);px(c,x,sb+11,C.pinkDD);R(c,x,sb+12,1,6,C.pinkD);px(c,x,sb+18,C.pinkDD);px(c,x-1,sb+11,C.white);px(c,x+1,sb+11,C.white);
+  // brazos finos levantados que sujetan el montón por debajo
+  const hy=sb-1-up;
+  for(const s of [-1,1]){line(c,x+s*5,sb+12,x+s*9,hy+3,C.skyD);line(c,x+s*6,sb+12,x+s*10,hy+3,C.sky);R(c,x+s*9+(s<0?-1:0),hy,2,2,SK);}
+  // cabeza
+  obj(c,l=>{ell(l,x,sb+5,5,5,SK);ell(l,x,sb+2,5,3,HAIR);R(l,x-5,sb+3,2,3,HAIR);R(l,x+4,sb+3,2,3,HAIR);},{sel:true});
+  R(c,x-2,sb+1,3,1,C.coffee);
+  if(o.blink){R(c,x-3,sb+6,2,1,C.out);R(c,x+2,sb+6,2,1,C.out);}else{px(c,x-2,sb+6,C.out);px(c,x+2,sb+6,C.out);}
+  px(c,x-4,sb+7,C.pinkD);px(c,x+4,sb+7,C.pinkD);
+  if(hop)R(c,x,sb+8,1,2,C.pinkDD);else if(o.worry){R(c,x-1,sb+8,3,1,SKD);}else px(c,x,sb+8,SKD);
+  // gotita de sudor cuando la torre se tambalea
+  if(o.worry){const k=Math.floor(Core.time*3)%2;px(c,x+6,sb+2+k,C.skyD);R(c,x+6,sb+3+k,2,2,C.sky);px(c,x+6,sb+3+k,C.white);}
 }
+function drawGasPuff(c,x,y,t){if(t<=0||t>=1)return;for(let k=0;k<3;k++){const a=t*10+k*2.1,r=Math.round(1+t*3);c.save();c.globalAlpha=0.8*(1-t);ell(c,Math.round(x+(k-1)*(4+t*8)),Math.round(y-t*4+Math.sin(a)),r,r,C.white);c.restore();}}
 
 function Stapler(rng,preview){
   const N1=11,N2=10;
-  // Fase 1: lista de montones. Los dos primeros siempre llevan marca; después hay trampas y montones de dos grapas.
-  const KINDS=['dibujo','foto','sinmarca','clip'],FMT=['carta','tabla','grafica','lista','recibo'],ART=['gato','flor','casa','sol','corazon','pez','estrella'];
+  // Fase 1: todos los montones se grapan. Cada uno es distinto: grosor, cuántas marcas y dónde,
+  // velocidad de la cinta y su forma de moverse (suave, acelera, frena, a tirones u ola).
+  const FMT=['carta','tabla','grafica','lista','recibo'],MOT=['acelera','frena','tirones','ola','suave'];
   const stacks=[];let U1=0;
   for(let i=0;i<N1;i++){
-    const r=rng();let kind=i<2?'normal':r<0.32?KINDS[Math.floor(rng()*KINDS.length)]:r<0.5?'doble':'normal';
-    if(i>=2&&stacks[i-1].trap&&stacks[i-2].trap&&kind!=='normal'&&kind!=='doble')kind='normal';
-    const trap=KINDS.indexOf(kind)>=0,n=kind==='foto'?3+Math.floor(rng()*3):4+Math.floor(rng()*(i<3?3:6));
-    const marks=kind==='doble'?[{o:SSW-10,j:null,rel:null},{o:SSW-34,j:null,rel:null}]:trap?[]:[{o:SSW-10,j:null,rel:null}];
-    const prog=i/(N1-1);
-    stacks.push({kind,trap,n,sh:mkSheets(rng,n,kind),marks,staples:[],fmt:FMT[Math.floor(rng()*FMT.length)],hd:[C.pinkD,C.mintDD,C.lavD,C.butterD,C.skyD][Math.floor(rng()*5)],
-      arts:[ART[Math.floor(rng()*ART.length)],ART[Math.floor(rng()*ART.length)],ART[Math.floor(rng()*ART.length)]],seed:Math.floor(rng()*99),
-      v:(44+30*prog)*(0.92+rng()*0.16),look:0.95-0.35*prog,st:'drop',t:0,x:SSTART,yo:0,sq:0,hitch:0,hand:-1,judged:false,
+    const prog=i/(N1-1),r=rng();
+    const n=i<2?3+Math.floor(rng()*3):2+Math.floor(rng()*9);
+    const nm=i<2?1:r<0.42?1:r<0.86?2:3;
+    // marcas en sitios al azar (separadas al menos 18 px); la de más a la derecha llega antes
+    const os=[];for(let tries=0;os.length<nm&&tries<80;tries++){const o=10+Math.round(rng()*(SSW-20));if(os.every(q=>Math.abs(q-o)>=18))os.push(o);}
+    if(i<2)os[0]=SSW-14-Math.round(rng()*20);
+    os.sort((a,b)=>b-a);const marks=os.map(o=>({o,j:null,rel:null}));
+    const v=(40+34*prog)*(0.86+rng()*0.28),mot=i<2?'suave':MOT[Math.floor(rng()*MOT.length)];
+    const arrive=(SHX-SSTART-os[0])/v;
+    stacks.push({n,sh:mkSheets(rng,n),marks,fmt:FMT[Math.floor(rng()*FMT.length)],hd:[C.pinkD,C.mintDD,C.lavD,C.butterD,C.skyD][Math.floor(rng()*5)],seed:Math.floor(rng()*99),
+      v,mot,t0:arrive*(0.15+rng()*0.55),f:0.8+rng()*0.6,ph:rng()*6,mt:0,vn:0,
+      look:0.8-0.3*prog,st:'drop',t:0,x:SSTART,yo:0,sq:0,hitch:0,
       lag:Spring(0,140,9),tab:rng()<0.6?[Math.floor(rng()*n),[C.pinkD,C.mintDD,C.butterD,C.skyD][Math.floor(rng()*4)]]:null});
-    U1+=trap?1:marks.length;
+    U1+=marks.length;
   }
   const TOTAL=U1+N2;
-  let phase=1,si=0,cur=null,spawnT=0.2,done=0,T=0,endT=0,ended=false,swapT=9;const leaving=[],air=[];
+  let phase=1,si=0,cur=null,spawnT=0.2,done=0,T=0,endT=0,ended=false,swapT=9,belt=0,bvNow=0;const leaving=[],air=[];
   const arm={t:-1,from:SREST,contact:0,flash:0};
   const tray=[];// montones grapados (pasan a la fase 2)
   const bg=mk(W,H);drawDesk3(bg.getContext('2d'));grain(bg.getContext('2d'),14,4);
   // el brazo baja de golpe (la parada de impacto lo congela abajo) y sube con un rebote
   const lift=()=>{const a=arm,t=a.t;if(t<0)return SREST;if(t<0.11)return a.contact;
     if(t<0.5)return a.contact+(SREST-a.contact)*Ease.outBack((t-0.11)/0.39);return SREST;};
+  // velocidad de la cinta para cada montón según su forma de moverse
+  function speed(s){const t=s.mt,k=Math.min(1,Math.max(0,(t-s.t0)/0.45)),sm=k*k*(3-2*k);
+    switch(s.mot){case 'acelera':return s.v*(0.6+0.9*sm);case 'frena':return s.v*(1.4-0.85*sm);
+      case 'tirones':return s.v*(0.18+1.45*Math.max(0,Math.sin(s.ph+t*Math.PI*2*s.f)));
+      case 'ola':return s.v*(1+0.5*Math.sin(s.ph+t*Math.PI*2*s.f*0.8));default:return s.v;}}
+  const tol=s=>Math.max(40,s.vn);// para medir en tiempo cuánto te has desviado
   function judge(j,det,x,y){done++;Core.judge(j,x,y,false,det);}
   function spawn(){const s=stacks[si++];s.st='drop';s.t=0;s.x=SSTART;s.sh.forEach((h,k)=>{h.off=70+k*7;});cur=s;Snd.tone(700,.05,'sine',.02);}
   function under(s){return s&&(s.st==='slide'||s.st==='hit')&&s.x<=SHX-2&&s.x+SSW>=SHX+2;}
-  function leave(s){s.st='out';s.t=0;leaving.push(s);if(cur===s)cur=null;spawnT=0.45;}
+  // cuando ya no le quedan marcas, la cinta se lo lleva deprisa por la derecha
+  function leave(s){s.st='out';s.t=0;leaving.push(s);if(cur===s)cur=null;spawnT=0.25;}
 
   /* ---------- fase 2 ---------- */
-  const tower=[],deb=[];let pcx=160,k2=0,st2='load',t2=0,swT=0,hang=null,fall=null,camY=0,pivY=0,clipOpen=0,wob=Spring(0,90,5),danger=0,creakT=0,goal=0;
+  const tower=[],deb=[];let pcx=160,k2=0,st2='load',t2=0,swT=0,hang=null,fall=null,camY=0,wob=Spring(0,90,5),danger=0,creakT=0,goal=0;
+  let chX=-40,chSb=0,exitX=0,hopT=0,puffT=1;// el compañero de la silla
+  let col=null,owed=0,owedT=0,owedQ=0;// derrumbe de la torre entera
   const sprCache=new Map();const sprOf=s=>{if(!sprCache.has(s))sprCache.set(s,sideSprite(s));return sprCache.get(s);};
-  const bg2=mk(W,H+SBG2);drawTower2Bg(bg2.getContext('2d'));
+  const bg2=mk(W,H+SBG2);drawTower2Bg(bg2.getContext('2d'));const bg2d=mk(W,H+SBG2);drawTower2Desk(bg2d.getContext('2d'));
   const towerTop=()=>{let y=SGY-2;for(const b of tower)y-=b.spr.hh;return y;};
   const topX=()=>tower.length?tower[tower.length-1].x:160;
-  const amp=()=>34+2.2*k2,omega=()=>Math.PI*2/(2.3-0.05*k2);
-  const swingX=()=>pcx+amp()*Math.sin(omega()*swT),swingV=()=>amp()*omega()*Math.cos(omega()*swT);
+  const GAP=24;
+  // la silla va y viene de lado a lado (sale del extremo izquierdo parada); cada montón con su amplitud y su ritmo
+  const swingX=()=>pcx-hang.A*Math.cos(hang.w*swT),swingV=()=>hang.A*hang.w*Math.sin(hang.w*swT);
   function nextHang(){
-    const pool=tray.length?tray:stacks.filter(s=>!s.trap);const s=pool[k2%pool.length];
-    const spr=sprOf(s);hang={s,spr};pcx=Math.max(80,Math.min(240,topX()));/* la pinza se recoloca sobre la torre */pivY=towerTop()-26-spr.hh-SL2;st2='load';t2=0;
-  }
-  function hangPos(){
-    const x=swingX(),dx=x-pcx,yEnd=pivY+Math.sqrt(Math.max(0,SL2*SL2-dx*dx));
-    const drop=st2==='load'?(1-Ease.outBack(Math.min(1,t2/0.6)))*-110:0;
-    return {x,clipY:yEnd+drop,top:yEnd+drop+4};
+    const pool=tray.length?tray:stacks;const s=pool[k2%pool.length];
+    const spr=sprOf(s),A=32+rng()*14+2*k2,P=(2.3-0.06*k2)*(0.85+rng()*0.3);
+    hang={s,spr,A,w:Math.PI*2/P};pcx=Math.max(70,Math.min(250,topX()));st2='load';t2=0;swT=0;chX=-40;
+    if(k2>0){puffT=0;Snd.burst(5200,.3,.06,0.7);}
   }
   function stability(){
     // de abajo arriba: si el centro de masas de lo que queda encima se sale del montón (o de la bandeja), se cae
@@ -1243,13 +1241,20 @@ function Stapler(rng,preview){
       const com=sx/m,base=k<0?160:tower[k].x,half=k<0?40:SW2*0.38,r=Math.abs(com-base)/half;worst=Math.max(worst,r);if(r>1&&fail<-1)fail=k;}
     return {fail,worst};
   }
-  function topple(k,dir){
-    const fallen=tower.splice(k+1);let y=towerTop();
-    fallen.forEach((b,i)=>{deb.push({spr:b.spr,x:b.x,y:y-b.spr.hh/2,vx:dir*(26+i*14)+(Math.random()-0.5)*10,vy:-30-i*6,a:0,va:dir*(1.6+i*0.5+Math.random()),t:0});y-=b.spr.hh;});
-    Core.shake=0.35;Snd.burst(700,.35,.3,1.2);Snd.burst(2600,.2,.12,2);Snd.tone(160,.3,'sine',.12,0,70);
+  // la torre entera se inclina sobre la esquina de la base y luego se desparrama
+  function collapse(dir){
+    col={t:0,dir,ang:0,av:0.4,px:160+dir*44,py:SGY-2};st2='collapse';owed=N2-k2;
+    Snd.tone(150,.5,'sawtooth',.03,0,90);Core.shake=0.2;
   }
+  function scatter(){
+    const c0=col;let y=SGY-2;
+    tower.forEach((b,i)=>{const cy=y-b.spr.hh/2,r=rot(b.x,cy);deb.push({spr:b.spr,x:r[0],y:r[1],vx:c0.dir*(30+i*16)+(Math.random()-0.5)*24,vy:-40-Math.random()*50+i*2,a:c0.ang*c0.dir,va:c0.dir*(2+Math.random()*3),t:0});y-=b.spr.hh;});
+    tower.length=0;Core.shake=0.45;Feel.puff(c0.px,SGY-camY,6,C.white);
+    Snd.burst(700,.4,.32,1.2);Snd.burst(2600,.25,.14,2);Snd.tone(160,.35,'sine',.12,0,60);Snd.burst(400,.3,.2,1);
+  }
+  function rot(x,y){const c0=col,a=c0.ang*c0.dir,dx=x-c0.px,dy=y-c0.py,ca=Math.cos(a),sa=Math.sin(a);return [c0.px+dx*ca-dy*sa,c0.py+dx*sa+dy*ca];}
   function land(){
-    const f=fall,b=f.s,spr=f.spr,dx=f.x-topX(),a=Math.abs(dx),edge=tower.length?SW2/2:44,vm=amp()*omega();
+    const f=fall,b=f.s,spr=f.spr,dx=f.x-topX(),a=Math.abs(dx),edge=tower.length?SW2/2:44,vm=hang.A*hang.w;
     const sy=towerTop()-camY;
     k2++;
     if(a>edge){deb.push({spr,x:f.x,y:towerTop()-spr.hh/2,vx:(dx>0?1:-1)*40,vy:-50,a:0,va:(dx>0?1:-1)*3,t:0});
@@ -1257,61 +1262,58 @@ function Stapler(rng,preview){
     tower.push({x:f.x,s:b,spr,land:0});wob.kick(-dx*7);
     Snd.burst(500,.08,.3,1.4);Snd.tone(140,.08,'sine',.12,0,90);Feel.puff(f.x-SW2/2+4,sy+1,3,C.white);Feel.puff(f.x+SW2/2-4,sy+1,3,C.white);
     const st=stability();
-    if(st.fail>-2){const lean=tower.slice(st.fail+1).reduce((q,t)=>q+t.x,0)/(tower.length-st.fail-1)-(st.fail<0?160:tower[st.fail].x);
-      topple(st.fail,lean>0?1:-1);judge('F','¡La torre se inclinó y se cayó!',160,Math.max(50,sy-20));fall=null;return;}
+    if(st.fail>-2){let m=0,sx=0;for(const t of tower){m+=t.spr.hh;sx+=t.x*t.spr.hh;}
+      judge('F','¡La torre se inclinó y se cayó entera!',160,Math.max(50,sy-20));fall=null;collapse(sx/m>=160?1:-1);return;}
     const ta=a/vm,j=a<=2.5||ta<=0.05?'P':a<=5||ta<=0.1?'B':a<=9||ta<=0.16?'R':'F';
     judge(j,j==='P'?'':(f.e<0?'◀ Pronto':'Tarde ▶'),f.x,Math.max(50,sy-12));
     if(j==='P'){Feel.ring(f.x,sy,C.butter,22);}
     fall=null;
   }
-  function goPhase2(){phase=2;swapT=0;k2=0;st2='load';t2=0;camY=0;swT=0;nextHang();}
-  if(TDEMO==='apilar'){for(const s of stacks)if(!s.trap)tray.push(s);si=N1;goPhase2();swapT=2;}TDEMO=null;
-  if(preview){spawn();cur.st='slide';cur.sh.forEach(h=>h.off=0);cur.x=SHX-cur.marks[0].o-14;cur.hand=1;}
+  function goPhase2(){phase=2;swapT=0;k2=0;camY=0;nextHang();chSb=towerTop()-GAP;}
+  if(TDEMO==='apilar'){for(const s of stacks)tray.push(s);si=N1;goPhase2();swapT=2;}TDEMO=null;
+  if(preview){spawn();cur.st='slide';cur.sh.forEach(h=>h.off=0);cur.x=SHX-cur.marks[0].o-14;}
 
   const self={_ph:()=>({phase,cur,st2,sx:hang?swingX():0,vx:hang?swingV():0,topX:topX()}),unit:'Paso',total:TOTAL,mood:'grapadora',
     inPractice(){return false;},progress(){return done;},
-    cue(){return phase===1?'Fase 1 · Grapa en la marca rosa; si no tiene marca, déjalo pasar':'Fase 2 · Suelta el montón justo encima de la torre';},
+    cue(){return phase===1?'Fase 1 · Grapa cada marca rosa justo bajo la grapadora':'Fase 2 · Suelta el montón justo encima de la torre';},
     update(dt){
       T+=dt;if(arm.t>=0){arm.t+=dt;if(arm.t>0.6)arm.t=-1;}arm.flash=Math.max(0,arm.flash-dt);
       for(const a of air){a.t+=dt;}while(air.length&&air[0].t>0.6)air.shift();
       if(phase===2)return upd2(dt);
-      if(!cur&&si<N1){spawnT-=dt;if(spawnT<=0)spawn();}
-      const s=cur;
+      if(!cur&&si<N1&&!leaving.some(s=>s.x<200)){spawnT-=dt;if(spawnT<=0)spawn();}
+      const s=cur;let bv=0;
       if(s){s.t+=dt;s.sq=Math.max(0,s.sq-dt);s.lag.step(dt);
         if(s.st==='drop'){let all=true;s.sh.forEach((h,k)=>{const t0=k*0.045,u=(s.t-t0)/0.24;if(u<1){all=false;h.off=Math.max(0,(70+k*7)*(1-u*u));}else{const b=u-1;h.off=b<0.35?Math.max(0,Math.sin(b/0.35*Math.PI)*2.2*(k===s.n-1?1:0.6)):0;if(b<0.35)all=false;}});
           if(!s.thud&&s.t>0.24+0.045*(s.n-1)){s.thud=1;Snd.burst(1800,.07,.14,1.5);Snd.tone(220,.06,'sine',.04,0,140);Feel.puff(s.x+8,SBASE+1,3,C.white);Feel.puff(s.x+SSW-8,SBASE+1,3,C.white);}
           if(all){s.st='look';s.t=0;}}
-        else if(s.st==='look'){s.hand=Math.min(1,s.t/s.look);if(s.t>=s.look){s.st='slide';s.t=0;s.lag.kick(-26);Snd.burst(900,.08,.05,1);}}
+        else if(s.st==='look'){if(s.t>=s.look){s.st='slide';s.t=0;s.lag.kick(-26);Snd.burst(900,.08,.05,1);Snd.tone(330,.08,'triangle',.03,0,440);}}
         else if(s.st==='slide'){
-          if(s.hitch>0)s.hitch-=dt;else s.x+=s.v*dt;
-          for(const m of s.marks){if(m.j)continue;if(s.x+m.o-SHX>s.v*0.16){m.j='F';judge('F','Se pasó sin grapa',SHX+44,64);}}
-          if(s.x+SSW>=SSTOP){s.x=SSTOP-SSW;s.lag.kick(34);Snd.tone(320,.06,'triangle',.06);Snd.burst(1200,.04,.12,2);
-            if(s.trap&&!s.judged){s.judged=true;judge('P','Bien: ese no se grapa',SHX+44,64);Snd.cap();}
-            leave(s);}
+          if(s.hitch>0){s.hitch-=dt;s.vn=0;}else{const v0=s.vn;s.vn=speed(s);s.mt+=dt;s.x+=s.vn*dt;if(s.vn-v0>dt*160)s.lag.kick(-(s.vn-v0)*0.25);else if(v0-s.vn>dt*160)s.lag.kick((v0-s.vn)*0.25);}
+          bv=s.vn;
+          for(const m of s.marks){if(m.j)continue;if(s.x+m.o-SHX>tol(s)*0.16+1){m.j='F';judge('F','Tarde ▶: se pasó sin grapa',SHX+44,64);}}
+          if(s.marks.every(m=>m.j))leave(s);
         }
-        else if(s.st==='hit'){if(s.t>0.3)leave(s);}
+        else if(s.st==='hit'){if(s.t>0.25)leave(s);}
       }
-      for(const s of leaving){s.t+=dt;s.sq=Math.max(0,s.sq-dt);s.lag.step(dt);
-        if(s.t<0.22){s.x-=110*dt;s.hand=1;}
-        else if(s.trap||!s.marks.some(m=>m.j&&m.j!=='F')){s.x-=(160+s.t*500)*dt;}
-        else{s.yo-=(120+s.t*700)*dt;s.hand=0;if(s.yo<-150&&!s.gone){s.gone=true;tray.push(s);Snd.tone(520,.06,'sine',.04);}}}
-      for(let i=leaving.length-1;i>=0;i--){const s=leaving[i];if(s.x+SSW<-100||s.yo<-160)leaving.splice(i,1);}
-      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Los montones grapados cuelgan de la pinza. Toca para soltarlos encima de la torre: si quedan torcidos, se inclina y se cae.',2.3);}}
+      for(const q of leaving){q.t+=dt;q.sq=Math.max(0,q.sq-dt);q.lag.step(dt);const v=Math.min(260,80+q.t*420);q.x+=v*dt;bv=Math.max(bv,v);
+        if(q.x>W+4&&!q.gone){q.gone=true;if(q.marks.some(m=>m.j&&m.j!=='F')){tray.push(q);Snd.tone(520,.06,'sine',.04);}}}
+      for(let i=leaving.length-1;i>=0;i--){if(leaving[i].x>W+20)leaving.splice(i,1);}
+      belt+=bv*dt;bvNow=bv;
+      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Tu compañero cruza en su silla con el montón en la cabeza. Toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',2.4);}}
     },
     press(){
       if(phase===2){
         if(swapT<2||st2!=='swing'||fall)return;
-        const p=hangPos(),v=swingV(),e=(p.x-topX())*Math.sign(v||1);
-        fall={x:p.x,yb:p.top+hang.spr.hh,vy:0,s:hang.s,spr:hang.spr,e};hang=null;clipOpen=0.3;st2='fall';Snd.burst(3000,.03,.15,3);Snd.tone(600,.05,'square',.02);return;}
+        const x=swingX(),v=swingV(),e=(x-topX())*Math.sign(v||1);
+        fall={x,yb:chSb,vy:0,s:hang.s,spr:hang.spr,e};hang.gone=true;hopT=0.25;exitX=x;st2='fall';t2=0;Snd.burst(3000,.03,.15,3);Snd.tone(600,.05,'square',.02);return;}
       arm.t=0;arm.flash=0;Snd.staple();
       const s=cur;
       if(!under(s)){arm.contact=0;arm.flash=0.12;air.push({x:SHX,t:0});Core.waste(SHX+44,64,'Grapa al aire');return;}
       arm.contact=Math.max(0,s.n*2-4);s.lag.kick(12);arm.flash=0.16;s.sq=0.14;/* la cabeza baja hasta la hoja de arriba y aplasta un pelín */
       const sy=SBASE-SSD-2*s.n+SDEP;
-      if(s.trap){s.staples.push({rel:SHX-s.x,j:'F'});if(!s.judged){s.judged=true;judge('F','¡Ese no se grapa!',SHX+44,64);}s.st='hit';s.t=0;return;}
       let best=null,bd=1e9;for(const m of s.marks){if(m.j)continue;const d=Math.abs(s.x+m.o-SHX);if(d<bd){bd=d;best=m;}}
-      if(!best){s.staples.push({rel:SHX-s.x,j:'F'});Core.waste(SHX+44,64,'Ya estaba grapado');return;}
-      const ta=bd/s.v,j=ta<=0.05?'P':ta<=0.1?'B':ta<=0.16?'R':'F';
+      if(!best){Core.waste(SHX+44,64,'Ya estaba grapado');return;}
+      const ta=bd/tol(s),j=ta<=0.05?'P':ta<=0.1?'B':ta<=0.16?'R':'F';
       best.j=j;best.rel=SHX-s.x;judge(j,j==='P'?'':(s.x+best.o<SHX?'◀ Pronto':'Tarde ▶'),SHX+44,64);
       if(j==='P')Feel.ring(SHX,sy,C.butter,14);
       if(s.marks.every(m=>m.j))s.st='hit',s.t=0;else s.hitch=0.14;
@@ -1321,8 +1323,7 @@ function Stapler(rng,preview){
       c.drawImage(bg,0,0);
       // agujas del reloj
       const hA=Core.time*0.05-1.2,mA=Core.time*0.6;line(c,140,21,140+Math.cos(hA)*4,21+Math.sin(hA)*4,C.out);line(c,140,21,140+Math.cos(mA)*7,21+Math.sin(mA)*7,C.lavDD);px(c,140,21,C.pinkDD);
-      // bandeja: pila de montones ya grapados
-      for(let i=0;i<tray.length;i++){const y=134-i*3,x=264+((i*3)%5)-2;R(c,x,y,42,6,i%2?C.paper:'#fbf8ff');R(c,x,y+6,42,1,'#e3dcee');R(c,x,y+7,42,1,'#cfc4e0');R(c,x+35,y+1,1,4,C.metalDD);R(c,x,y,1,8,'#cfc4e0');R(c,x+41,y,1,8,'#bdb0d2');}
+      drawBelt(c);
       const L=lift();
       drawStaplerBase(c,L);
       const all=leaving.concat(cur?[cur]:[]);
@@ -1331,52 +1332,73 @@ function Stapler(rng,preview){
         const [tx,ty]=drawStack3(c,s,s.x,s.yo);
         drawTopSheet(c,tx,ty,s);drawMarks(c,tx,ty,s);
         for(const m of s.marks)if(m.rel!=null)drawStaple3(c,tx+m.rel,ty+SDEP,m.j);
-        for(const q of s.staples)drawStaple3(c,tx+q.rel,ty+SDEP,'F');
-        if(s.hand>=0&&s.yo>-2){const hx=s.x-2-(1-ease(s.hand))*80,hy=SBASE-SSD/2-2*s.n+s.yo;if(hx>-30)drawHand(c,hx,hy,s.st==='slide');}
+        // rayitas de velocidad cuando la cinta corre
+        if(s.st==='slide'&&s.vn>s.v*1.12||s.st==='out'){for(let k=0;k<3;k++)R(c,Math.round(s.x)-8-k*3-(Math.floor(Core.time*20)+k)%3,SBASE-10-k*8-2*s.n,5+k,1,C.lavD);}
       }
       drawStaplerArm(c,L,arm.flash);
-      // aviso de que el montón va a arrancar
-      if(cur&&cur.st==='look'){const k=cur.t/cur.look,y=SBASE-SSD-2*cur.n-8+Math.round(Math.sin(Core.time*10)*1);if(k>0.45){for(let i=0;i<3;i++)if(k>0.45+i*0.17)R(c,cur.x+SSW+6+i*5,y+20,3,1,C.lavDD);}}
+      // aviso de que la cinta va a arrancar
+      if(cur&&cur.st==='look'){const k=cur.t/cur.look,y=SBASE-SSD-2*cur.n+12;if(k>0.35){for(let i=0;i<3;i++)if(k>0.35+i*0.2)R(c,cur.x+SSW+6+i*5,y,3,1,C.lavDD);}}
       for(const a of air){const y=SAY-2+a.t*40;R(c,a.x-1,Math.round(y),1,3,C.metalDD);R(c,a.x+1,Math.round(y)+1,1,3,C.metalDD);}
     }
   };
+  function drawBelt(c){
+    // banda con listones que avanzan a la velocidad real de la cinta y rodillos que giran en el canto
+    const o=belt%14;
+    for(let x=-o;x<W;x+=14){const xx=Math.round(x);c.save();c.globalAlpha=0.55;R(c,xx,BLT0,1,BLT1-BLT0,C.beltD);c.restore();R(c,xx+1,BLT0+1,1,BLT1-BLT0-2,'#e4def4');}
+    const a=belt/3;for(let x=10;x<W;x+=22){ell(c,x,BLT1+3,2,2,'#8a7cb0');px(c,x+Math.round(Math.cos(a)*1.6),BLT1+3+Math.round(Math.sin(a)*1.6),C.beltL);}
+    // piloto del motor: verde si corre, amarillo que parpadea antes de arrancar
+    const on=bvNow>1,warn=cur&&cur.st==='look'&&cur.t>cur.look*0.35&&Math.floor(Core.time*8)%2;
+    R(c,4,BLT1+1,4,3,on?C.mintDD:warn?C.butterD:'#8a7cb0');px(c,4,BLT1+1,on?C.mintL:warn?'#fff8d0':C.beltD);
+  }
   function upd2(dt){
     if(swapT<2){swapT+=dt;}
-    swT+=dt;t2+=dt;clipOpen=Math.max(0,clipOpen-dt);
+    t2+=dt;hopT=Math.max(0,hopT-dt);puffT=Math.min(1,puffT+dt*1.6);
     wob.step(dt);
     for(const d of deb){d.t+=dt;d.vy+=520*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;d.a+=d.va*dt;}
     for(let i=deb.length-1;i>=0;i--)if(deb[i].y-camY>H+60)deb.splice(i,1);
     for(const b of tower)b.land+=dt;
-    const st=tower.length>1?stability().worst:0;danger+=((st>0.62?(st-0.62)/0.38:0)-danger)*Math.min(1,dt*4);
-    if(danger>0.2){creakT-=dt;if(creakT<=0){creakT=0.9;Snd.tone(180+Math.random()*40,.18,'sawtooth',.012,0,150);}}
-    const target=Math.min(0,towerTop()-112);camY+=(target-camY)*Math.min(1,dt*3);
-    if(st2==='load'){if(t2>=0.6)st2='swing';}
-    else if(st2==='fall'&&fall){fall.vy+=900*dt;fall.yb+=fall.vy*dt;if(fall.yb>=towerTop()){fall.yb=towerTop();land();st2='settle';t2=0;}}
-    else if(st2==='settle'){if(t2>0.4){if(k2<N2)nextHang();else st2='end';}}
+    const st=tower.length>1&&!col?stability().worst:0;danger+=((st>0.62?(st-0.62)/0.38:0)-danger)*Math.min(1,dt*4);
+    if(danger>0.2&&!col){creakT-=dt;if(creakT<=0){creakT=0.9;Snd.tone(180+Math.random()*40,.18,'sawtooth',.012,0,150);}}
+    const target=col&&col.t>0.6?0:Math.min(0,towerTop()-112);camY+=(target-camY)*Math.min(1,dt*3);
+    // la silla sube con el pistón hasta la altura de la torre (psss), entra por la izquierda y, al soltar, se va por la derecha
+    if(hang&&!hang.gone){const tgt=towerTop()-GAP;chSb+=(tgt-chSb)*Math.min(1,dt*5);}
+    if(hang&&hang.gone){const k=t2;chX=exitX+60*k+420*k*k;}
+    if(st2==='load'){const k=Ease.outCubic(Math.min(1,t2/0.7));chX=-40+(pcx-hang.A+40)*k;if(t2>=0.7){st2='swing';swT=0;}}
+    else if(st2==='swing'){swT+=dt;chX=swingX();}
+    else if(st2==='fall'&&fall){fall.vy+=900*dt;fall.yb+=fall.vy*dt;if(fall.yb>=towerTop()){fall.yb=towerTop();land();if(st2==='fall')st2='settle';}}
+    else if(st2==='settle'){if(t2>0.45&&chX>W+30){if(k2<N2)nextHang();else{st2='end';endT=0;}}}
+    else if(st2==='collapse'){col.t+=dt;
+      if(tower.length){col.av+=(3+col.ang*9)*dt;col.ang+=col.av*dt;if(col.ang>0.42)scatter();}
+      // los montones que quedaban ya no se pueden apilar: cuentan como fallo, de uno en uno
+      if(owed>0&&col.t>0.9){owedT-=dt;if(owedT<=0){owedT=0.14;const q=++owedQ;owed--;k2++;
+        judge('F',q===1?'Sin torre: '+(owed?(owed+1)+' montones sin apilar':'1 montón sin apilar'):'',q===1?160:44+((q-2)%8)*33,q===1?128:q%2?84:104);}}
+      if(owed<=0&&!tower.length&&!deb.length&&col.t>1.6&&!ended){ended=true;Core.finish();}}
     else if(st2==='end'){endT+=dt;if(endT>0.3&&!goal){goal=1;if(tower.length>=N2*0.7){Feel.confetti(topX(),towerTop()-camY,26);Snd.fanfare('S');}}
       if(endT>1.6&&!deb.length&&!ended){ended=true;Core.finish();}}
   }
   function draw2(c){
     const cy=Math.round(camY);
     c.drawImage(bg2,0,SBG2+cy,W,H,0,0,W,H);
-    // torre: cada nivel se desplaza con el bamboleo (más arriba, más se mueve)
-    const n=tower.length,sway=wob.x+danger*Math.sin(Core.time*8)*3;
+    // compañero en la silla (detrás de la mesa y de la torre)
+    if(hang&&chX>-30&&chX<W+30){const v=st2==='swing'?swingV():st2==='load'?120:200,lg=Math.max(-1,Math.min(1,Math.round(-v/40)));
+      const sb=Math.round(chSb-cy),rod=8+Math.max(0,Math.round((SGY-2-GAP)-chSb));
+      drawCoworker(c,chX,sb,{legs:lg,up:hopT>0?Math.sin(hopT/0.25*Math.PI)*3:0,hop:hopT,rod,blink:Core.time%3.1<0.12,worry:danger>0.3||!!col});
+      if(!hang.gone){const sp=hang.spr;c.drawImage(sp,Math.round(chX-SW2/2-sp.ax),Math.round(sb-sp.hh-sp.ay));}
+      drawGasPuff(c,chX,sb+28,puffT);
+      // sombra guía sobre la torre: dónde caería
+      if(!hang.gone&&st2==='swing'){const ty=towerTop()-cy;c.save();c.globalAlpha=0.35;R(c,Math.round(chX-SW2/2+2),ty-1,SW2-4,1,C.lavDD);c.restore();}
+    }
+    c.drawImage(bg2d,0,SBG2+cy,W,H,0,0,W,H);
+    // torre: cada nivel se desplaza con el bamboleo (más arriba, más se mueve); al derrumbarse gira entera sobre la esquina
+    const n=tower.length,sway=col?0:wob.x+danger*Math.sin(Core.time*8)*3;
     let y=SGY-2;
     for(let i=0;i<n;i++){const b=tower[i],sp=b.spr,f=(i+1)/n,ox=Math.round(sway*f*f),sq=b.land<0.08&&i===n-1?1:0;
-      y-=sp.hh;c.drawImage(sp,Math.round(b.x-SW2/2-sp.ax+ox),Math.round(y-cy-sp.ay+sq));}
-    // cuerda y pinza
-    if(phase===2&&(hang||clipOpen>0||st2==='settle'||st2==='fall')){
-      const p=hangPos(),cx=p.x;const top=Math.max(-2,pivY-cy);
-      const ropeX0=pcx+(cx-pcx)*((top-(pivY-cy))/Math.max(1,p.clipY-pivY));
-      line(c,ropeX0,top,cx,p.clipY-cy-8,C.woodDD,C.woodD);
-      if(hang){const sp=hang.spr;c.drawImage(sp,Math.round(cx-SW2/2-sp.ax),Math.round(p.top-cy-sp.ay));}
-      drawClip(c,cx,p.clipY-cy-2,clipOpen>0?Math.min(1,clipOpen/0.1):0);
-      // sombra guía sobre la torre: dónde caería
-      if(hang&&st2==='swing'){const ty=towerTop()-cy;c.save();c.globalAlpha=0.35;R(c,Math.round(cx-SW2/2+2),ty-1,SW2-4,1,C.lavDD);c.restore();}
-    }
+      y-=sp.hh;
+      if(col){const [rx,ry]=rot(b.x,y+sp.hh/2);c.save();c.translate(Math.round(rx),Math.round(ry-cy));c.rotate(col.ang*col.dir);c.drawImage(sp,-Math.round(SW2/2+sp.ax),-Math.round(sp.hh/2+sp.ay));c.restore();}
+      else c.drawImage(sp,Math.round(b.x-SW2/2-sp.ax+ox),Math.round(y-cy-sp.ay+sq));}
     if(fall){const sp=fall.spr;c.drawImage(sp,Math.round(fall.x-SW2/2-sp.ax),Math.round(fall.yb-sp.hh-cy-sp.ay));}
     for(const d of deb){c.save();c.translate(Math.round(d.x),Math.round(d.y-cy));c.rotate(d.a);c.drawImage(d.spr,-Math.round(d.spr.width/2),-Math.round(d.spr.height/2));c.restore();}
-    if(danger>0.25&&n){const ty=towerTop()-cy-14,tx=topX()+Math.round(sway)+SW2/2+6;if(Math.floor(Core.time*4)%2){R(c,tx,ty,2,6,C.pinkDD);R(c,tx,ty+8,2,2,C.pinkDD);}}
+    if(danger>0.25&&n&&!col){const ty=towerTop()-cy-14,tx=topX()+Math.round(sway)+SW2/2+6;if(Math.floor(Core.time*4)%2){R(c,tx,ty,2,6,C.pinkDD);R(c,tx,ty+8,2,2,C.pinkDD);}}
   }
   return self;
 }
@@ -1477,6 +1499,8 @@ function Toaster(rng,preview){
     const mr=rng(),mode=i<3?'normal':mr<0.36?'turbo':'normal';
     items.push({B,mode,tt:0.45+rng()*0.6,el:0,target:Math.max(B.base+0.2,shade),rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
   }
+  // pistas que se desvanecen: la marca rosa de la aguja solo en la primera tostada y las guías de untar solo en la primera pasada
+  const H1=Core.hint(),H2=Core.hint();
   const lv=Spring(0,320,13);let cur=0,st='insert',t=0,lever=0,endT=0,ended=false,holding=false;const stack=[];let fly=null;const smoke=[];
   const bg=mk(W,H);drawKitchenBg(bg.getContext('2d'));grain(bg.getContext('2d'),15,4);
   if(preview){st='toast';items[0].p=0.5;lever=1;}
@@ -1496,6 +1520,7 @@ function Toaster(rng,preview){
   function judgeOut(auto){const u=U(),[,x1]=edges(),e=(kx-x1)/u.v,j=auto?'F':J2(Math.abs(e));u.jr=j;u.ex=kx;done++;
     Core.judge(j,UTX+40,UTY-42,false,j==='P'?'':(e<0?'▼ Te quedaste corto':'▲ Te pasaste'));if(u.jp==='P'&&j==='P')Core.sparkle(UTX,UTY);}
   function update2(dt){
+    H2.step(dt);
     if(swapT<2){swapT+=dt;if(swapT>=2&&U())kx=startX();return;}
     const u=U();if(!u){endT+=dt;if(endT>0.8&&!ended){ended=true;Core.finish();}return;}
     const [x0,x1]=edges();
@@ -1508,7 +1533,7 @@ function Toaster(rng,preview){
         if(u.sx==null){done+=2;u.jp=u.jr='F';Core.judge('F',UTX-40,UTY-42,false,'No la untaste');Core.judge('F',UTX+40,UTY-42,false,'');}
         u.st='out';u.t=0;}
       return;}
-    if(u.st==='out'){u.t+=dt;u.dip=Math.max(0,u.dip-dt*10);kx+=u.v*dt;if(u.t>0.9){ui++;if(U())kx=startX();}}
+    if(u.st==='out'){u.t+=dt;u.dip=Math.max(0,u.dip-dt*10);kx+=u.v*dt;if(u.t>0.9){ui++;if(U())kx=startX();if(ui===1&&U()){H2.fade();Core.note(UTX,UTY-48,'Ahora sin guías: a ojo');}}}
   }
   function press2(){
     if(swapT<2)return;const u=U();if(!u||u.st!=='pass'||u.sx!=null)return; // una sola bajada por pasada
@@ -1534,9 +1559,12 @@ function Toaster(rng,preview){
     dith(c,x0+3,y0+4,w,UTH,'#b07a5a');
     obj(c,l=>{rr(l,x0-4,y0-4,w+8,UTH+8,toastCol(bread.p,2),10);},{sel:true});rr(c,x0-1,y0-1,w+2,UTH+2,toastCol(bread.p),8);
     for(const [ddx,ddy] of [[8,10],[30,6],[48,14],[14,36],[40,40],[24,24],[58,30]])if(ddx<w-4)px(c,x0+ddx,y0+ddy,toastCol(bread.p,1));
-    // guías rosas de entrada y salida
-    if(u.st!=='out'){for(let yy=y0-8;yy<y0+UTH+8;yy+=3){px(c,x0,yy,'rgba(243,154,192,0.95)');px(c,x0+w-1,yy,'rgba(243,154,192,0.95)');}
-      for(const gx of [x0,x0+w-1]){R(c,gx-2,y0-10,5,1,C.pinkD);px(c,gx,y0-9,C.pinkD);R(c,gx-2,y0+UTH+9,5,1,C.pinkD);px(c,gx,y0+UTH+8,C.pinkD);}}
+    // guías rosas de entrada y salida: solo en la primera pasada; luego se desvanecen hacia arriba en chispitas
+    if(u.st!=='out'&&H2.a>0){const a=H2.a,lift=Math.round((1-a)*6);c.save();c.globalAlpha=a;
+      for(let yy=y0-8;yy<y0+UTH+8;yy+=3){px(c,x0,yy-lift,'rgba(243,154,192,0.95)');px(c,x0+w-1,yy-lift,'rgba(243,154,192,0.95)');}
+      for(const gx of [x0,x0+w-1]){R(c,gx-2,y0-10-lift,5,1,C.pinkD);px(c,gx,y0-9-lift,C.pinkD);R(c,gx-2,y0+UTH+9-lift,5,1,C.pinkD);px(c,gx,y0+UTH+8-lift,C.pinkD);
+        if(a<1)for(let k=0;k<4;k++)px(c,gx+((k*7+Math.floor(Core.time*20))%7)-3,y0+8+k*14-Math.round((1-a)*20),k%2?C.white:C.pinkL);}
+      c.restore();}
     // lo untado: sobre la tostada y, si te sales, manchurrón en la bandeja
     if(u.sx!=null){const a=Math.round(u.sx)+dx,bb=Math.round(u.ex!=null?u.ex:kx)+dx;
       if(bb>a){
@@ -1565,6 +1593,7 @@ function Toaster(rng,preview){
       t+=dt;for(const s of smoke){s.t+=dt;s.y-=dt*14;s.x+=Math.sin(s.t*3+s.k)*dt*6;}
       for(let i=smoke.length-1;i>=0;i--)if(smoke[i].t>1.4)smoke.splice(i,1);
       if(fly){fly.t+=dt;if(fly.t>=0.75){stack.push(fly.b);fly=null;}}
+      H1.step(dt);
       const b=it();
       if(!b){endT+=dt;if(endT>0.8){endT=0;goPhase2();Core.banner('Fase 2','¡A untar!','La espátula cruza una sola vez. Mantén justo cuando entre en la tostada y suelta justo cuando salga.');}return;}
       if(st==='insert'){lever=0;if(t>0.55){st='ready';t=0;}}
@@ -1576,7 +1605,7 @@ function Toaster(rng,preview){
         if(b.p>=1.06){holding=false;pop('F','▲ Te pasaste: quemada');for(let k=0;k<6;k++)smoke.push({x:TX-14+k*5,y:74,t:0,k});}
       }
       else if(st==='pop'){if(t<dt*1.5)lv.kick(-9);lever=Math.max(0,lever-dt*10);if(t>0.6){st='serve';t=0;fly={b,t:0};}}
-      else if(st==='serve'){if(!fly){cur++;st='insert';t=0;}}
+      else if(st==='serve'){if(!fly){cur++;st='insert';t=0;if(cur===1){H1.fade();Core.note(TX,52,'Ahora sin marca: fíjate en el pedido');}}}
       lv.target=lever;lv.step(dt); // la palanca baja y sube con muelle (rebota al soltar)
     },
     press(){if(phase===2){press2();return;}const b=it();if(!b)return;holding=true;if(st==='ready'){st='toast';t=0;Snd.burst(700,.06,.2);}},
@@ -1632,11 +1661,13 @@ function Toaster(rng,preview){
       for(let i=0;i<gw;i++)R(c,gx+i,gy,1,5,toastCol(i/gw));
       if(b){
         const tx=gx+Math.round(b.target*gw);
-        if(true){R(c,tx-1,gy-5,3,1,C.pinkDD);px(c,tx,gy-4,C.pinkDD);R(c,tx-1,gy+7,3,1,C.pinkDD);px(c,tx,gy+6,C.pinkDD);
-          R(c,tx-2,gy-1,1,7,C.white);R(c,tx+2,gy-1,1,7,C.white);}
-        else if(st!=='pop'&&st!=='serve'){// sin marca: un ojito avisa de que hay que fiarse del color del pedido
-          obj(c,l=>{ell(l,gx+gw+9,gy+2,5,3,C.white);},{sel:true});ell(c,gx+gw+9,gy+2,1,1,C.lavDD);px(c,gx+gw+9,gy+1,C.out);px(c,gx+gw+10,gy+1,C.white);R(c,gx+gw+5,gy-2,1,1,C.out);R(c,gx+gw+9,gy-3,1,1,C.out);R(c,gx+gw+13,gy-2,1,1,C.out);}
-        else{R(c,tx-1,gy-5,3,1,C.pinkDD);px(c,tx,gy-4,C.pinkDD);}
+        // marca rosa del punto justo: solo en la primera tostada; luego se desvanece y queda la muestra del pedido
+        if(H1.a>0){const a=H1.a,ly=Math.round((1-a)*-5);c.save();c.globalAlpha=a;
+          R(c,tx-1,gy-5+ly,3,1,C.pinkDD);px(c,tx,gy-4+ly,C.pinkDD);R(c,tx-1,gy+7-ly,3,1,C.pinkDD);px(c,tx,gy+6-ly,C.pinkDD);
+          R(c,tx-2,gy-1,1,7,C.white);R(c,tx+2,gy-1,1,7,C.white);
+          if(a<1)for(let k=0;k<5;k++)px(c,tx-3+((k*5+Math.floor(Core.time*24))%7),gy-6-Math.round((1-a)*(8+k*3)),k%2?C.white:C.pinkL);c.restore();}
+        if(H1.a<1&&st!=='pop'&&st!=='serve'){// sin marca: un ojito avisa de que hay que fiarse del color del pedido
+          c.save();c.globalAlpha=1-H1.a;obj(c,l=>{ell(l,gx+gw+9,gy+2,5,3,C.white);},{sel:true});ell(c,gx+gw+9,gy+2,1,1,C.lavDD);px(c,gx+gw+9,gy+1,C.out);px(c,gx+gw+10,gy+1,C.white);R(c,gx+gw+5,gy-2,1,1,C.out);R(c,gx+gw+9,gy-3,1,1,C.out);R(c,gx+gw+13,gy-2,1,1,C.out);c.restore();}
         if(b.turbo&&st==='toast'){const f=Math.floor(Core.time*16)%2;for(let k=0;k<4;k++)px(c,TX-30+k*20+f,78-((k+f)%2),k%2?C.butter:'#ff9d6e');R(c,TX-31,100,62,1,f?'#ffb38a':C.metalL);}
         b.np=b.np==null?b.p:b.np+(b.p-b.np)*0.35;const nx=gx+Math.min(gw-1,Math.round(Math.min(1.06,b.np)*gw/1.0));
         if(st==='toast'||st==='pop'){R(c,nx,gy-2,1,9,C.out);px(c,nx,gy-3,C.out);}
@@ -1667,14 +1698,17 @@ function Toaster(rng,preview){
 /* ---------- Minijuego 4: Tortilla de patatas ----------
    Una cocina larga con tres puestos; la cámara se desliza de uno a otro.
    Cada paso tiene su propio gesto:
+   · Pelar: mantén para pasar el pelador por la patata y suelta justo al llegar al final
+     (dos pasadas: se gira la patata entre una y otra).
    · Cortar: la mano empuja la patata a tirones; toca cuando asome el grosor de la guía.
+   Las guías rosas de pelar y cortar solo se ven la primera vez; luego se desvanecen.
    · Cascar: mantén para apretar el huevo contra el borde y suelta con la grieta justa.
    · Batir: toca a ritmo para que la aguja se quede dentro de la zona que se mueve.
    · Voltear: mantén para coger impulso (sube y baja) y suelta en la marca. */
 const EGG={raw:'#ffd34d',beat:'#ffe07a',cook:['#ffe58a','#ffd36b','#f7bf55','#e8a245','#c9803a']};
 const TCT=128,TKX=146,TBW=146,TPN=144,TPL=284,TGA=216;
-const POT={a:'#fff0b8',b:'#f2d58a',c:'#fffbe2',d:'#f7e3a0'};
-const TCUE={cortar:'Corta rodajas iguales: toca cuando la patata llegue a la guía rosa',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
+const POT={a:'#fff0b8',b:'#f2d58a',c:'#fffbe2',d:'#f7e3a0'},SKIN={a:'#dcae78',d:'#c08f5c',s:'#9c6d45',l:'#ecc897'};
+const TCUE={pelar:'Pela la patata: mantén y suelta justo al llegar al final',cortar:'Corta rodajas iguales: toca cuando asome el grosor justo',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
   batir:'Bate a ritmo: toca para que la aguja no salga de la zona rosa',vuelta:'Dale la vuelta: mantén para coger impulso y suelta en la marca',servir:''};
 function drawTortillaPanel(c,k){
   // pared de azulejos tipo metro (lavanda) continua entre paneles
@@ -1755,9 +1789,13 @@ function drawGauge(c,x,y,h,val,zc,zw,opts){
 function Tortilla(rng,preview){
   // receta: dos tortillas; cada una con sus rodajas, huevos, batido y vuelta
   const ph=[];let TOTAL=0;
+  // grosor de las rodajas: el mismo en las dos tortillas (la guía rosa solo sale en la primera rodaja de la partida)
+  const T=7+Math.floor(rng()*3);
   for(let k=0;k<2;k++){
-    const n=3+(k===1&&rng()<0.6?1:0);
-    ph.push({k:'cortar',st:0,n,T:7+Math.floor(rng()*3),base:(11+rng()*3)*(1+k*0.22),f:1.2+rng()*0.8,ph:rng()*6});TOTAL+=n;
+    const n=3+(k===1&&rng()<0.6?1:0),len=n*T+30+Math.round(rng()*22),pv=(36+rng()*10)*(1+k*0.18);
+    // pelar: dos pasadas (arriba, se gira la patata, otra vez arriba); cada una a su ritmo
+    for(let q=0;q<2;q++){ph.push({k:'pelar',st:0,tort:k,stroke:q,len,v:pv*(1+q*0.08),f:0.9+rng()*0.8,pp:rng()*6});TOTAL++;}
+    ph.push({k:'cortar',st:0,tort:k,n,T,len,base:(11+rng()*3)*(1+k*0.22),f:1.2+rng()*0.8,ph:rng()*6});TOTAL+=n;
     const ne=2+(k===1&&rng()<0.6?1:0);
     for(let e=0;e<ne;e++){ph.push({k:'huevo',st:1,egg:e,r:(0.5+rng()*0.25)*(1+k*0.18),f:1.1+rng()*0.9,pp:rng()*6,target:0.5+rng()*0.3});TOTAL++;}
     ph.push({k:'batir',st:1,dur:3.4+k*0.6,zp:rng()*6,zf:0.9+rng()*0.4+k*0.25});TOTAL++;
@@ -1765,7 +1803,8 @@ function Tortilla(rng,preview){
     ph.push({k:'servir',st:2,tort:k});
   }
   let pi=0,camX=0,cam=null,wait=0.3,endT=0,ended=false,done=0;
-  const A={pot:null,knife:0,chopX:0,slices:[],pile:0,scoop:0,bowlSl:0,eggs:0,yolks:[],beat:0,wa:0,pan:0,cook:0,flip:null,plate:0,serve:null,splat:0,shells:[],mess:0,steam:[],bob:0};
+  const HP=Core.hint(),HC=Core.hint();// guías de pelar y de cortar: solo la primera vez
+  const A={peels:[],kin:1,pot:null,knife:0,chopX:0,slices:[],pile:0,scoop:0,bowlSl:0,eggs:0,yolks:[],beat:0,wa:0,pan:0,cook:0,flip:null,plate:0,serve:null,splat:0,shells:[],mess:0,steam:[],bob:0};
   const bgc=mk(W*3,H),bx=bgc.getContext('2d');for(let k=0;k<3;k++){const p=mk(W,H);drawTortillaPanel(p.getContext('2d'),k);bx.drawImage(p,k*W,0);}
   const P=()=>ph[pi];
   const J=(a,p,b,r)=>a<=p?'P':a<=b?'B':a<=r?'R':'F';
@@ -1773,7 +1812,14 @@ function Tortilla(rng,preview){
   function enter(){
     const p=P();if(!p){return;}
     p.t=0;p.init=true;
-    if(p.k==='cortar'){A.pot={x0:TKX+20,len:p.n*p.T+40,tip:true,push:0};p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];}
+    if(p.k==='pelar'){
+      if(p.stroke===0){A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[p.len,p.len],rolled:false,hop:0};A.peels=[];A.slices=[];A.pile=0;A.scoop=0;
+        p.bn=p.tort===0?['Paso 1','¡A pelar!','Mantén para pasar el pelador y suelta justo al llegar al final de la patata. Luego se gira y otra pasada.',2.4]:['Otra tortilla','¡A pelar!','Suelta justo al final de la patata.',1.6];}
+      else if(p.tort===0){HP.fade();p.note='Ahora sin guía: suelta al llegar al final';}
+      p.hold=false;p.pe=null;p.ht=0;p.res=null;p.vn=0;A.kin=0;}
+    if(p.k==='cortar'){if(!A.pot||!A.pot.peeled)A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peeled:true};
+      A.pot.push=0;A.kin=0;p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];p.hint=HC;
+      p.bn=p.tort===0?['Paso 2','¡A cortar!','Toca cuando la rodaja tenga el grosor de la guía rosa. La guía solo sale en la primera: las demás, iguales a ojo.',2.4]:['Paso 2','¡A cortar!','Rodajas iguales que antes, ahora sin guía.',1.6];}
     if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;}
     if(p.k==='batir'){p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
     if(p.k==='vuelta'){p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
@@ -1783,9 +1829,9 @@ function Tortilla(rng,preview){
   function next(){pi++;if(pi<ph.length)enter();}
   enter();
   if(TDEMO){const k=ph.findIndex(q=>q.k===TDEMO);if(k>0){pi=k;enter();camX=ph[pi].st*W;cam=null;wait=0.1;if(TDEMO==='batir'){A.bowlSl=3;A.eggs=2;A.yolks=[{t:1,x:TBW-20},{t:1,x:TBW-4}];}}TDEMO=null;}
-  if(preview){A.pot.x0-=6;}
+  if(preview){const p=P();p.hold=true;p.pe=A.pot.x0+Math.round(A.pot.len*0.55);A.pot.rem[0]=A.pot.len-(p.pe-A.pot.x0);for(let k=0;k<5;k++)A.peels.push({x:TKX+18-k*9,y:TCT-12,vx:0,vy:0,t:1,rest:true,s:k%2});}
   const active=()=>!cam&&wait<=0;
-  const self={_A:A,_flip:()=>A.flip,_dbg:()=>{const p=P()||{};return {k:p.k,ready:active(),p,past:A.pot?TKX-A.pot.x0:0,z:p.z};},unit:'Paso',total:TOTAL,mood:'tortilla',hold:true,
+  const self={_A:A,_flip:()=>A.flip,_dbg:()=>{const p=P()||{};return {k:p.k,ready:active(),p,past:A.pot?TKX-A.pot.x0:0,pend:A.pot?A.pot.x0+A.pot.len-4:0,z:p.z};},unit:'Paso',total:TOTAL,mood:'tortilla',hold:true,
     inPractice(){return false;},progress(){return done;},
     cue(){const p=P();return p?TCUE[p.k]:'';},
     update(dt){
@@ -1797,12 +1843,33 @@ function Tortilla(rng,preview){
       for(const y of A.yolks){y.t+=dt;}
       for(const s of A.steam){s.t+=dt;s.y-=dt*12;s.x+=Math.sin(s.t*3+s.k)*dt*5;}A.steam=A.steam.filter(s=>s.t<1.3);
       if(A.pan>0&&Math.random()<dt*5)A.steam.push({x:TPN-30+Math.random()*60,y:108,t:0,k:Math.random()*6});
+      A.kin=Math.min(1,A.kin+dt/0.35);HP.step(dt);
+      for(const q of A.peels){if(q.rest)continue;q.t+=dt;q.vy+=320*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;if(q.y>=TCT-12){q.y=TCT-12;q.rest=true;}}
       const p=P();
       if(!p){endT+=dt;if(endT>0.8&&!ended){ended=true;Core.finish();}return;}
+      // cartel de cada paso nuevo (al llegar, no al crear el juego); el paso espera a que se lea
+      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3]);if(!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
+      if(!cam&&p.note&&!DEMO){Core.note(TKX+40,24,p.note);p.note=null;}
+      if(p.hint)p.hint.step(dt);
       p.t+=dt;
+      if(p.k==='pelar'){
+        const pot=A.pot,end=pot.x0+pot.len-4,band=pot.rolled?1:0;
+        if(p.res){p.res.t+=dt;
+          // tras la primera pasada la patata da media vuelta: la piel que quedaba abajo sale arriba
+          if(p.stroke===0){const u=Math.min(1,Math.max(0,(p.res.t-0.25)/0.4));pot.hop=Math.sin(u*Math.PI)*7;if(u>=0.5)pot.rolled=true;if(p.res.t>0.85)next();}
+          else if(p.res.t>0.6){pot.peeled=true;next();}
+          return;}
+        if(!active())return;
+        if(p.hold){p.ht+=dt;const v=p.v*(0.35+1.3*Math.max(0,Math.sin(p.pp+p.ht*Math.PI*2*p.f)))/0.76;const x0=p.pe;p.pe+=v*dt;p.vn=v;
+          pot.rem[band]=Math.max(0,Math.min(pot.rem[band],pot.x0+pot.len-p.pe));
+          if(Math.floor(x0/5)!==Math.floor(p.pe/5)&&p.pe<end+2)A.peels.push({x:p.pe-3,y:TCT-42,vx:-18-Math.random()*22,vy:-40-Math.random()*30,t:0,rest:false,s:Math.random()<0.5?1:0});
+          if(A.peels.length>60)A.peels.shift();
+          if(p.pe>end+12){p.hold=false;peel('F','▲ Te pasaste: el pelador se salió');}}
+        return;
+      }
       if(p.k==='cortar'){
         const pot=A.pot;
-        if(p.cuts>=p.n){A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.n;next();}return;}
+        if(p.cuts>=p.n){A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.n;pot.gone=true;next();}return;}
         if(!active())return;
         const v=p.base*(0.3+1.4*Math.max(0,Math.sin(p.ph+p.t*Math.PI*2*p.f)))/0.75;pot.x0-=v*dt;pot.push=v;
         if(TKX-pot.x0>p.T+5)cut('F','▲ Muy gruesa');
@@ -1831,14 +1898,17 @@ function Tortilla(rng,preview){
     },
     press(){
       const p=P();if(!p||!active())return;
-      if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,j=J(Math.abs(e),1,2,3.5);cut(j,e<0?'▼ Muy fina':'▲ Muy gruesa');}
+      if(p.k==='pelar'&&!p.res&&!p.hold){p.hold=true;p.ht=0;p.pe=A.pot.x0+3;Snd.burst(3200,.04,.06,2);}
+      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,j=J(Math.abs(e),1,2,3.5);cut(j,e<0?'▼ Muy fina':'▲ Muy gruesa');}
       else if(p.k==='huevo'&&!p.open){p.hold=true;p.ht=0;}
       else if(p.k==='batir'&&p.fin==null){p.s=Math.min(1.05,p.s+0.12*(1-0.35*p.s));Snd.burst(4200,.05,.1,1.5);}
       else if(p.k==='vuelta'&&p.pre<=0&&!A.flip){p.hold=true;p.ht=0;p.p=0;}
     },
     release(){
       const p=P();if(!p)return;
-      if(p.k==='huevo'&&p.hold){p.hold=false;if(p.c<0.08){p.c=0;Snd.tone(900,.03,'sine',.02);return;}
+      if(p.k==='pelar'&&p.hold){p.hold=false;if(p.pe-(A.pot.x0+3)<6){p.pe=null;return;}
+        const e=p.pe-(A.pot.x0+A.pot.len-4),j=J(Math.abs(e),2.5,5,9);peel(j,e<0?'▼ Te quedaste corto: quedó piel':'▲ Te pasaste');}
+      else if(p.k==='huevo'&&p.hold){p.hold=false;if(p.c<0.08){p.c=0;Snd.tone(900,.03,'sine',.02);return;}
         const e=p.c-p.target,j=J(Math.abs(e),0.04,0.085,0.15);crack(j,e<0?'▼ Poca fuerza':'▲ Mucha fuerza: cáscara',false);}
       else if(p.k==='vuelta'&&p.hold){p.hold=false;if(p.ht<0.06){p.p=0;return;}
         const e=p.p-p.target,j=J(Math.abs(e),0.035,0.075,0.13);
@@ -1846,8 +1916,12 @@ function Tortilla(rng,preview){
         Snd.boing();judge(j,e<0?'▼ Poco impulso':'▲ Demasiado impulso',TPN,50);}
     }
   };
+  function peel(j,det){
+    const p=P();p.res={t:0,j};Snd.tone(520,.06,'triangle',.04,0,380);judge(j,det,Math.min(TKX+110,p.pe),58);
+  }
   function cut(j,det){
     const p=P(),pot=A.pot,w=Math.max(2,Math.round(TKX-pot.x0));
+    if(p.cuts===0&&p.hint){p.hint.fade();if(p.tort===0)Core.note(TKX-30,24,'Ahora a ojo: iguales a la primera');}
     A.slices.push({w,t:0,x:TKX-w,tip:pot.tip,i:p.cuts,j});pot.len-=w;pot.x0=TKX;pot.tip=false;p.cuts++;A.knife=0.24;
     Snd.burst(1500,.05,.28,3);Snd.tone(170,.06,'triangle',.05);judge(j,det,TKX-20,58);
   }
@@ -1870,29 +1944,53 @@ function Tortilla(rng,preview){
       for(const s of A.slices){const k=ease(Math.min(1,s.t/0.28)),tx=o0+96-s.i*13+sc*150,x=Math.round((o0+s.x)+(tx-(o0+s.x))*k),hh=Math.round(30*(1-k)+7*k),ww=Math.round(s.w*(1-k)+22*k);
         if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14+(s.t<0.36?1:0),11+(s.t<0.36?1:0),4-(s.t<0.36?1:0),POT.a);},{sel:true});
         if(k>=1&&sc<1){ell(c,Math.round(x+10),TCT-15,6,2,POT.c);px(c,x+7,TCT-16,C.white);R(c,x+2,TCT-12,18,1,POT.d);}}
-      if(A.pot&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
-        const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30;
-        obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip),{sel:true});
-        // brillo, sombra suave y cara cortada
-        R(c,x0+5,y+4,Math.max(0,pot.len-20),2,POT.c);px(c,x0+8,y+8,C.white);R(c,x0+4,y+23,Math.max(0,pot.len-14),4,POT.d);
-        for(const [dx,dy] of [[14,12],[26,18],[22,7],[38,10],[46,20],[54,8],[62,15]]){const xx=x0+pot.len-dx;if(xx>x0+4){px(c,xx,y+dy,'#d9b77a');px(c,xx+1,y+dy,POT.d);}}
+      // mondas de piel caídas en la tabla
+      for(const q of A.peels){const x=Math.round(o0+q.x),y=Math.round(q.y);if(q.rest){R(c,x,y,4,2,SKIN.d);R(c,x+1,y,2,1,SKIN.l);if(q.s)px(c,x+4,y-1,SKIN.d);}else{R(c,x,y,3,2,SKIN.a);px(c,x+1,y-1,SKIN.d);}}
+      if(A.pot&&!A.pot.gone&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
+        const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30-Math.round(pot.hop||0);
+        // piel y carne: la banda de arriba y la de abajo se pelan por separado (tras girar la patata se intercambian)
+        const anySkin=pot.rem[0]>0||pot.rem[1]>0,tb=pot.rolled?1:0,bb=1-tb;
+        obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip,anySkin?SKIN.a:POT.a),{sel:true});
+        if(anySkin){c.save();c.beginPath();c.rect(x0-2,y-2,pot.len-pot.rem[tb]+2,17);c.rect(x0-2,y+15,pot.len-pot.rem[bb]+2,18);c.clip();drawPotato(c,x0,y,pot.len,pot.tip,POT.a);c.restore();}
+        const skinAt=(xx,yy)=>xx>=x0+pot.len-pot.rem[yy<y+15?tb:bb];
+        // brillo, sombra suave y ojitos de la patata
+        c.save();c.globalAlpha=0.6;R(c,x0+5,y+4,Math.max(0,pot.len-20),2,C.white);c.globalAlpha=0.22;R(c,x0+4,y+23,Math.max(0,pot.len-14),4,'#b0763e');c.restore();px(c,x0+8,y+8,C.white);
+        for(const [dx,dy] of [[14,12],[26,18],[22,7],[38,10],[46,20],[54,8],[62,15],[72,11],[80,19]]){const xx=x0+pot.len-dx;if(xx>x0+4){const sk=skinAt(xx,y+dy);px(c,xx,y+dy,sk?SKIN.s:'#d9b77a');px(c,xx+1,y+dy,sk?SKIN.d:POT.d);}}
         if(!pot.tip){ell(c,x0+2,y+15,2,12,POT.c);R(c,x0,y+4,1,22,POT.d);}
-        // mano que empuja la patata (rebota un poco al empujar)
-        const hx=x0+pot.len+1,hy=y+6-Math.round(Math.min(2,pot.push/12));
-        obj(c,l=>{rr(l,hx+10,hy-3,16,13,C.pink,4);rr(l,hx-2,hy,15,16,'#ffe1cc',5);rr(l,hx-5,hy+4,6,8,'#ffe1cc',3);},{sel:true});
-        R(c,hx+11,hy-2,14,1,C.pinkL);for(const k of [4,8,12])R(c,hx-4,hy+k,3,1,'#f2b9a0');R(c,hx+1,hy+1,9,1,'#fff3ea');
+        // mano que empuja la patata (solo al cortar; rebota un poco al empujar)
+        if(p.k!=='pelar'){const hx=x0+pot.len+1,hy=y+6-Math.round(Math.min(2,pot.push/12));
+          obj(c,l=>{rr(l,hx+10,hy-3,16,13,C.pink,4);rr(l,hx-2,hy,15,16,'#ffe1cc',5);rr(l,hx-5,hy+4,6,8,'#ffe1cc',3);},{sel:true});
+          R(c,hx+11,hy-2,14,1,C.pinkL);for(const k of [4,8,12])R(c,hx-4,hy+k,3,1,'#f2b9a0');R(c,hx+1,hy+1,9,1,'#fff3ea');}
+        if(p.k==='pelar'){
+          // guía rosa del final (solo la primera pasada; luego se desvanece)
+          if(HP.a>0){const g=x0+pot.len-4,a=HP.a,gc=Math.sin(Core.time*5)>0?C.pinkDD:C.pinkD,lift=Math.round((1-a)*8);c.save();c.globalAlpha=a;
+            for(let k=0;k<3;k++){R(c,g-2+k,y-14+k-lift,5-2*k,1,gc);R(c,g-2+k,y+36-k+lift,5-2*k,1,gc);}
+            for(let yy=y-10;yy<y+34;yy+=4)R(c,g,yy,2,3,gc);
+            if(a<1)for(let k=0;k<6;k++)px(c,g-3+((k*5+Math.floor(Core.time*20))%7),y+30-k*8-Math.round((1-a)*16),k%2?C.white:C.pinkL);c.restore();}
+          // pelador: cuchilla sobre la piel, horquilla y mango rosa hacia la mano
+          const pe=p.pe!=null?p.pe:pot.x0+3,ex=Math.round(o0+pe),ey=y+1-(p.hold?0:4)+(p.hold&&Math.floor(Core.time*30)%2?1:0);
+          if(!p.res||p.res.t<0.25){
+            line(c,ex-3,ey-1,ex+1,ey-8,C.metalDD);line(c,ex+3,ey-1,ex+3,ey-8,C.metalDD);
+            obj(c,l=>{R(l,ex-4,ey-2,9,2,C.metal);l.fillStyle=C.pinkD;for(let k=0;k<12;k++)l.fillRect(ex+1+Math.round(k*0.8),ey-9-k,5,3);},{sel:true});
+            R(c,ex-3,ey-2,7,1,C.metalL);for(let k=2;k<11;k++)px(c,ex+2+Math.round(k*0.8),ey-9-k,C.pinkL);
+            const hx2=ex+10,hy2=ey-30;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
+            if(p.hold&&p.vn>40){px(c,ex-6,ey-4,C.white);px(c,ex-8,ey-2,SKIN.l);}}
+        }
       }
-      if(p.k==='cortar'&&p.cuts<p.n){
-        // guía rosa: grosor que debe asomar a la izquierda del cuchillo
-        const g=kx-p.T,pulse=Math.sin(Core.time*5)>0;
-        const gc=pulse?C.pinkDD:C.pinkD;
+      if(p.k==='cortar'&&p.cuts<p.n&&p.hint&&p.hint.a>0){
+        // guía rosa: grosor que debe asomar a la izquierda del cuchillo (solo en la primera rodaja; luego se desvanece)
+        const g=kx-p.T,pulse=Math.sin(Core.time*5)>0,a=p.hint.a,lift=Math.round((1-a)*8);
+        const gc=pulse?C.pinkDD:C.pinkD;c.save();c.globalAlpha=a;
         R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,2,5,gc);
         // triangulitos arriba y abajo y línea de 2 px: se lee de un vistazo sobre la patata
-        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
-        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy,2,3,gc);
+        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k-lift,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
+        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy-lift,2,3,gc);
+        if(a<1)for(let k=0;k<6;k++)px(c,g-3+((k*5+Math.floor(Core.time*20))%7),TCT-14-k*7-Math.round((1-a)*16),k%2?C.white:C.pinkL);
+        c.restore();
       }
+      if(p.k!=='pelar'){
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
-      const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36);
+      const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36-(p.k==='cortar'?(1-Ease.outBack(A.kin))*90:0));
       // cuchilla en 3/4: el filo cae justo en la línea de corte; el mango sube en diagonal hacia la mano
       const sk=yy=>Math.round((41-yy)*0.22);
       obj(c,l=>{l.fillStyle=C.metal;for(let yy=0;yy<42;yy++){const w=yy>38?5-(yy-39):9;l.fillRect(kx-1+sk(yy),ky+yy,w,1);}
@@ -1902,6 +2000,7 @@ function Tortilla(rng,preview){
       for(let k=2;k<13;k++)px(c,kx+9+Math.round(k*0.9),ky-3-k,C.pinkL);px(c,kx+13,ky-8,C.pinkDD);
       const hx2=kx+17,hy2=ky-21;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
       if(A.knife>0.12){R(c,kx-8,TCT-11,3,1,C.white);R(c,kx+4,TCT-11,3,1,C.white);px(c,kx-10,TCT-13,C.white);px(c,kx+7,TCT-13,C.white);}
+      }
     }
     /* puesto 2: bol, huevos y varillas */
     const o1=W-cx;
@@ -2174,9 +2273,23 @@ function drawLensBuddy(c,b,t){
 // cuarto oscuro: tonos, fondo y piezas
 const TONE=['#fbf1ec','#efdcd4','#ddc0b6','#c49c92','#a77c75','#86595a','#633c41','#432630'];
 const DR={tray:[108,122,104,50],fix:[222,128,86,40],box:[14,130,80,34],strip:[112,103,96,9],lamp:[36,20],line:40,slots:[72,128,184,240],L:38};
-function toneOver(c,x,y,w,h,d){
-  if(d<1){c.fillStyle='rgba(251,241,236,'+Math.min(0.97,Math.pow(1-Math.max(0,d),0.75)*0.97).toFixed(3)+')';c.fillRect(x,y,w,h);}
-  else if(d>1){c.fillStyle='rgba(58,24,36,'+Math.min(0.88,(d-1)*1.7).toFixed(3)+')';c.fillRect(x,y,w,h);}
+// revelado de verdad: la foto empieza en blanco y van saliendo primero las sombras y luego los claros.
+// Si te pasas, todo se oscurece a manchas hasta que la imagen se pierde.
+const DEVN=(()=>{const g=mulberry32(77),a=new Float32Array(64*40);for(let i=0;i<a.length;i++)a[i]=g();
+  // ruido suave (manchas): media de vecinos
+  const b=new Float32Array(a.length);for(let y=0;y<40;y++)for(let x=0;x<64;x++){let s=0,n=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=64||yy>=40)continue;s+=a[yy*64+xx];n++;}b[y*64+x]=s/n;}
+  let lo=1,hi=0;for(const v of b){lo=Math.min(lo,v);hi=Math.max(hi,v);}for(let i=0;i<b.length;i++)b[i]=(b[i]-lo)/(hi-lo);return b;})();
+function devSrc(p){if(p.src)return p.src;const k=mk(64,40),x=k.getContext('2d');x.drawImage(p.img,0,0);const d=x.getImageData(0,0,64,40).data,lum=new Float32Array(64*40);
+  for(let i=0;i<lum.length;i++)lum[i]=(d[i*4]*0.3+d[i*4+1]*0.55+d[i*4+2]*0.15)/255;return p.src={d,lum};}
+function develop(c,p,d,w,h){
+  const S=devSrc(p),im=c.createImageData(64,40),o=im.data,PW=[251,244,240],DK=[42,20,24];
+  const over=Math.max(0,Math.min(1,(d-1)/0.45));
+  for(let i=0;i<S.lum.length;i++){const l=S.lum[i],st=0.05+0.4*l,v=Math.max(0,Math.min(1,(d-st)/0.55)),e=v*v*(3-2*v);
+    let r=PW[0]+(S.d[i*4]-PW[0])*e,g=PW[1]+(S.d[i*4+1]-PW[1])*e,b=PW[2]+(S.d[i*4+2]-PW[2])*e;
+    if(over>0){const k=Math.max(0,Math.min(1,over*(1.25+0.6*(1-l))-0.25+(DEVN[i]-0.5)*0.7*over));r+=(DK[0]-r)*k;g+=(DK[1]-g)*k;b+=(DK[2]-b)*k;}
+    o[i*4]=r;o[i*4+1]=g;o[i*4+2]=b;o[i*4+3]=255;}
+  if(w&&w!==64){const t=mk(64,40);t.getContext('2d').putImageData(im,0,0);const x=c;x.save();x.imageSmoothingEnabled=true;x.drawImage(t,0,0,w,h);x.restore();}
+  else c.putImageData(im,0,0);
 }
 function drawDarkroomBg(c){
   const WA='#8a4456',WD='#743849',WL='#9c5266',BN='#5a2c38',BL='#7a3c4a',BD='#45212b';
@@ -2242,10 +2355,12 @@ function Fotos(rng,preview){
     obj(x,l=>drawCar(l,x,car,false),{sel:true});drawCar(null,x,car,true);return crop(cv,VFX-32,FCY-22);}
   // --- fase 2 y 3 ---
   let phase=1,swapT=0;const dev=[],hung=[];let di=0,dst='wait',dT=0,holding=false,rockT=0,hi=0,hst='wait',hT=0,sw=null;
-  const rate0=()=>0.52+rng()*0.22;
+  // cada foto se revela a su ritmo: unas tardan más y otras menos (de 1,1 a 2,6 s hasta el punto justo)
+  const rate0=()=>1.059/(1.1+rng()*1.5);
   function setupDev(list){
-    list.forEach((img,k)=>dev.push({img,d:0,rate:rate0()*(k>=2?1.12:1),fast:k>=1&&rng()<0.45,j:null,print:null}));
+    list.forEach((img,k)=>dev.push({img,d:0,rate:rate0(),j:null,print:null}));
   }
+  let stripA=1;
   function goPhase2(){
     // las mejores fotos del carrete (en el orden en que se hicieron) pasan al cuarto oscuro
     const rk={P:0,B:1,R:2,F:3,E:4};const best=roll.map((r,i)=>({r,i})).sort((a,b)=>rk[a.r.j]-rk[b.r.j]||a.i-b.i).slice(0,N2).sort((a,b)=>a.i-b.i).map(o=>o.r.img);
@@ -2255,7 +2370,7 @@ function Fotos(rng,preview){
   function goPhase3(){phase=3;swapT=0;hst='wait';hi=0;}
   function newSwing(){const P=1.15+rng()*0.4-hi*0.06;sw={A:0.42+rng()*0.16,w:2*Math.PI/P,t:0,ph:Math.PI/2,L:0};}
   const theta=()=>sw.A*Math.sin(sw.w*sw.t+sw.ph);
-  function bake(p){const k=mk(64,40),x=k.getContext('2d');x.drawImage(p.img,0,0);toneOver(x,0,0,64,40,p.d);
+  function bake(p){const k=mk(64,40),x=k.getContext('2d');develop(x,p,p.d);
     const h=mk(32,20),hx=h.getContext('2d');hx.imageSmoothingEnabled=true;hx.drawImage(k,0,0,32,20);p.print=k;p.half=h;}
   const st=TDEMO;TDEMO=null;
   if(st==='revelar'||st==='tender'){for(const c of cars)c.j='P';const imgs=[0,1,2,3].map(fakeShot);setupDev(imgs);phase=2;swapT=9;dst='in';dT=0;
@@ -2264,23 +2379,23 @@ function Fotos(rng,preview){
   const self={_cars:cars,_ph:()=>({phase,dst,hst,p:dev[di],sw,th:sw?theta():0,hi}),unit:'Paso',total:TOTAL,mood:'fotos',hold:true,
     inPractice(){return false;},
     progress(){return done;},
-    cue(){return phase===1?'Fase 1 · Foto cuando el coche esté en el centro · carrete: '+film:phase===2?'Fase 2 · Mantén para mecer la cubeta; suelta cuando la foto tenga el tono de la muestra':'Fase 3 · Toca cuando la foto pase justo bajo la pinza';},
+    cue(){return phase===1?'Fase 1 · Foto cuando el coche esté en el centro · carrete: '+film:phase===2?'Fase 2 · Mantén para revelar; suelta cuando la foto se vea bien':'Fase 3 · Toca cuando la foto pase justo bajo la pinza';},
     update(dt){
       swapT+=dt;flash=Math.max(0,flash-dt);pressT=Math.max(0,pressT-dt);emptyT=Math.max(0,emptyT-dt);
       for(const r of roll)r.t+=dt;
       if(phase===1){
         time+=dt;place();
         for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,150,false,film>0?'Se escapó':'Sin carrete');}}
-        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén pulsado para mecer la cubeta y que salga la foto. Suelta cuando tenga el tono de la muestra.',2.2);}}
+        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4);}}
         return;}
       if(phase===2){
-        rockT+=dt*(holding?1:0.25);
+        rockT+=dt*(holding?1:0.25);if(di>=1||(di===0&&dst==='out'))stripA=Math.max(0,stripA-dt*1.5);
         const p=dev[di];
         if(dst==='wait'){if(swapT>2.2){dst='in';dT=0;}return;}
         dT+=dt;
         if(dst==='in'){if(dT>0.7){dst='ready';dT=0;}}
-        else if(dst==='dev'&&p){p.d+=p.rate*(0.55+0.75*Math.min(1.3,p.d))*(p.fast&&p.d>0.55?1.35:1)*dt;if(p.d>=1.45)judge2('F','▲ Se veló: muy oscura');}
-        else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';}
+        else if(dst==='dev'&&p){p.d+=p.rate*(0.6+0.8*Math.min(1.3,p.d))*dt;if(p.d>=1.45)judge2('F','▲ Te pasaste: se quemó');}
+        else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';if(di===1&&dst==='in')Core.note(160,62,'Ahora sin guía: suelta cuando se vea bien');}
         else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.1);}
         return;}
       // fase 3
@@ -2313,7 +2428,7 @@ function Fotos(rng,preview){
     release(){
       if(phase!==2||dst!=='dev')return;holding=false;
       const p=dev[di],d=p.d-1,a=Math.abs(d),j=a<=0.05?'P':a<=0.1?'B':a<=0.17?'R':'F';
-      judge2(j,j==='P'?'':(d<0?'▼ Muy clara':'▲ Muy oscura'));
+      judge2(j,j==='P'?'':(d<0?'▼ Te quedaste corto: no se ve':'▲ Te pasaste: muy oscura'));
     },
     draw(c){
       if(phase===1){drawStreet(c);return;}
@@ -2370,7 +2485,9 @@ function Fotos(rng,preview){
       pline(c,sx,11,tx,ty-1,'#f0e0d0');drawHanging(c,dev[hi],Math.round(tx),Math.round(ty),0);
       obj(c,l=>{rr(l,sx-9,-4,19,9,C.lavD,3);rr(l,sx-6,4,13,7,'#ffe1cc',3);rr(l,sx-2,9,5,3,'#ffe1cc',1);},{sel:true});R(c,sx-8,1,17,1,C.lav);R(c,sx-8,4,17,1,C.lavDD);R(c,sx-4,7,9,1,'#f2b9a0');R(c,sx-4,5,3,1,'#fff3ea');}
     // tira de prueba con el tono objetivo
-    const [sx,sy,sw2,sh]=DR.strip;
+    const [sx,sy,sw2,sh]=DR.strip;const p=dev[Math.min(di,N2-1)];
+    // indicador de cuándo soltar: solo con la primera foto; luego se desvanece y toca revelar a ojo
+    if(phase===2&&stripA>0){c.save();c.globalAlpha=stripA;
     obj(c,l=>{R(l,sx-2,sy-2,sw2+4,sh+4,C.paper);});
     for(let i=0;i<8;i++)R(c,sx+i*12,sy,12,sh,TONE[i]);
     const tX=sx+Math.round(1/1.5*sw2),tp=Math.sin(Core.time*6)>0?C.white:C.pinkL;
@@ -2378,11 +2495,11 @@ function Fotos(rng,preview){
     R(c,tX-4,sy-4,9,2,tp);R(c,tX-4,sy+sh+2,9,2,tp);R(c,tX-4,sy-4,2,sh+8,tp);R(c,tX+3,sy-4,2,sh+8,tp);
     R(c,tX-3,sy-3,7,1,C.pinkD);R(c,tX-3,sy+sh+2,7,1,C.pinkD);
     R(c,sx+4,sy-4,8,3,'rgba(255,248,220,0.8)');R(c,sx+sw2-12,sy-4,8,3,'rgba(255,248,220,0.8)');
-    const p=dev[Math.min(di,N2-1)];
-    if(phase===2&&p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
+    if(p&&(dst==='dev'||dst==='ready'||dst==='out')){const cx=sx+Math.round(Math.min(1.5,p.d)/1.5*sw2);
       // puntero grande con contorno: triángulo debajo de la tira y muestra del tono actual encima
       obj(c,l=>{l.fillStyle=C.butter;for(let k=0;k<6;k++)l.fillRect(cx-5+k,sy+sh+9-k,11-2*k,1);l.fillRect(cx-5,sy+sh+10,11,2);rr(l,cx-7,sy-15,15,11,C.white,2);});
       R(c,cx-4,sy+sh+10,9,1,C.butterL||C.white);const ti=Math.max(0,Math.min(7,Math.round(p.d/1.5*8-0.5)));R(c,cx-5,sy-13,11,7,TONE[ti]);R(c,cx-5,sy-13,11,1,'rgba(255,255,255,0.35)');}
+    c.restore();}
     // cubeta de revelado: líquido que se mece mientras mantienes
     const [tx,ty,tw,th2]=DR.tray,rock=holding?Math.sin(rockT*9):Math.sin(rockT*9)*0.25,rx=Math.round(rock*2);
     rr(c,tx+4,ty+3,tw-8,th2-7,'#c97c8a',3);
@@ -2397,7 +2514,7 @@ function Fotos(rng,preview){
         const x=px0+(inTray?rx:0);
         const w64=Math.round(64*sc),h40=Math.round(40*sc);obj(c,l=>{R(l,x-1,py0-1,w64+2,h40+2,C.paper);});
         if(dst==='in')R(c,x,py0,64,40,TONE[0]);
-        else{toneX.clearRect(0,0,64,40);toneX.drawImage(p.img,0,0);toneOver(toneX,0,0,64,40,p.d);c.drawImage(tone,0,0,64,40,x,py0,w64,h40);}
+        else{develop(toneX,p,p.d);c.drawImage(tone,0,0,64,40,x,py0,w64,h40);}
         if(dst==='in'||dst==='out'){const cx=x+w64-4,cy=py0+2;for(let k=0;k<2;k++)pline(c,cx+k*3,cy,cx+30+k*3,cy-26,k?'#d8b678':'#ecd29a');}
       }
     }
@@ -2415,7 +2532,7 @@ function Fotos(rng,preview){
   }
   // foto colgada por arriba: si se balancea (sw = desplazamiento abajo), cada franja se desplaza más cuanto más abajo
   function drawHanging(c,p,x,y,tilt,sw){
-    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');kx.imageSmoothingEnabled=true;kx.drawImage(p.img,0,0,32,20);toneOver(kx,0,0,32,20,p.d);p.half=k;}
+    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');develop(kx,p,p.d,32,20);p.half=k;}
     const off=r=>Math.round(sw*r/24);
     obj(c,l=>{for(let r=0;r<24;r+=3)R(l,x-18+off(r+1.5),y+r,36,3,C.paper);});
     for(let r=0;r<20;r+=2)c.drawImage(p.half,0,r,32,2,x-16+off(r+3),y+2+r,32,2);
@@ -2429,21 +2546,22 @@ const GAMES={
     seq:[['bien','fill'],['bien','cap'],['mal','fill'],['mal','cap']],
     bot(g){const P=g._ph();if(P.phase===2){if(P.cap||P.reload>0)return;for(const b of g._bs){if(b.cj||b.x>FX)continue;if(b.x+P.v*P.landT(b)>=FX-0.4)return 'tap';}return;}
       const b=g._bs.find(b=>b.st==='fill');if(b&&b.level>=b.target-0.15)return 'tap';}},
-  grapadora:{name:'Grapadora',hint:'Fase 1: llega un montón de folios cada vez. Míralo bien antes de que la mano lo empuje: grapa solo si tiene la marca rosa y pulsa cuando la marca pase justo bajo la grapadora (algunos llevan dos). Los dibujos, las fotos, los que no tienen marca y los que ya llevan clip se dejan pasar. Fase 2: los montones grapados cuelgan de una pinza que se balancea; toca para soltarlos encima de la torre. Si quedan torcidos, la torre se inclina y se cae.',make:Stapler,crop:[96,58],gesture:'tap',warm:0.4,view:[96,62],loopT:7,
+  grapadora:{name:'Grapadora',hint:'Fase 1: los montones llegan por una cinta que acelera, frena o va a tirones. Grapa cada marca rosa justo bajo la cabeza de la grapadora (puede haber una, dos o tres). Fase 2: tu compañero cruza en su silla de oficina con el montón en la cabeza; toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',make:Stapler,crop:[96,58],gesture:'tap',warm:0.4,view:[96,62],loopT:7,
     seq:[['bien','grapar'],['bien','apilar'],['mal','grapar'],['mal','apilar']],
     bot(g){const P=g._ph();
       if(P.phase===2){if(P.st2!=='swing')return;const e=(P.sx-P.topX)*Math.sign(P.vx||1);if(e>=-Math.abs(P.vx)*0.018&&e<=0.6)return 'tap';return;}
-      const s=P.cur;if(!s||s.st!=='slide'||s.trap||s.hitch>0)return;for(const m of s.marks){if(m.j)continue;const d=s.x+m.o-SHX;if(d>=0&&d<3)return 'tap';}}},
-  tostadora:{name:'Tostadora',hint:'Fase 1: mantén pulsado para bajar la palanca y suelta cuando la aguja llegue a la marca rosa (el color del pedido). Fase 2: unta todas las tostadas; la espátula cruza una sola vez de izquierda a derecha: mantén justo cuando entre en la tostada y suelta justo cuando salga.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
+      const s=P.cur;if(!s||s.st!=='slide')return;for(const m of s.marks){if(m.j)continue;const d=s.x+m.o-SHX;if(d>=-0.5&&d<4)return 'tap';}}},
+  tostadora:{name:'Tostadora',hint:'Fase 1: mantén para bajar la palanca y suelta cuando la tostada tenga el color del pedido; la marca rosa solo sale en la primera. Fase 2: la espátula cruza una vez: mantén al entrar en la tostada y suelta al salir; las guías solo salen en la primera pasada.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
     seq:[['bien','tostar'],['bien','untar'],['mal','tostar'],['mal','untar']],
     bot(g,D){const d=g._dbg();if(d.phase===2){if(d.swapT<2||!d.u||d.u.st!=='pass')return;if(d.u.sx==null&&d.kx>=d.e[0])return 'down';if(d.h2&&d.kx>=d.e[1])return 'up';return;}if(!d.b)return;if(d.st==='ready'){D.rt=(D.rt||0)+D.dt;if(D.rt>0.5){D.rt=0;return 'down';}}if(d.st==='toast'&&d.b.p>=d.b.target)return 'up';}},
-  tortilla:{name:'Tortilla de patatas',hint:'Cuatro gestos distintos: corta rodajas iguales tocando cuando la patata llegue a la guía, casca los huevos manteniendo y soltando en la marca, bate a ritmo sin salirte de la zona y dale la vuelta soltando con el impulso justo.',make:Tortilla,crop:[86,56],gesture:'mix',warm:0.5,view:D=>{const k=D.g._dbg().k;return k==='cortar'?[86,58]:k==='vuelta'?[86,36]:[98,36];},loopT:7,
+  tortilla:{name:'Tortilla de patatas',hint:'Pela la patata (mantén y suelta al llegar al final), córtala en rodajas iguales, casca los huevos con la fuerza justa, bate a ritmo y dale la vuelta. Las guías rosas de pelar y cortar solo salen la primera vez.',make:Tortilla,crop:[86,56],gesture:'mix',warm:0.5,view:D=>{const k=D.g._dbg().k;return k==='cortar'||k==='pelar'?[86,58]:k==='vuelta'?[86,36]:[98,36];},loopT:7,
     bot(g,D){const d=g._dbg(),p=d.p;if(!d.ready)return;
+      if(d.k==='pelar'&&!p.res){if(!p.hold)return 'down';if(p.pe>=d.pend-0.3)return 'up';return;}
       if(d.k==='cortar'&&p.cuts<p.n&&d.past>=p.T-0.1)return 'tap';
       if(d.k==='huevo'&&!p.open){if(!p.hold)return 'down';if(p.c>=p.target-0.004)return 'up';}
       if(d.k==='batir'&&p.fin==null){D.cd=(D.cd||0)-(D.dt||0.016);if(p.s<p.z-0.03&&D.cd<=0){D.cd=0.09;return 'tap';}}
       if(d.k==='vuelta'&&p.pre<=0&&!g._flip()){if(!p.hold)return 'down';const u=(p.ht/p.period)%1;if(u<0.5&&p.p>=p.target-0.004)return 'up';}}},
-  fotos:{name:'Fotos a coches',hint:'Fase 1: miras por el visor de una cámara de carrete. Toca cuando el coche quede centrado; el carrete es limitado y cada coche solo admite una foto (ojo con los patitos, los gatos y los pájaros que se posan en el objetivo). Fase 2: en el cuarto oscuro mantén para mecer la cubeta y suelta cuando la foto tenga el tono de la muestra. Fase 3: cuelga cada foto tocando cuando pase bajo la pinza.',make:Fotos,crop:[96,80],gesture:'mix',
+  fotos:{name:'Fotos a coches',hint:'Fase 1: toca cuando el coche quede centrado en el visor; el carrete es limitado. Fase 2: mantén para revelar; la foto sale del papel en blanco. Suelta cuando se vea bien: si te pasas se oscurece. Cada foto va a su ritmo y solo la primera trae guía. Fase 3: cuelga cada foto cuando pase bajo la pinza.',make:Fotos,crop:[96,80],gesture:'mix',
     chips:'<b style="background:var(--pink)">Toca</b> <b style="background:var(--mint)">Mantén y suelta</b> <b>Toca</b>',
     view:D=>{const P=D.g._ph();return P.phase===1?[96,88]:P.phase===2?[96,100]:[Math.max(0,Math.min(192,(DR.slots[Math.min(P.hi,3)])-64)),6];},warm:0.6,loopT:8,
     seq:[['bien','calle'],['bien','revelar'],['bien','tender'],['mal','calle'],['mal','revelar'],['mal','tender']],
@@ -2628,9 +2746,9 @@ function drawParts(c,dt){
 let Demo=null;const demoFull=mk(W,H),demoCv=$('demo'),demoCx=demoCv.getContext('2d');
 // La intro es un vídeo corto que se juega solo: primero un intento perfecto ("Así") y luego uno con
 // error ("Si te retrasas…"), con el resultado a la vista. Así no hacen falta rondas de práctica.
-const TSEQ=[['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
+const TSEQ=[['bien','pelar'],['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
 function demoStart(id,phase){
-  // la tortilla enseña sus cuatro gestos, uno por vuelta del vídeo
+  // la tortilla enseña sus gestos, uno por vuelta del vídeo
   const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
   Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
   DEMO=true;try{for(let w=GAMES[id].warm||0;w>0;w-=1/30)Demo.g.update(1/30);}finally{DEMO=false;}Demo.last=null;

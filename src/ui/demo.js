@@ -2,9 +2,9 @@
 let Demo=null;const demoFull=mk(W,H),demoCv=$('demo'),demoCx=demoCv.getContext('2d');
 // La intro es un vídeo corto que se juega solo: primero un intento perfecto ("Así") y luego uno con
 // error ("Si te retrasas…"), con el resultado a la vista. Así no hacen falta rondas de práctica.
-const TSEQ=[['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
+const TSEQ=[['bien','pelar'],['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
 function demoStart(id,phase){
-  // la tortilla enseña sus cuatro gestos, uno por vuelta del vídeo
+  // la tortilla enseña sus gestos, uno por vuelta del vídeo
   const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
   Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
   DEMO=true;try{for(let w=GAMES[id].warm||0;w>0;w-=1/30)Demo.g.update(1/30);}finally{DEMO=false;}Demo.last=null;

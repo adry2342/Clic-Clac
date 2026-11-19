@@ -27,6 +27,11 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   // cartel de cambio de fase: bloquea los clics mientras se lee
   bannerT:0,
   banner(tag,title,sub,dur){if(DEMO)return;dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.className='';el.hidden=false;void el.offsetWidth;Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();},
+  // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
+  note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);
+    el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';el.innerHTML='<b>'+txt+'</b>';$('stage').appendChild(el);setTimeout(()=>el.remove(),1300);},
+  // pistas que se desvanecen: la primera vez se ven las marcas rosas; después se apagan y se juega a ojo
+  hint(){return {a:1,f:-1,fade(){if(this.f<0&&this.a>0)this.f=0;},step(dt){if(this.f>=0){this.f+=dt;this.a=Math.max(0,1-this.f/0.9);}return this.a;}};},
   // clic de más (sin nada que acertar): cuenta como fallo para que no compense aporrear
   waste(x,y,det){this.judge('F',x,y,false,det);}
 };

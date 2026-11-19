@@ -36,8 +36,8 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 📎 Grapadora
 <img src="media/grapadora.gif" width="100%" alt="Grapadora">
 
-**Fase 1 · Grapar.** Llega un montón de folios cada vez y tienes un momento para mirarlo antes de que la mano lo empuje. Grapa **solo** si lleva la marca rosa: los dibujos, las fotos, los que no tienen marca y los que ya llevan clip se dejan pasar.
-**Fase 2 · Apilar.** Los montones grapados cuelgan de una pinza que se balancea: suéltalos encima de la torre. Si quedan torcidos, la torre se inclina y se cae.
+**Fase 1 · Grapar.** Los montones llegan por una cinta transportadora que pasa bajo la grapadora: grapa cada marca rosa justo debajo de la cabeza. Ningún montón es igual: grosor, una, dos o tres marcas en cualquier sitio, y la cinta acelera, frena o va a tirones.
+**Fase 2 · Apilar.** Un compañero cruza de lado a lado en su silla de oficina con el montón en la cabeza (el pistón de gas sube con la torre): toca para soltarlo encima. Si la torre se inclina demasiado, gira entera, se cae y se acaba la fase.
 
 </td>
 </tr>
@@ -47,8 +47,8 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 🍞 Tostadora
 <img src="media/tostadora.gif" width="100%" alt="Tostadora">
 
-**Fase 1 · Tostar.** Mantén para bajar la palanca y suelta en el color del pedido.
-**Fase 2 · Untar.** La espátula cruza una sola vez: mantén al entrar en la tostada y suelta al salir. Mantequilla, mermelada, crema de cacahuete, miel…
+**Fase 1 · Tostar.** Mantén para bajar la palanca y suelta en el color del pedido. La marca rosa de la aguja solo sale en la primera tostada: luego, a ojo.
+**Fase 2 · Untar.** La espátula cruza una sola vez: mantén al entrar en la tostada y suelta al salir. Las guías solo salen en la primera pasada. Mantequilla, mermelada, crema de cacahuete, miel…
 
 </td>
 <td valign="top">
@@ -56,7 +56,7 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 🥔 Tortilla de patatas
 <img src="media/tortilla.gif" width="100%" alt="Tortilla de patatas">
 
-Corta rodajas iguales, casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
+Pela la patata (mantén y suelta al llegar al final), córtala en rodajas iguales (las guías rosas solo salen la primera vez), casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
 
 </td>
 </tr>
@@ -67,7 +67,7 @@ Corta rodajas iguales, casca los huevos con la fuerza justa, bate a ritmo sin sa
 <img src="media/fotos.gif" width="60%" alt="Fotos a coches">
 
 **Fase 1 · Calle.** Cámara de carrete: haz la foto cuando el coche pase por el centro. El carrete es limitado, hay patitos, gatos y perros cruzando… y algún pájaro que se posa en el objetivo.
-**Fase 2 · Cuarto oscuro.** Mece la cubeta y suelta cuando tu foto tenga el tono de la muestra.
+**Fase 2 · Cuarto oscuro.** Mece la cubeta: la foto sale del papel en blanco poco a poco. Suelta cuando se vea bien; si te pasas, se quema a manchas y se pierde. Cada foto se revela a su ritmo y solo la primera trae guía.
 **Fase 3 · Tendedero.** Cuelga cada foto cuando pase justo bajo la pinza.
 
 </td>

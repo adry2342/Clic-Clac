@@ -1,14 +1,17 @@
 /* ---------- Minijuego 4: Tortilla de patatas ----------
    Una cocina larga con tres puestos; la cámara se desliza de uno a otro.
    Cada paso tiene su propio gesto:
+   · Pelar: mantén para pasar el pelador por la patata y suelta justo al llegar al final
+     (dos pasadas: se gira la patata entre una y otra).
    · Cortar: la mano empuja la patata a tirones; toca cuando asome el grosor de la guía.
+   Las guías rosas de pelar y cortar solo se ven la primera vez; luego se desvanecen.
    · Cascar: mantén para apretar el huevo contra el borde y suelta con la grieta justa.
    · Batir: toca a ritmo para que la aguja se quede dentro de la zona que se mueve.
    · Voltear: mantén para coger impulso (sube y baja) y suelta en la marca. */
 const EGG={raw:'#ffd34d',beat:'#ffe07a',cook:['#ffe58a','#ffd36b','#f7bf55','#e8a245','#c9803a']};
 const TCT=128,TKX=146,TBW=146,TPN=144,TPL=284,TGA=216;
-const POT={a:'#fff0b8',b:'#f2d58a',c:'#fffbe2',d:'#f7e3a0'};
-const TCUE={cortar:'Corta rodajas iguales: toca cuando la patata llegue a la guía rosa',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
+const POT={a:'#fff0b8',b:'#f2d58a',c:'#fffbe2',d:'#f7e3a0'},SKIN={a:'#dcae78',d:'#c08f5c',s:'#9c6d45',l:'#ecc897'};
+const TCUE={pelar:'Pela la patata: mantén y suelta justo al llegar al final',cortar:'Corta rodajas iguales: toca cuando asome el grosor justo',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
   batir:'Bate a ritmo: toca para que la aguja no salga de la zona rosa',vuelta:'Dale la vuelta: mantén para coger impulso y suelta en la marca',servir:''};
 function drawTortillaPanel(c,k){
   // pared de azulejos tipo metro (lavanda) continua entre paneles
@@ -89,9 +92,13 @@ function drawGauge(c,x,y,h,val,zc,zw,opts){
 function Tortilla(rng,preview){
   // receta: dos tortillas; cada una con sus rodajas, huevos, batido y vuelta
   const ph=[];let TOTAL=0;
+  // grosor de las rodajas: el mismo en las dos tortillas (la guía rosa solo sale en la primera rodaja de la partida)
+  const T=7+Math.floor(rng()*3);
   for(let k=0;k<2;k++){
-    const n=3+(k===1&&rng()<0.6?1:0);
-    ph.push({k:'cortar',st:0,n,T:7+Math.floor(rng()*3),base:(11+rng()*3)*(1+k*0.22),f:1.2+rng()*0.8,ph:rng()*6});TOTAL+=n;
+    const n=3+(k===1&&rng()<0.6?1:0),len=n*T+30+Math.round(rng()*22),pv=(36+rng()*10)*(1+k*0.18);
+    // pelar: dos pasadas (arriba, se gira la patata, otra vez arriba); cada una a su ritmo
+    for(let q=0;q<2;q++){ph.push({k:'pelar',st:0,tort:k,stroke:q,len,v:pv*(1+q*0.08),f:0.9+rng()*0.8,pp:rng()*6});TOTAL++;}
+    ph.push({k:'cortar',st:0,tort:k,n,T,len,base:(11+rng()*3)*(1+k*0.22),f:1.2+rng()*0.8,ph:rng()*6});TOTAL+=n;
     const ne=2+(k===1&&rng()<0.6?1:0);
     for(let e=0;e<ne;e++){ph.push({k:'huevo',st:1,egg:e,r:(0.5+rng()*0.25)*(1+k*0.18),f:1.1+rng()*0.9,pp:rng()*6,target:0.5+rng()*0.3});TOTAL++;}
     ph.push({k:'batir',st:1,dur:3.4+k*0.6,zp:rng()*6,zf:0.9+rng()*0.4+k*0.25});TOTAL++;
@@ -99,7 +106,8 @@ function Tortilla(rng,preview){
     ph.push({k:'servir',st:2,tort:k});
   }
   let pi=0,camX=0,cam=null,wait=0.3,endT=0,ended=false,done=0;
-  const A={pot:null,knife:0,chopX:0,slices:[],pile:0,scoop:0,bowlSl:0,eggs:0,yolks:[],beat:0,wa:0,pan:0,cook:0,flip:null,plate:0,serve:null,splat:0,shells:[],mess:0,steam:[],bob:0};
+  const HP=Core.hint(),HC=Core.hint();// guías de pelar y de cortar: solo la primera vez
+  const A={peels:[],kin:1,pot:null,knife:0,chopX:0,slices:[],pile:0,scoop:0,bowlSl:0,eggs:0,yolks:[],beat:0,wa:0,pan:0,cook:0,flip:null,plate:0,serve:null,splat:0,shells:[],mess:0,steam:[],bob:0};
   const bgc=mk(W*3,H),bx=bgc.getContext('2d');for(let k=0;k<3;k++){const p=mk(W,H);drawTortillaPanel(p.getContext('2d'),k);bx.drawImage(p,k*W,0);}
   const P=()=>ph[pi];
   const J=(a,p,b,r)=>a<=p?'P':a<=b?'B':a<=r?'R':'F';
@@ -107,7 +115,14 @@ function Tortilla(rng,preview){
   function enter(){
     const p=P();if(!p){return;}
     p.t=0;p.init=true;
-    if(p.k==='cortar'){A.pot={x0:TKX+20,len:p.n*p.T+40,tip:true,push:0};p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];}
+    if(p.k==='pelar'){
+      if(p.stroke===0){A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[p.len,p.len],rolled:false,hop:0};A.peels=[];A.slices=[];A.pile=0;A.scoop=0;
+        p.bn=p.tort===0?['Paso 1','¡A pelar!','Mantén para pasar el pelador y suelta justo al llegar al final de la patata. Luego se gira y otra pasada.',2.4]:['Otra tortilla','¡A pelar!','Suelta justo al final de la patata.',1.6];}
+      else if(p.tort===0){HP.fade();p.note='Ahora sin guía: suelta al llegar al final';}
+      p.hold=false;p.pe=null;p.ht=0;p.res=null;p.vn=0;A.kin=0;}
+    if(p.k==='cortar'){if(!A.pot||!A.pot.peeled)A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peeled:true};
+      A.pot.push=0;A.kin=0;p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];p.hint=HC;
+      p.bn=p.tort===0?['Paso 2','¡A cortar!','Toca cuando la rodaja tenga el grosor de la guía rosa. La guía solo sale en la primera: las demás, iguales a ojo.',2.4]:['Paso 2','¡A cortar!','Rodajas iguales que antes, ahora sin guía.',1.6];}
     if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;}
     if(p.k==='batir'){p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
     if(p.k==='vuelta'){p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
@@ -117,9 +132,9 @@ function Tortilla(rng,preview){
   function next(){pi++;if(pi<ph.length)enter();}
   enter();
   if(TDEMO){const k=ph.findIndex(q=>q.k===TDEMO);if(k>0){pi=k;enter();camX=ph[pi].st*W;cam=null;wait=0.1;if(TDEMO==='batir'){A.bowlSl=3;A.eggs=2;A.yolks=[{t:1,x:TBW-20},{t:1,x:TBW-4}];}}TDEMO=null;}
-  if(preview){A.pot.x0-=6;}
+  if(preview){const p=P();p.hold=true;p.pe=A.pot.x0+Math.round(A.pot.len*0.55);A.pot.rem[0]=A.pot.len-(p.pe-A.pot.x0);for(let k=0;k<5;k++)A.peels.push({x:TKX+18-k*9,y:TCT-12,vx:0,vy:0,t:1,rest:true,s:k%2});}
   const active=()=>!cam&&wait<=0;
-  const self={_A:A,_flip:()=>A.flip,_dbg:()=>{const p=P()||{};return {k:p.k,ready:active(),p,past:A.pot?TKX-A.pot.x0:0,z:p.z};},unit:'Paso',total:TOTAL,mood:'tortilla',hold:true,
+  const self={_A:A,_flip:()=>A.flip,_dbg:()=>{const p=P()||{};return {k:p.k,ready:active(),p,past:A.pot?TKX-A.pot.x0:0,pend:A.pot?A.pot.x0+A.pot.len-4:0,z:p.z};},unit:'Paso',total:TOTAL,mood:'tortilla',hold:true,
     inPractice(){return false;},progress(){return done;},
     cue(){const p=P();return p?TCUE[p.k]:'';},
     update(dt){
@@ -131,12 +146,33 @@ function Tortilla(rng,preview){
       for(const y of A.yolks){y.t+=dt;}
       for(const s of A.steam){s.t+=dt;s.y-=dt*12;s.x+=Math.sin(s.t*3+s.k)*dt*5;}A.steam=A.steam.filter(s=>s.t<1.3);
       if(A.pan>0&&Math.random()<dt*5)A.steam.push({x:TPN-30+Math.random()*60,y:108,t:0,k:Math.random()*6});
+      A.kin=Math.min(1,A.kin+dt/0.35);HP.step(dt);
+      for(const q of A.peels){if(q.rest)continue;q.t+=dt;q.vy+=320*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;if(q.y>=TCT-12){q.y=TCT-12;q.rest=true;}}
       const p=P();
       if(!p){endT+=dt;if(endT>0.8&&!ended){ended=true;Core.finish();}return;}
+      // cartel de cada paso nuevo (al llegar, no al crear el juego); el paso espera a que se lea
+      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3]);if(!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
+      if(!cam&&p.note&&!DEMO){Core.note(TKX+40,24,p.note);p.note=null;}
+      if(p.hint)p.hint.step(dt);
       p.t+=dt;
+      if(p.k==='pelar'){
+        const pot=A.pot,end=pot.x0+pot.len-4,band=pot.rolled?1:0;
+        if(p.res){p.res.t+=dt;
+          // tras la primera pasada la patata da media vuelta: la piel que quedaba abajo sale arriba
+          if(p.stroke===0){const u=Math.min(1,Math.max(0,(p.res.t-0.25)/0.4));pot.hop=Math.sin(u*Math.PI)*7;if(u>=0.5)pot.rolled=true;if(p.res.t>0.85)next();}
+          else if(p.res.t>0.6){pot.peeled=true;next();}
+          return;}
+        if(!active())return;
+        if(p.hold){p.ht+=dt;const v=p.v*(0.35+1.3*Math.max(0,Math.sin(p.pp+p.ht*Math.PI*2*p.f)))/0.76;const x0=p.pe;p.pe+=v*dt;p.vn=v;
+          pot.rem[band]=Math.max(0,Math.min(pot.rem[band],pot.x0+pot.len-p.pe));
+          if(Math.floor(x0/5)!==Math.floor(p.pe/5)&&p.pe<end+2)A.peels.push({x:p.pe-3,y:TCT-42,vx:-18-Math.random()*22,vy:-40-Math.random()*30,t:0,rest:false,s:Math.random()<0.5?1:0});
+          if(A.peels.length>60)A.peels.shift();
+          if(p.pe>end+12){p.hold=false;peel('F','▲ Te pasaste: el pelador se salió');}}
+        return;
+      }
       if(p.k==='cortar'){
         const pot=A.pot;
-        if(p.cuts>=p.n){A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.n;next();}return;}
+        if(p.cuts>=p.n){A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.n;pot.gone=true;next();}return;}
         if(!active())return;
         const v=p.base*(0.3+1.4*Math.max(0,Math.sin(p.ph+p.t*Math.PI*2*p.f)))/0.75;pot.x0-=v*dt;pot.push=v;
         if(TKX-pot.x0>p.T+5)cut('F','▲ Muy gruesa');
@@ -165,14 +201,17 @@ function Tortilla(rng,preview){
     },
     press(){
       const p=P();if(!p||!active())return;
-      if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,j=J(Math.abs(e),1,2,3.5);cut(j,e<0?'▼ Muy fina':'▲ Muy gruesa');}
+      if(p.k==='pelar'&&!p.res&&!p.hold){p.hold=true;p.ht=0;p.pe=A.pot.x0+3;Snd.burst(3200,.04,.06,2);}
+      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,j=J(Math.abs(e),1,2,3.5);cut(j,e<0?'▼ Muy fina':'▲ Muy gruesa');}
       else if(p.k==='huevo'&&!p.open){p.hold=true;p.ht=0;}
       else if(p.k==='batir'&&p.fin==null){p.s=Math.min(1.05,p.s+0.12*(1-0.35*p.s));Snd.burst(4200,.05,.1,1.5);}
       else if(p.k==='vuelta'&&p.pre<=0&&!A.flip){p.hold=true;p.ht=0;p.p=0;}
     },
     release(){
       const p=P();if(!p)return;
-      if(p.k==='huevo'&&p.hold){p.hold=false;if(p.c<0.08){p.c=0;Snd.tone(900,.03,'sine',.02);return;}
+      if(p.k==='pelar'&&p.hold){p.hold=false;if(p.pe-(A.pot.x0+3)<6){p.pe=null;return;}
+        const e=p.pe-(A.pot.x0+A.pot.len-4),j=J(Math.abs(e),2.5,5,9);peel(j,e<0?'▼ Te quedaste corto: quedó piel':'▲ Te pasaste');}
+      else if(p.k==='huevo'&&p.hold){p.hold=false;if(p.c<0.08){p.c=0;Snd.tone(900,.03,'sine',.02);return;}
         const e=p.c-p.target,j=J(Math.abs(e),0.04,0.085,0.15);crack(j,e<0?'▼ Poca fuerza':'▲ Mucha fuerza: cáscara',false);}
       else if(p.k==='vuelta'&&p.hold){p.hold=false;if(p.ht<0.06){p.p=0;return;}
         const e=p.p-p.target,j=J(Math.abs(e),0.035,0.075,0.13);
@@ -180,8 +219,12 @@ function Tortilla(rng,preview){
         Snd.boing();judge(j,e<0?'▼ Poco impulso':'▲ Demasiado impulso',TPN,50);}
     }
   };
+  function peel(j,det){
+    const p=P();p.res={t:0,j};Snd.tone(520,.06,'triangle',.04,0,380);judge(j,det,Math.min(TKX+110,p.pe),58);
+  }
   function cut(j,det){
     const p=P(),pot=A.pot,w=Math.max(2,Math.round(TKX-pot.x0));
+    if(p.cuts===0&&p.hint){p.hint.fade();if(p.tort===0)Core.note(TKX-30,24,'Ahora a ojo: iguales a la primera');}
     A.slices.push({w,t:0,x:TKX-w,tip:pot.tip,i:p.cuts,j});pot.len-=w;pot.x0=TKX;pot.tip=false;p.cuts++;A.knife=0.24;
     Snd.burst(1500,.05,.28,3);Snd.tone(170,.06,'triangle',.05);judge(j,det,TKX-20,58);
   }
@@ -204,29 +247,53 @@ function Tortilla(rng,preview){
       for(const s of A.slices){const k=ease(Math.min(1,s.t/0.28)),tx=o0+96-s.i*13+sc*150,x=Math.round((o0+s.x)+(tx-(o0+s.x))*k),hh=Math.round(30*(1-k)+7*k),ww=Math.round(s.w*(1-k)+22*k);
         if(sc<1)obj(c,l=>{if(k<1)rr(l,x,TCT-10-hh,ww,hh,POT.a,2);else ell(l,x+11,TCT-14+(s.t<0.36?1:0),11+(s.t<0.36?1:0),4-(s.t<0.36?1:0),POT.a);},{sel:true});
         if(k>=1&&sc<1){ell(c,Math.round(x+10),TCT-15,6,2,POT.c);px(c,x+7,TCT-16,C.white);R(c,x+2,TCT-12,18,1,POT.d);}}
-      if(A.pot&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
-        const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30;
-        obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip),{sel:true});
-        // brillo, sombra suave y cara cortada
-        R(c,x0+5,y+4,Math.max(0,pot.len-20),2,POT.c);px(c,x0+8,y+8,C.white);R(c,x0+4,y+23,Math.max(0,pot.len-14),4,POT.d);
-        for(const [dx,dy] of [[14,12],[26,18],[22,7],[38,10],[46,20],[54,8],[62,15]]){const xx=x0+pot.len-dx;if(xx>x0+4){px(c,xx,y+dy,'#d9b77a');px(c,xx+1,y+dy,POT.d);}}
+      // mondas de piel caídas en la tabla
+      for(const q of A.peels){const x=Math.round(o0+q.x),y=Math.round(q.y);if(q.rest){R(c,x,y,4,2,SKIN.d);R(c,x+1,y,2,1,SKIN.l);if(q.s)px(c,x+4,y-1,SKIN.d);}else{R(c,x,y,3,2,SKIN.a);px(c,x+1,y-1,SKIN.d);}}
+      if(A.pot&&!A.pot.gone&&!(p.k==='cortar'&&p.cuts>=p.n&&sc>0.98)){
+        const pot=A.pot,x0=Math.round(o0+pot.x0+(p.k==='cortar'&&p.cuts>=p.n?sc*160:0)),y=TCT-10-30-Math.round(pot.hop||0);
+        // piel y carne: la banda de arriba y la de abajo se pelan por separado (tras girar la patata se intercambian)
+        const anySkin=pot.rem[0]>0||pot.rem[1]>0,tb=pot.rolled?1:0,bb=1-tb;
+        obj(c,l=>drawPotato(l,x0,y,pot.len,pot.tip,anySkin?SKIN.a:POT.a),{sel:true});
+        if(anySkin){c.save();c.beginPath();c.rect(x0-2,y-2,pot.len-pot.rem[tb]+2,17);c.rect(x0-2,y+15,pot.len-pot.rem[bb]+2,18);c.clip();drawPotato(c,x0,y,pot.len,pot.tip,POT.a);c.restore();}
+        const skinAt=(xx,yy)=>xx>=x0+pot.len-pot.rem[yy<y+15?tb:bb];
+        // brillo, sombra suave y ojitos de la patata
+        c.save();c.globalAlpha=0.6;R(c,x0+5,y+4,Math.max(0,pot.len-20),2,C.white);c.globalAlpha=0.22;R(c,x0+4,y+23,Math.max(0,pot.len-14),4,'#b0763e');c.restore();px(c,x0+8,y+8,C.white);
+        for(const [dx,dy] of [[14,12],[26,18],[22,7],[38,10],[46,20],[54,8],[62,15],[72,11],[80,19]]){const xx=x0+pot.len-dx;if(xx>x0+4){const sk=skinAt(xx,y+dy);px(c,xx,y+dy,sk?SKIN.s:'#d9b77a');px(c,xx+1,y+dy,sk?SKIN.d:POT.d);}}
         if(!pot.tip){ell(c,x0+2,y+15,2,12,POT.c);R(c,x0,y+4,1,22,POT.d);}
-        // mano que empuja la patata (rebota un poco al empujar)
-        const hx=x0+pot.len+1,hy=y+6-Math.round(Math.min(2,pot.push/12));
-        obj(c,l=>{rr(l,hx+10,hy-3,16,13,C.pink,4);rr(l,hx-2,hy,15,16,'#ffe1cc',5);rr(l,hx-5,hy+4,6,8,'#ffe1cc',3);},{sel:true});
-        R(c,hx+11,hy-2,14,1,C.pinkL);for(const k of [4,8,12])R(c,hx-4,hy+k,3,1,'#f2b9a0');R(c,hx+1,hy+1,9,1,'#fff3ea');
+        // mano que empuja la patata (solo al cortar; rebota un poco al empujar)
+        if(p.k!=='pelar'){const hx=x0+pot.len+1,hy=y+6-Math.round(Math.min(2,pot.push/12));
+          obj(c,l=>{rr(l,hx+10,hy-3,16,13,C.pink,4);rr(l,hx-2,hy,15,16,'#ffe1cc',5);rr(l,hx-5,hy+4,6,8,'#ffe1cc',3);},{sel:true});
+          R(c,hx+11,hy-2,14,1,C.pinkL);for(const k of [4,8,12])R(c,hx-4,hy+k,3,1,'#f2b9a0');R(c,hx+1,hy+1,9,1,'#fff3ea');}
+        if(p.k==='pelar'){
+          // guía rosa del final (solo la primera pasada; luego se desvanece)
+          if(HP.a>0){const g=x0+pot.len-4,a=HP.a,gc=Math.sin(Core.time*5)>0?C.pinkDD:C.pinkD,lift=Math.round((1-a)*8);c.save();c.globalAlpha=a;
+            for(let k=0;k<3;k++){R(c,g-2+k,y-14+k-lift,5-2*k,1,gc);R(c,g-2+k,y+36-k+lift,5-2*k,1,gc);}
+            for(let yy=y-10;yy<y+34;yy+=4)R(c,g,yy,2,3,gc);
+            if(a<1)for(let k=0;k<6;k++)px(c,g-3+((k*5+Math.floor(Core.time*20))%7),y+30-k*8-Math.round((1-a)*16),k%2?C.white:C.pinkL);c.restore();}
+          // pelador: cuchilla sobre la piel, horquilla y mango rosa hacia la mano
+          const pe=p.pe!=null?p.pe:pot.x0+3,ex=Math.round(o0+pe),ey=y+1-(p.hold?0:4)+(p.hold&&Math.floor(Core.time*30)%2?1:0);
+          if(!p.res||p.res.t<0.25){
+            line(c,ex-3,ey-1,ex+1,ey-8,C.metalDD);line(c,ex+3,ey-1,ex+3,ey-8,C.metalDD);
+            obj(c,l=>{R(l,ex-4,ey-2,9,2,C.metal);l.fillStyle=C.pinkD;for(let k=0;k<12;k++)l.fillRect(ex+1+Math.round(k*0.8),ey-9-k,5,3);},{sel:true});
+            R(c,ex-3,ey-2,7,1,C.metalL);for(let k=2;k<11;k++)px(c,ex+2+Math.round(k*0.8),ey-9-k,C.pinkL);
+            const hx2=ex+10,hy2=ey-30;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
+            if(p.hold&&p.vn>40){px(c,ex-6,ey-4,C.white);px(c,ex-8,ey-2,SKIN.l);}}
+        }
       }
-      if(p.k==='cortar'&&p.cuts<p.n){
-        // guía rosa: grosor que debe asomar a la izquierda del cuchillo
-        const g=kx-p.T,pulse=Math.sin(Core.time*5)>0;
-        const gc=pulse?C.pinkDD:C.pinkD;
+      if(p.k==='cortar'&&p.cuts<p.n&&p.hint&&p.hint.a>0){
+        // guía rosa: grosor que debe asomar a la izquierda del cuchillo (solo en la primera rodaja; luego se desvanece)
+        const g=kx-p.T,pulse=Math.sin(Core.time*5)>0,a=p.hint.a,lift=Math.round((1-a)*8);
+        const gc=pulse?C.pinkDD:C.pinkD;c.save();c.globalAlpha=a;
         R(c,g,TCT-8,p.T+1,1,C.pinkD);R(c,g,TCT-10,2,5,gc);
         // triangulitos arriba y abajo y línea de 2 px: se lee de un vistazo sobre la patata
-        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
-        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy,2,3,gc);
+        for(let k=0;k<3;k++){R(c,g-2+k,TCT-54+k-lift,5-2*k,1,gc);R(c,g-2+k,TCT-4-k,5-2*k,1,gc);}
+        for(let yy=TCT-50;yy<TCT-10;yy+=4)R(c,g,yy-lift,2,3,gc);
+        if(a<1)for(let k=0;k<6;k++)px(c,g-3+((k*5+Math.floor(Core.time*20))%7),TCT-14-k*7-Math.round((1-a)*16),k%2?C.white:C.pinkL);
+        c.restore();
       }
+      if(p.k!=='pelar'){
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
-      const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36);
+      const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36-(p.k==='cortar'?(1-Ease.outBack(A.kin))*90:0));
       // cuchilla en 3/4: el filo cae justo en la línea de corte; el mango sube en diagonal hacia la mano
       const sk=yy=>Math.round((41-yy)*0.22);
       obj(c,l=>{l.fillStyle=C.metal;for(let yy=0;yy<42;yy++){const w=yy>38?5-(yy-39):9;l.fillRect(kx-1+sk(yy),ky+yy,w,1);}
@@ -236,6 +303,7 @@ function Tortilla(rng,preview){
       for(let k=2;k<13;k++)px(c,kx+9+Math.round(k*0.9),ky-3-k,C.pinkL);px(c,kx+13,ky-8,C.pinkDD);
       const hx2=kx+17,hy2=ky-21;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
       if(A.knife>0.12){R(c,kx-8,TCT-11,3,1,C.white);R(c,kx+4,TCT-11,3,1,C.white);px(c,kx-10,TCT-13,C.white);px(c,kx+7,TCT-13,C.white);}
+      }
     }
     /* puesto 2: bol, huevos y varillas */
     const o1=W-cx;
