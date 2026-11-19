@@ -51,6 +51,16 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .card .nm{font-size:max(10px,calc(var(--u)*7px)); line-height:1.15; min-height:2.3em}
 .card .best{font-size:max(9px,calc(var(--u)*5.5px)); color:#6b5c80}
 .card:not(:disabled):hover{transform:translateY(calc(var(--u)*-1px))}
+/* menú con calma: las fichas entran una a una y luego flotan suavemente, cada una a su compás; el logo se mece */
+@keyframes cardin{from{opacity:0; scale:.9}60%{opacity:1}to{opacity:1; scale:1}}
+@keyframes floaty{0%,100%{translate:0 0}50%{translate:0 calc(var(--u)*-2px)}}
+@keyframes logobob{0%,100%{translate:0 0; rotate:0deg}50%{translate:0 calc(var(--u)*-2px); rotate:-1deg}}
+@keyframes footin{from{opacity:0}}
+.card{animation:cardin 1s cubic-bezier(.2,.8,.2,1) both, floaty 5.5s ease-in-out infinite}
+.card:nth-child(1){animation-delay:.15s,1.2s}.card:nth-child(2){animation-delay:.35s,2.1s}.card:nth-child(3){animation-delay:.55s,1.6s}.card:nth-child(4){animation-delay:.75s,2.6s}.card:nth-child(5){animation-delay:.95s,1.9s}
+.logo{animation:footin 1.2s ease both, logobob 7s ease-in-out 1.2s infinite}
+.menu-foot{animation:footin 1.4s ease 1.2s both}
+@media (prefers-reduced-motion: reduce){.card,.logo,.menu-foot{animation:none}}
 .card:disabled{cursor:default; background:#e9e4f2}
 .card:disabled canvas{filter:grayscale(.6) brightness(.95)}
 .stamp{position:absolute; top:calc(var(--u)*2px); right:calc(var(--u)*2px); min-width:calc(var(--u)*18px); height:calc(var(--u)*18px); border-radius:50%; display:grid; place-items:center; font-size:max(10px,calc(var(--u)*8px)); background:var(--butter); border:calc(var(--u)*1px) solid var(--ink); transform:rotate(-12deg); padding:0 calc(var(--u)*2px)}
@@ -145,7 +155,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <canvas id="c" width="320" height="180" aria-label="Escena del minijuego"></canvas>
 
   <div id="menu" class="ov">
-    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.2</span></div>
+    <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.4</span></div>
     <div class="cards" id="cards"></div>
     <div class="menu-foot">
       <button class="toggle" id="tSfx" aria-pressed="true">Sonido</button>

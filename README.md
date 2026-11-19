@@ -56,7 +56,7 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 🥔 Tortilla de patatas
 <img src="media/tortilla.gif" width="100%" alt="Tortilla de patatas">
 
-Pela la patata (toca cuando el pelador llegue al final), córtala a ojo en los trozos que pida la receta, de 3 a 6, lo más iguales posible (las marcas rosas solo salen la primera vez), casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
+Pela la patata (gira sola: toca cuando una franja de piel pase por la línea del pelador), córtala a ojo en los trozos que pida la receta, de 3 a 6, lo más iguales posible (las marcas rosas solo salen la primera vez), casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
 
 </td>
 </tr>

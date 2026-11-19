@@ -5,7 +5,25 @@ function iconPan(l,x,y){rr(l,x-12,y-3,20,7,'#a194c8',3);rr(l,x+7,y-2,10,3,C.wood
 function iconCamera(l,x,y){rr(l,x-11,y-6,22,15,C.mint,3);rr(l,x-6,y-9,8,4,C.mintD,1);ell(l,x,y+1,5,5,C.metal);ell(l,x,y+1,3,3,C.lavDD);rr(l,x+6,y-4,3,2,C.butter,0);}
 /* Menú: el fondo es un patrón CSS que se desliza muy suave (subpíxel); en el lienzo solo aparece,
    de vez en cuando y al azar, un objeto de los niveles que hace algo y se va. */
-const MenuFx={a:null,wait:1.2,last:''};
+const MenuFx={a:null,wait:1.2,last:'',bg:null,T:0,clouds:null,pet:null};
+// fondo del menú: cielo pastel en bandas, sol suave, colinas y una repisa de madera donde salen los objetos
+function menuBg(){const cv=mk(W,H),c=cv.getContext('2d');
+  const band=['#f0ebff','#f3eaff','#f7e9fb','#fbe8f4','#ffe7ee','#ffe8e6','#ffeadf','#ffecda'];
+  for(let i=0;i<band.length;i++){const y0=Math.round(i*150/band.length),y1=Math.round((i+1)*150/band.length);R(c,0,y0,W,y1-y0,band[i]);
+    if(i>0)for(let x=(i%2)*2;x<W;x+=4)px(c,x,y0,band[i-1]);}
+  // sol grande y difuso
+  for(const [r,a] of [[30,0.18],[22,0.3],[15,0.9]]){c.save();c.globalAlpha=a;ell(c,262,46,r,r,'#fff3c4');c.restore();}
+  ell(c,262,46,12,12,'#fff7d8');
+  // colinas lejanas y cercanas
+  c.fillStyle='#e3dafb';for(let x=0;x<W;x++){const h=Math.round(16+7*Math.sin(x*0.021+1)+4*Math.sin(x*0.057));c.fillRect(x,158-h,1,h+2);}
+  c.fillStyle=C.mintD;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,163-h,1,h+2);}
+  c.fillStyle=C.mint;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,164-h,1,2);}
+  // arbolitos redondos en la colina
+  for(const x of [22,58,104,214,248,296]){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11)),gy=163-h;R(c,x,gy-4,1,4,C.woodD);ell(c,x,gy-7,4,4,C.greenD);ell(c,x-1,gy-8,2,2,C.green);}
+  // repisa de madera
+  R(c,0,164,W,16,C.wood);R(c,0,164,W,1,C.woodL);R(c,0,165,W,1,'#fff3e2');R(c,0,170,W,1,C.woodD);for(let x=7;x<W;x+=29)R(c,x,171,1,9,C.woodD);dith(c,0,176,W,4,C.woodDD);
+  return cv;}
+function drawCloud(c,x,y,s,col){ell(c,x,y,9*s,4*s,col);ell(c,x+7*s,y-2*s,7*s,5*s,col);ell(c,x-7*s,y+1*s,6*s,3*s,col);R(c,x-12*s,y+2*s,26*s,2,col);}
 function menuSpawn(){
   const kinds=['tostada','coche','botella','grapadora','tortilla','foto'].filter(k=>k!==MenuFx.last);
   const k=kinds[Math.floor(Math.random()*kinds.length)];MenuFx.last=k;
@@ -16,11 +34,20 @@ function menuSpawn(){
   MenuFx.a=a;
 }
 function drawMenuFx(c,dt){
-  c.clearRect(0,0,W,H);
+  const M=MenuFx;if(!M.bg)M.bg=menuBg();c.drawImage(M.bg,0,0);
   if(reduce)return;
-  const M=MenuFx;if(!M.a){M.wait-=dt;if(M.wait<=0)menuSpawn();return;}
-  const a=M.a;a.t+=dt;const t=a.t,u=t/a.dur;
-  if(t>=a.dur){M.a=null;M.wait=1.6+Math.random()*2.2;return;}
+  M.T+=dt;const T=M.T;
+  // nubes que se mueven muy despacio (dos capas)
+  if(!M.clouds)M.clouds=[[20,22,1,3],[140,14,0.8,3],[230,30,1.1,3],[80,64,0.7,6],[200,74,0.9,6],[300,58,0.6,6]];
+  for(const [x0,y,s,v] of M.clouds){const x=((x0+T*v)%(W+60))-30;drawCloud(c,Math.round(x),y+Math.round(Math.sin(T*0.4+x0)*1),s,v>4?'#fffaff':'#fbf6ff');}
+  // pétalos que caen meciéndose y destellos que parpadean
+  if(!M.pet){M.pet=[];for(let i=0;i<16;i++)M.pet.push({x:Math.random()*W,y:Math.random()*H,v:5+Math.random()*7,ph:Math.random()*6,sw:4+Math.random()*6,c:i%3});}
+  for(const p of M.pet){p.y+=p.v*dt;if(p.y>166){p.y=-4;p.x=Math.random()*W;}const x=Math.round(p.x+Math.sin(T*0.8+p.ph)*p.sw),y=Math.round(p.y),fl=Math.sin(T*2+p.ph)>0;
+    const col=p.c===0?C.pink:p.c===1?C.pinkD:'#ffd6e6';if(fl){R(c,x,y,3,2,col);px(c,x,y,C.pinkL);px(c,x+3,y+1,col);}else{R(c,x,y,2,3,col);px(c,x+1,y,C.pinkL);px(c,x+2,y+1,col);}}
+  for(let i=0;i<7;i++){const k=(T*0.35+i*0.37)%1;if(k<0.25){const x=(i*47+13)%W,y=12+(i*29)%60,a=Math.sin(k/0.25*Math.PI);c.save();c.globalAlpha=a;R(c,x-1,y,3,1,C.white);R(c,x,y-1,1,3,C.white);c.restore();}}
+  if(!M.a){M.wait-=dt;if(M.wait<=0)menuSpawn();return;}
+  const a=M.a;a.t+=dt*0.75;const t=a.t,u=t/a.dur;
+  if(t>=a.dur){M.a=null;M.wait=2.2+Math.random()*2.4;return;}
   if(a.k==='tostada'){ // salta desde abajo como de una tostadora, da un bote y vuelve a bajar
     const up=t<0.5?backOut(t/0.5):t<1.7?1:1-inout((t-1.7)/0.6),y=Math.round(196-up*56+Math.sin(Math.min(1,Math.max(0,(t-0.5)/1.2))*Math.PI*2)*-3);
     dith(c,a.x-8,178,16,1,C.lavD);obj(c,l=>iconToast(l,a.x,y),{sel:true});

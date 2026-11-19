@@ -206,7 +206,7 @@ function Toaster(rng,preview){
     },
     press(){if(phase===2){press2();return;}const b=it();if(!b)return;holding=true;if(st==='ready'){st='toast';t=0;Snd.burst(700,.06,.2);}},
     release(){holding=false;if(phase===2){release2();return;}const b=it();if(!b||st!=='toast')return;
-      const d=b.p-b.target,a=Math.abs(d),w=1;const j=a<=0.03*w?'P':a<=0.07*w?'B':a<=0.13*w?'R':'F';
+      const d=b.p-b.target,a=Math.abs(d),w=1;const j=a<=0.05*w?'P':a<=0.1*w?'B':a<=0.17*w?'R':'F';
       pop(j,j==='P'?'':(d<0?'▼ Te quedaste corto':'▲ Te pasaste'));},
     draw(c){
       c.drawImage(bg,0,0);
