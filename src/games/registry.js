@@ -3,8 +3,11 @@ const GAMES={
     seq:[['bien','fill'],['bien','cap'],['mal','fill'],['mal','cap']],
     bot(g){const P=g._ph();if(P.phase===2){if(P.cap||P.reload>0)return;for(const b of g._bs){if(b.cj||b.x>FX)continue;if(b.x+P.v*P.landT(b)>=FX-0.4)return 'tap';}return;}
       const b=g._bs.find(b=>b.st==='fill');if(b&&b.level>=b.target-0.15)return 'tap';}},
-  grapadora:{name:'Grapadora',hint:'Los folios salen de la impresora ya de camino: no sabrás cuál viene. Pulsa cuando la marca rosa pase justo bajo la grapadora. Si no tiene marca (dibujos, fotos o documentos sin marca), déjalo pasar. Los folios largos llevan dos marcas.',make:Stapler,crop:[96,58],gesture:'tap',warm:1.4,view:[96,62],loopT:6.4,
-    bot(g){if(g._units().some(u=>!u.no&&u.p.x+u.o-HX>=0&&u.p.x+u.o-HX<3))return 'tap';}},
+  grapadora:{name:'Grapadora',hint:'Fase 1: llega un montón de folios cada vez. Míralo bien antes de que la mano lo empuje: grapa solo si tiene la marca rosa y pulsa cuando la marca pase justo bajo la grapadora (algunos llevan dos). Los dibujos, las fotos, los que no tienen marca y los que ya llevan clip se dejan pasar. Fase 2: los montones grapados cuelgan de una pinza que se balancea; toca para soltarlos encima de la torre. Si quedan torcidos, la torre se inclina y se cae.',make:Stapler,crop:[96,58],gesture:'tap',warm:0.4,view:[96,62],loopT:7,
+    seq:[['bien','grapar'],['bien','apilar'],['mal','grapar'],['mal','apilar']],
+    bot(g){const P=g._ph();
+      if(P.phase===2){if(P.st2!=='swing')return;const e=(P.sx-P.topX)*Math.sign(P.vx||1);if(e>=-Math.abs(P.vx)*0.018&&e<=0.6)return 'tap';return;}
+      const s=P.cur;if(!s||s.st!=='slide'||s.trap||s.hitch>0)return;for(const m of s.marks){if(m.j)continue;const d=s.x+m.o-SHX;if(d>=0&&d<3)return 'tap';}}},
   tostadora:{name:'Tostadora',hint:'Fase 1: mantén pulsado para bajar la palanca y suelta cuando la aguja llegue a la marca rosa (el color del pedido). Fase 2: unta todas las tostadas; la espátula cruza una sola vez de izquierda a derecha: mantén justo cuando entre en la tostada y suelta justo cuando salga.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
     seq:[['bien','tostar'],['bien','untar'],['mal','tostar'],['mal','untar']],
     bot(g,D){const d=g._dbg();if(d.phase===2){if(d.swapT<2||!d.u||d.u.st!=='pass')return;if(d.u.sx==null&&d.kx>=d.e[0])return 'down';if(d.h2&&d.kx>=d.e[1])return 'up';return;}if(!d.b)return;if(d.st==='ready'){D.rt=(D.rt||0)+D.dt;if(D.rt>0.5){D.rt=0;return 'down';}}if(d.st==='toast'&&d.b.p>=d.b.target)return 'up';}},

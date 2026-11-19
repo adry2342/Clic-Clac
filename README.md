@@ -36,7 +36,8 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 📎 Grapadora
 <img src="media/grapadora.gif" width="100%" alt="Grapadora">
 
-Los folios salen de la impresora sin avisar. Grapa **solo** donde haya marca rosa: los dibujos, las fotos y los documentos sin marca están para despistarte.
+**Fase 1 · Grapar.** Llega un montón de folios cada vez y tienes un momento para mirarlo antes de que la mano lo empuje. Grapa **solo** si lleva la marca rosa: los dibujos, las fotos, los que no tienen marca y los que ya llevan clip se dejan pasar.
+**Fase 2 · Apilar.** Los montones grapados cuelgan de una pinza que se balancea: suéltalos encima de la torre. Si quedan torcidos, la torre se inclina y se cae.
 
 </td>
 </tr>
