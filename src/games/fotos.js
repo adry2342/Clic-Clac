@@ -169,7 +169,7 @@ function drawLensBuddy(c,b,t){
 }
 // cuarto oscuro: tonos, fondo y piezas
 const TONE=['#fbf1ec','#efdcd4','#ddc0b6','#c49c92','#a77c75','#86595a','#633c41','#432630'];
-const DR={tray:[108,122,104,50],fix:[222,128,86,40],box:[14,130,80,34],strip:[112,103,96,9],lamp:[36,20],line:40,slots:[72,128,184,240],L:38};
+const DR={tray:[96,108,128,68],fix:[232,130,82,40],box:[10,130,80,34],strip:[112,90,96,9],lamp:[36,20],line:40,slots:[72,128,184,240],L:38};
 // revelado de verdad: la foto empieza en blanco y van saliendo primero las sombras y luego los claros.
 // Si te pasas, todo se oscurece a manchas hasta que la imagen se pierde.
 const DEVN=(()=>{const g=mulberry32(77),a=new Float32Array(64*40);for(let i=0;i<a.length;i++)a[i]=g();
@@ -188,6 +188,7 @@ function develop(c,p,d,w,h){
   if(w&&w!==64){const t=mk(64,40);t.getContext('2d').putImageData(im,0,0);const x=c;x.save();x.imageSmoothingEnabled=true;x.drawImage(t,0,0,w,h);x.restore();}
   else c.putImageData(im,0,0);
 }
+const mixc=(a,b,t)=>{const A=hex(a),B=hex(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';};
 function drawDarkroomBg(c){
   const WA='#8a4456',WD='#743849',WL='#9c5266',BN='#5a2c38',BL='#7a3c4a',BD='#45212b';
   R(c,0,0,W,126,WA);
@@ -201,7 +202,6 @@ function drawDarkroomBg(c){
   for(let i=0;i<4;i++){const h=18-(i%2)*3;R(c,242+i*17,76+(i%2)*3,7,6,C.creamD);R(c,243+i*17,78+(i%2)*3,5,1,C.peachDD);R(c,242+i*17,70+(i%2)*3,7,2,C.out);R(c,248+i*17,72+(i%2)*3,1,h-4,'rgba(255,230,200,0.5)');}
   ell(c,217,85,8,8,C.paper);R(c,217,79,1,6,C.out);R(c,217,85,5,1,C.out);px(c,217,85,C.pinkD);
   // fotitos de práctica en la pared (pinchadas)
-  for(const [x,y,col] of [[54,70,C.sky],[76,76,C.mint],[98,68,C.pink]]){obj(c,l=>{R(l,x,y,18,14,C.paper);});R(c,x+2,y+2,14,9,col);R(c,x+2,y+8,14,3,C.greenD);ell(c,x+12,y+4,2,2,C.butter);px(c,x+8,y-1,C.pinkD);}
   // mesa
   R(c,0,126,W,54,BN);R(c,0,126,W,2,BL);R(c,0,128,W,1,BD);for(let x=0;x<W;x+=34)R(c,x,130,1,50,BD);dith(c,0,168,W,12,BD);
   // caja de papel fotográfico
@@ -366,7 +366,8 @@ function Fotos(rng,preview){
     c.drawImage(room,0,0);
     // bombilla roja de seguridad, colgando
     const [lx,ly]=DR.lamp,fl=0.9+0.1*Math.sin(Core.time*2.3);
-    c.save();c.globalAlpha=0.18*fl;ell(c,lx,ly+4,46,34,'#ff7b86');c.globalAlpha=0.16*fl;ell(c,lx,ly+4,28,20,'#ff9aa2');c.restore();
+    const on=phase===3?Math.max(0,1-swapT/0.6):1;
+    c.save();c.globalAlpha=0.18*fl*on;ell(c,lx,ly+4,46,34,'#ff7b86');c.globalAlpha=0.16*fl*on;ell(c,lx,ly+4,28,20,'#ff9aa2');c.restore();
     R(c,lx,0,1,ly-6,C.out);obj(c,l=>{rr(l,lx-8,ly-7,17,7,'#4a3646',3);ell(l,lx,ly+1,6,4,'#ff5c6c');});px(c,lx-2,ly,'#ffd0d4');px(c,lx-3,ly+1,'#ffb3bb');
     // cuerda de tender con sus pinzas
     const LY=DR.line;for(let x=10;x<311;x++)px(c,x,LY,(x>>1)%2?'#f0e0d0':'#cdb4a6');
@@ -374,9 +375,9 @@ function Fotos(rng,preview){
       if(!h){obj(c,l=>{rr(l,sx-2,LY-5,5,10,C.woodD,1);});R(c,sx,LY-4,1,8,C.woodDD);if(cur){const b=Math.floor(Core.time*4)%2;R(c,sx-1,LY-10-b,3,1,C.pinkD);px(c,sx,LY-9-b,C.pinkD);}}});
     // fotos colgadas secándose (gotean un rato)
     for(const h of hung){const x=Math.round(h.x),off=x-DR.slots[dev.indexOf(h.p)],tilt=h.j==='P'?0:Math.max(-3,Math.min(3,Math.round(off/4)));
-      drawHanging(c,h.p,x,LY+1,tilt,h.sp?Math.max(-6,Math.min(6,h.sp.x)):0);
+      drawHanging(c,h.p,x,LY+1,tilt,h.sp?Math.max(-6,Math.min(6,h.sp.x)):0,h.t);
       obj(c,l=>{rr(l,x-2,LY-5,5,10,C.woodD,1);});R(c,x,LY-4,1,8,C.woodDD);
-      if(h.t<6){const ph=(h.t*1.4+h.x*0.01)%1;if(ph<0.8){const yy=LY+27+Math.round(ph*ph*60);R(c,x+(h.x%7)-3,yy,1,2,'rgba(255,214,220,0.9)');}}}
+      if(h.t<6){const ph=(h.t*1.4+h.x*0.01)%1;if(ph<0.8){const yy=LY+38+Math.round(ph*ph*60);R(c,x+(h.x%7)-3,yy,1,2,'rgba(255,214,220,0.9)');}}}
     // foto colgando del hilo en fase 3
     if(phase===3&&sw&&hi<N2&&(hst==='in'||hst==='swing')){const th=theta(),sx=DR.slots[hi],L=sw.L,tx=sx+L*Math.sin(th),ty=2+L*Math.cos(th);
       pline(c,sx,11,tx,ty-1,'#f0e0d0');drawHanging(c,dev[hi],Math.round(tx),Math.round(ty),0);
@@ -402,38 +403,53 @@ function Fotos(rng,preview){
     rr(c,tx+4,ty+3,tw-8,th2-7,'#c97c8a',3);
     // la superficie del líquido se inclina con el vaivén
     for(let i=2;i<tw-10;i++){const yy=ty+5+Math.round(rock*2.2*((i/(tw-12))*2-1));px(c,tx+4+i,yy,'#e3a0ad');}
-    let px0=128,py0=128,inTray=false,sc=1;
+    // la foto se ve grande (1,5x) para que se note bien cómo va apareciendo
+    const PX=tx+16,PY=ty+5;let px0=PX,py0=PY,inTray=false,sc=1.5,shot=null;
     if(phase===2&&p){
-      if(dst==='in'){const k=ease(Math.min(1,dT/0.7));px0=Math.round(30+(128-30)*k);py0=Math.round(116+(128-116)*k-Math.sin(k*Math.PI)*24);}
-      else if(dst==='out'){const k=ease(Math.min(1,dT/0.75)),ex=DR.fix[0]+8+di*12,ey=DR.fix[1]+6+(di%2)*3;px0=Math.round(128+(ex-128)*k);py0=Math.round(128+(ey-128)*k-Math.sin(k*Math.PI)*28);sc=1-0.5*k;}
+      if(dst==='in'){const k=ease(Math.min(1,dT/0.7));px0=Math.round(30+(PX-30)*k);py0=Math.round(116+(PY-116)*k-Math.sin(k*Math.PI)*24);}
+      else if(dst==='out'){const k=ease(Math.min(1,dT/0.75)),ex=DR.fix[0]+8+di*12,ey=DR.fix[1]+6+(di%2)*3;px0=Math.round(PX+(ex-PX)*k);py0=Math.round(PY+(ey-PY)*k-Math.sin(k*Math.PI)*28);sc=1.5-k;}
       else inTray=true;
       if(dst==='in'||dst==='ready'||dst==='dev'||dst==='out'){
-        const x=px0+(inTray?rx:0);
-        const w64=Math.round(64*sc),h40=Math.round(40*sc);obj(c,l=>{R(l,x-1,py0-1,w64+2,h40+2,C.paper);});
-        if(dst==='in')R(c,x,py0,64,40,TONE[0]);
-        else{develop(toneX,p,p.d);c.drawImage(tone,0,0,64,40,x,py0,w64,h40);}
-        if(dst==='in'||dst==='out'){const cx=x+w64-4,cy=py0+2;for(let k=0;k<2;k++)pline(c,cx+k*3,cy,cx+30+k*3,cy-26,k?'#d8b678':'#ecd29a');}
+        const x=px0+(inTray?rx:0),w=Math.round(64*sc),h=Math.round(40*sc);obj(c,l=>{R(l,x-1,py0-1,w+2,h+2,C.paper);});
+        shot={x,y:py0,w,h,blank:dst==='in',tong:dst==='in'||dst==='out'};
       }
     }
-    // reflejos del líquido por encima de la foto
+    // reflejos del líquido
     c.save();c.globalAlpha=0.22;R(c,tx+4,ty+3,tw-8,th2-7,'#e8909e');c.restore();
-    for(let k=0;k<3;k++){const wx=tx+10+((Math.round(rockT*40)+k*34)%(tw-30)),wy=ty+8+k*14+Math.round(rock*2);R(c,wx,wy,12,1,'rgba(255,220,226,0.7)');}
-    if(holding){for(let k=0;k<2;k++){const s=Math.round(rock*3);R(c,tx+4+(s>0?tw-12:0),ty+6+k*18,4,1,'rgba(255,230,236,0.8)');}}
     // cubeta de fijado con las fotos ya reveladas
     const [fx,fy,fw2,fh]=DR.fix;rr(c,fx+4,fy+3,fw2-8,fh-7,'#b98096',3);
     dev.forEach((q,k)=>{if(!q.half||hung.some(h=>h.p===q)||(phase===3&&k===hi&&hst!=='wait'))return;const x=fx+8+k*12,y=fy+6+(k%2)*3;obj(c,l=>{R(l,x-1,y-1,34,22,C.paper);});c.drawImage(q.half,x,y);});
     c.save();c.globalAlpha=0.2;R(c,fx+4,fy+3,fw2-8,fh-7,'#d898aa');c.restore();
     // luz roja sobre todo
-    c.save();c.globalCompositeOperation='multiply';c.fillStyle='#ffd2cc';c.fillRect(0,0,W,H);c.restore();
+    // en la fase 3 se enciende la luz blanca: las fotos lucen con su color
+    const lit=phase===3?Math.min(1,swapT/0.9):0;
+    c.save();c.globalCompositeOperation='multiply';c.fillStyle=lit>0?mixc('#ffd2cc','#fff6f0',lit):'#ffd2cc';c.fillRect(0,0,W,H);c.restore();
+    if(lit>0&&lit<1){c.save();c.globalAlpha=(1-lit)*0.5;c.fillStyle='#fff8ec';c.fillRect(0,0,W,H);c.restore();}
+    if(shot){const {x,y,w,h}=shot;
+      if(shot.blank)R(c,x,y,w,h,TONE[0]);
+      else{develop(toneX,p,p.d);c.save();c.imageSmoothingEnabled=true;
+        // dentro del líquido la imagen ondula un poco al mecer la cubeta
+        if(inTray){for(let r=0;r<h;r+=2){const o=Math.round(Math.sin(rockT*9+r*0.35)*(holding?1:0.4));c.drawImage(tone,0,r*40/h,64,2*40/h,x+o,y+r,w,2);}}
+        else c.drawImage(tone,0,0,64,40,x,y,w,h);c.restore();}
+      // un poco de rojo encima (estamos en el cuarto oscuro) y brillos del líquido
+      c.save();c.globalAlpha=0.16;c.fillStyle='#ff8a96';c.fillRect(x,y,w,h);c.restore();
+      if(inTray){c.save();c.globalAlpha=0.5;for(let k=0;k<3;k++){const wx=x+((Math.round(rockT*40)+k*37)%(w-14)),wy=y+6+k*18+Math.round(rock*2);R(c,wx,wy,14,1,'#ffe6ea');}c.restore();}
+      if(shot.tong){const cx=x+w-4,cy=y+2;for(let k=0;k<2;k++)pline(c,cx+k*3,cy,cx+30+k*3,cy-26,k?'#d8b678':'#ecd29a');}}
     dith(c,0,0,W,6,'#3a1a24');dith(c,0,174,W,6,'#3a1a24');
   }
-  // foto colgada por arriba: si se balancea (sw = desplazamiento abajo), cada franja se desplaza más cuanto más abajo
-  function drawHanging(c,p,x,y,tilt,sw){
-    sw=sw||0;if(!p.half){const k=mk(32,20),kx=k.getContext('2d');develop(kx,p,p.d,32,20);p.half=k;}
-    const off=r=>Math.round(sw*r/24);
-    obj(c,l=>{for(let r=0;r<24;r+=3)R(l,x-18+off(r+1.5),y+r,36,3,C.paper);});
-    for(let r=0;r<20;r+=2)c.drawImage(p.half,0,r,32,2,x-16+off(r+3),y+2+r,32,2);
-    if(tilt){R(c,x-18,y+23,36,1,'rgba(58,24,36,0.25)');}
+  // foto colgada por arriba, como una copia de verdad: borde blanco (más ancho abajo), sombra en la pared y brillo de recién revelada.
+  // si se balancea (sw = desplazamiento abajo), cada franja se desplaza más cuanto más abajo
+  function drawHanging(c,p,x,y,tilt,sw,t){
+    sw=sw||0;if(!p.mid){const k=mk(48,30),kx=k.getContext('2d');develop(kx,p,p.d,48,30);p.mid=k;}
+    if(!p.half){const k=mk(32,20),kx=k.getContext('2d');develop(kx,p,p.d,32,20);p.half=k;}
+    const off=r=>Math.round(sw*r/36);
+    c.save();c.globalAlpha=0.28;for(let r=0;r<36;r+=3)R(c,x-24+off(r+1.5)+2,y+r+2,52,3,'#3a1a24');c.restore();
+    obj(c,l=>{for(let r=0;r<36;r+=3)R(l,x-26+off(r+1.5),y+r,52,3,C.paper);});
+    c.save();c.imageSmoothingEnabled=true;for(let r=0;r<30;r+=2)c.drawImage(p.mid,0,r,48,2,x-24+off(r+3),y+2+r,48,2);c.restore();
+    // papel brillante: reflejo fijo arriba a la izquierda y un destello que cruza al colgarla
+    R(c,x-23+off(4),y+3,10,1,'rgba(255,255,255,0.55)');R(c,x-23+off(5),y+4,4,1,'rgba(255,255,255,0.4)');
+    if(t!=null&&t<0.9){const u=t/0.9,gx=x-30+Math.round(u*64);c.save();c.globalAlpha=0.6*(1-u);for(let r=0;r<30;r++){const xx=gx+Math.round(r*0.5);if(xx>=x-24&&xx<x+22)R(c,xx+off(r),y+2+r,3,1,C.white);}c.restore();}
+    if(tilt){R(c,x-26,y+35,52,1,'rgba(58,24,36,0.25)');}
   }
   return self;
 }

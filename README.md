@@ -56,7 +56,7 @@ Cada juego tiene **varias fases** y cada fase cambia el ritmo: unas piden un cli
 ### 🥔 Tortilla de patatas
 <img src="media/tortilla.gif" width="100%" alt="Tortilla de patatas">
 
-Pela la patata (mantén y suelta al llegar al final), córtala en rodajas iguales (las guías rosas solo salen la primera vez), casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
+Pela la patata (toca cuando el pelador llegue al final), córtala a ojo en los trozos que pida la receta, de 3 a 6, lo más iguales posible (las marcas rosas solo salen la primera vez), casca los huevos con la fuerza justa, bate a ritmo sin salirte de la zona y dale la vuelta con el impulso exacto.
 
 </td>
 </tr>
@@ -67,7 +67,7 @@ Pela la patata (mantén y suelta al llegar al final), córtala en rodajas iguale
 <img src="media/fotos.gif" width="60%" alt="Fotos a coches">
 
 **Fase 1 · Calle.** Cámara de carrete: haz la foto cuando el coche pase por el centro. El carrete es limitado, hay patitos, gatos y perros cruzando… y algún pájaro que se posa en el objetivo.
-**Fase 2 · Cuarto oscuro.** Mece la cubeta: la foto sale del papel en blanco poco a poco. Suelta cuando se vea bien; si te pasas, se quema a manchas y se pierde. Cada foto se revela a su ritmo y solo la primera trae guía.
+**Fase 2 · Cuarto oscuro.** Mece la cubeta: la foto sale del papel en blanco poco a poco. Suelta cuando se vea bien; si te pasas, se quema a manchas y se pierde. Cada foto se revela a su ritmo y solo la primera trae guía. Al tenderlas se enciende la luz y lucen como copias de verdad.
 **Fase 3 · Tendedero.** Cuelga cada foto cuando pase justo bajo la pinza.
 
 </td>
