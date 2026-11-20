@@ -11,10 +11,10 @@ function frame(now){
   if((Core.scene==='intro'||Core.card)&&Demo&&!Core.paused)demoStep(dt);
   ctx.setTransform(1,0,0,1,0,0);let sx=0;if(Core.shake>0&&running){Core.shake-=dt;sx=(Math.floor(Core.time*60)%2)?1:-1;}
   ctx.translate(sx,0);
-  if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);
+  if(Core.scene==='intro')drawIntroBg(ctx);else if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);
   Feel.draw(ctx);
   drawParts(ctx,running?dt:0);
-  if(Core.wipe>0){Core.wipe-=dt;const p=1-Math.max(0,Core.wipe)/0.55;ctx.setTransform(1,0,0,1,0,0);
+  if(Core.wipe>0){Core.wipe-=dt;const p=1-Math.max(0,Core.wipe)/(Core.wipeD||0.55);ctx.setTransform(1,0,0,1,0,0);
     for(let y=0;y<H;y+=16)for(let x=0;x<W;x+=16){const d=(x/W)*0.5+(y/H)*0.2;const t=Math.min(1,Math.max(0,(p-d)/0.3));const sz=Math.round(18*(1-smooth(t)));
       if(sz>0){rr(ctx,x+8-sz/2,y+8-sz/2,sz,sz,(x/16+y/16)%2?C.lav:C.pink,Math.min(3,sz>>1));}}}
   if(Core.scene==='play'){

@@ -72,7 +72,9 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .toggle[aria-pressed="false"]{background:#bdb5cc; text-decoration:line-through}
 
 /* Intro */
-#intro{background:rgba(42,34,56,.35)}
+#intro{background:transparent}
+#intro .panel{animation:inpop .5s cubic-bezier(.2,1.2,.4,1) .6s both}
+@keyframes inpop{from{transform:translateY(calc(var(--u)*14px)) scale(.9); opacity:0}to{transform:none; opacity:1}}
 .panel{background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*5px); box-shadow:0 calc(var(--u)*3px) 0 var(--ink); padding:calc(var(--u)*8px) calc(var(--u)*14px); display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*5px); text-align:center; max-width:calc(var(--u)*300px)}
 .panel h2{margin:0; font-weight:400; font-size:calc(var(--u)*14px)}
 .hint{font-size:max(11px,calc(var(--u)*7.5px)); text-wrap:balance}
@@ -128,9 +130,18 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .res h2{grid-column:1/-1; text-align:center}
 .rankbox{display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*3px)}
 .rank{font-size:calc(var(--u)*54px); line-height:1; color:var(--cream); text-shadow: calc(var(--u)*-1.5px) 0 var(--ink), calc(var(--u)*1.5px) 0 var(--ink), 0 calc(var(--u)*-1.5px) var(--ink), 0 calc(var(--u)*1.5px) var(--ink), calc(var(--u)*3px) calc(var(--u)*3px) 0 var(--ink)}
-.rank{animation:stamp .55s cubic-bezier(.2,1.4,.4,1) both; transform-origin:50% 60%}
+.rank{animation:stamp .7s cubic-bezier(.2,1.2,.4,1) .15s both; transform-origin:50% 60%}
 .rank[data-r="S+"]{color:var(--gold); animation:stamp .55s cubic-bezier(.2,1.4,.4,1) both, shine 1.6s ease-in-out .6s infinite}
-@keyframes stamp{0%{transform:scale(2.6) rotate(-16deg); opacity:0}55%{transform:scale(.9) rotate(4deg); opacity:1}100%{transform:scale(1) rotate(-3deg)}}
+.panel.res{animation:reszoom .55s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes reszoom{from{transform:scale(1.35); opacity:0}to{transform:scale(1); opacity:1}}
+.rankbox{position:relative}
+.burst{position:absolute; left:50%; top:calc(var(--u)*27px); width:0; height:0; pointer-events:none}
+.burst i{position:absolute; margin:calc(var(--u)*-2px) 0 0 calc(var(--u)*-2px); width:calc(var(--u)*4.5px); height:calc(var(--u)*4.5px); z-index:-1; border-radius:calc(var(--u)*1px); border:calc(var(--u)*.6px) solid var(--ink); opacity:0; animation:burst .9s cubic-bezier(.15,.8,.3,1) both}
+.burst i.h{width:calc(var(--u)*6px); height:calc(var(--u)*6px); border-radius:50% 50% 0 50%}
+.burst b{position:absolute; left:calc(var(--u)*-10px); top:calc(var(--u)*-10px); width:calc(var(--u)*20px); height:calc(var(--u)*20px); border-radius:50%; border:calc(var(--u)*2px) solid var(--butter); box-shadow:0 0 0 calc(var(--u)*1px) var(--pink); z-index:-1; opacity:0; animation:ring .7s ease-out .3s both}
+@keyframes ring{0%{opacity:1; transform:scale(.3)}100%{opacity:0; transform:scale(4.2)}}
+@keyframes burst{0%{opacity:1; transform:rotate(var(--a)) translateX(0) scale(.4)}70%{opacity:1}100%{opacity:0; transform:rotate(var(--a)) translateX(calc(var(--u)*1px*var(--d))) scale(1.1)}}
+@keyframes stamp{0%{transform:scale(3.2) rotate(-12deg); opacity:0}60%{transform:scale(.88) rotate(3deg); opacity:1}80%{transform:scale(1.06) rotate(-4deg)}100%{transform:scale(1) rotate(-3deg)}}
 .tally li{animation:rowin .3s ease-out both}
 .tally li:nth-child(1){animation-delay:.35s}.tally li:nth-child(2){animation-delay:.45s}.tally li:nth-child(3){animation-delay:.55s}.tally li:nth-child(4){animation-delay:.65s}
 @keyframes rowin{from{opacity:0; transform:translateX(calc(var(--u)*-6px))}}
@@ -150,7 +161,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 #rotate{position:fixed; left:50%; bottom:calc(12px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); background:var(--butter); color:var(--ink); border:2px solid var(--ink); border-radius:8px; padding:6px 10px; font-size:13px; white-space:nowrap}
 @media (max-width:520px){ .card .nm,.card .best,.menu-foot span,.toggle,.soon{font-size:calc(var(--u)*6px)} .card .nm{min-height:0} }
 @media (max-height:520px){ .demo-box{width:calc(var(--u)*208px); height:calc(var(--u)*117px)} .panel{padding:calc(var(--u)*5px) calc(var(--u)*12px); gap:calc(var(--u)*3px)} }
-@media (prefers-reduced-motion: reduce){ .pop,.go,#hand,.rank,.tally li,.pop.P::after{animation-duration:0s !important; animation-iteration-count:1 !important} }
+.panel.res,.burst{}
+@media (prefers-reduced-motion: reduce){ .burst{display:none} #intro .panel{animation:none} .panel.res,.pop,.go,#hand,.rank,.tally li,.pop.P::after{animation-duration:0s !important; animation-iteration-count:1 !important} }
 </style>
 
 <div id="stage">
@@ -202,7 +214,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   <div id="results" class="ov" hidden>
     <div class="panel res">
       <h2 id="rName"></h2>
-      <div class="rankbox"><div class="rank" id="rRank">S+</div><div class="rmsg" id="rMsg"></div></div>
+      <div class="rankbox"><div class="burst" id="rBurst"></div><div class="rank" id="rRank">S+</div><div class="rmsg" id="rMsg"></div></div>
       <div>
         <ul class="tally" id="rTally"></ul>
         <div class="meta" id="rMeta"></div>

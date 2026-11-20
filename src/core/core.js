@@ -30,7 +30,8 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   // cartel de cambio de fase: bloquea los clics mientras se lee
   bannerT:0,
   // con demo: en vez de un cartel que se va solo, se abre una ficha con el vídeo de la fase nueva y esperas a pulsar
-  banner(tag,title,sub,dur,demo,quiet){if(DEMO)return false;if(demo&&this.scene==='play'){this.cardWait=1.1;this.cardInfo={tag,title,sub,demo};return true;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.querySelector('small').hidden=!sub;el.className='';el.hidden=false;void el.offsetWidth;if(!quiet)Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
+  banner(tag,title,sub,dur,demo,quiet){if(DEMO)return false;// cambio de fase: sin ficha (el tutorial va en la precarga); los cuadraditos tapan el cambio de escena y queda solo el título
+    if(demo&&this.scene==='play'){if(!reduce){this.wipe=this.wipeD=1.0;}sub='';quiet=true;dur=1.7;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.querySelector('small').hidden=!sub;el.className='';el.hidden=false;void el.offsetWidth;if(!quiet)Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
   card:false,cardWait:0,cardInfo:null,
   // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
   note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);

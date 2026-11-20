@@ -41,7 +41,7 @@ syncToggles();
 
 /* ---------- flujo ---------- */
 function show(id,on){$(id).hidden=!on;}
-function wipe(){if(!reduce)Core.wipe=0.55;}
+function wipe(d){if(!reduce)Core.wipe=Core.wipeD=d||0.55;}
 function setScene(s){
   if(s!=='play'){Core.card=false;Core.cardWait=0;}
   Core.scene=s;stage.classList.toggle('menubg',s==='menu');show('menu',s==='menu');show('intro',s==='intro');show('hud',s==='play');show('results',s==='results');show('pause',false);Core.paused=false;
@@ -52,7 +52,7 @@ function openGame(id){
   Core.run={id,seed,counts:{P:0,B:0,R:0,F:0},n:0,pts:0,streak:0,best:0};
   Core.game=GAMES[id].make(mulberry32(seed));Snd.setMood(Core.game.mood);
   $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;document.querySelector('#intro .go').textContent='Pulsa para empezar';$('hName').textContent=GAMES[id].name;
-  lastHud='';setScene('intro');wipe();
+  lastHud='';setScene('intro');wipe(1.3);
 }
 function openCard(){const I=Core.cardInfo;Core.card=true;release();
   $('inName').textContent=I.tag+' · '+I.title;$('inHint').textContent=I.sub;document.querySelector('#intro .go').textContent='Pulsa para continuar';
@@ -60,7 +60,8 @@ function openCard(){const I=Core.cardInfo;Core.card=true;release();
 function closeCard(){Core.card=false;Demo=null;show('intro',false);Core.ready=1.2;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';Snd.ui();}
 function startPlay(){Demo=null;Core.card=false;Core.cardWait=0;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
 function toMenu(){Feel.reset();$('ready').hidden=true;$('phase').hidden=true;Core.bannerT=0;Core.ready=0;Snd.waterStop();Snd.sizzle(false);$('hCue').hidden=true;lastCue='';Snd.setMood('menu');Core.game=null;buildMenu();setScene('menu');wipe();const f=document.querySelector('.card:not(:disabled)');f&&f.focus({preventScroll:true});}
-function rankOf(r){if(r.n===0)return 'D';if(r.counts.P===r.n)return 'S+';const p=r.pts/(100*r.n)*100;return p>=95?'S':p>=85?'A':p>=70?'B':p>=50?'C':'D';}
+// misma escala en todos los juegos, por porcentaje: S+ todo perfecto, S ≥ 90 %, A ≥ 80 %, B ≥ 65 %, C ≥ 50 %
+function rankOf(r){if(r.n===0)return 'D';if(r.counts.P===r.n)return 'S+';const p=r.pts/(100*r.n)*100;return p>=90?'S':p>=80?'A':p>=65?'B':p>=50?'C':'D';}
 function showResults(){
   if(Core.scene!=='play')return;
   const r=Core.run,rk=rankOf(r),pct=r.n?r.pts/(100*r.n)*100:0;
@@ -74,9 +75,12 @@ function showResults(){
   $('rMeta').textContent='Precisión '+pct.toFixed(1).replace('.',',')+' % · '+r.pts+' pts · Racha máx. '+r.best+' · Semilla '+r.seed;
   const e=r.early||0,l=r.late||0;let tip='';
   if(e+l>=2){tip=e>l*1.5?'Tiendes a adelantarte: espera un pelín más.':l>e*1.5?'Tiendes a llegar tarde: anticípate un poco.':'Tus fallos se reparten entre pronto y tarde: vas bien encaminado.';}
-  $('rTip').textContent=tip?('Pronto '+e+' · Tarde '+l+' · '+tip):'';$('rTip').hidden=!tip;
+  $('rTip').textContent=tip?('Pronto '+e+' · Tarde '+l):'';$('rTip').hidden=!tip;
   $('rRec').hidden=!(better&&prev);
   setScene('results');
+  // mini explosión de estrellitas y corazones alrededor de la nota
+  const bx=$('rBurst');bx.innerHTML='<b></b>';const cols=['var(--pink)','var(--butter)','var(--mint)','var(--lav)','var(--sky)','var(--peach)'];
+  for(let i=0;i<30;i++){const sp=document.createElement('i');const a=i/30*360+Math.random()*10,d=(i&1?34:50)+Math.random()*30;sp.style.setProperty('--a',a+'deg');sp.style.setProperty('--d',d);sp.style.background=cols[i%cols.length];sp.style.animationDelay=(0.3+Math.random()*0.12)+'s';if(i%3===0)sp.className='h';bx.appendChild(sp);}
   if(rk==='S+'||rk==='S')setTimeout(()=>Snd.fanfare(rk),350);
   setTimeout(()=>$('again').focus({preventScroll:true}),50);
 }

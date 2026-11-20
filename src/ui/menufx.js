@@ -82,3 +82,8 @@ function drawParts(c,dt){
   Core.parts=Core.parts.filter(p=>p.t<p.life);
   for(const p of Core.parts){if(p.kind==='star'){R(c,p.x-1,p.y,3,1,p.col);R(c,p.x,p.y-1,1,3,p.col);}else R(c,p.x,p.y,1,2,p.col);}
 }
+
+// fondo de la pantalla de precarga: cuadraditos rosas y lilas que se deslizan en diagonal, despacio
+function drawIntroBg(c){const t=Core.time*10;R(c,0,0,W,H,C.lavL);
+  for(let y=-16;y<H+16;y+=16)for(let x=-16;x<W+16;x+=16){const xx=Math.round(x+(t%16)),yy=Math.round(y+(t%16)),k=((x+y)/16)&1,b=Math.sin(Core.time*1.5+(x+y)*0.03);
+    const sz=8+Math.round(b*2);rr(c,xx+8-sz/2,yy+8-sz/2,sz,sz,k?C.pinkL:C.lav,3);}}
