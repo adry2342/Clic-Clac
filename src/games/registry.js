@@ -8,12 +8,12 @@ const GAMES={
     bot(g){const P=g._ph();
       if(P.phase===2){if(P.st2!=='swing')return;const e=(P.sx-P.topX)*Math.sign(P.vx||1);if(e>=-Math.abs(P.vx)*0.018&&e<=0.6)return 'tap';return;}
       const s=P.cur;if(!s||s.st!=='slide')return;for(const m of s.marks){if(m.j)continue;const d=s.x+m.o-SHX;if(d>=-0.5&&d<4)return 'tap';}}},
-  tostadora:{name:'Tostadora',hint:'Fase 1: mantén para bajar la palanca y suelta cuando el pan tenga el mismo tostado que el pedido (un tono de más o de menos da Bien); la marca rosa solo sale en la primera. Fase 2: el cuchillo cruza una vez: mantén al entrar en la tostada y suelta al salir.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
+  tostadora:{name:'Tostadora',hint:'Fase 1: mantén para bajar la palanca y suelta cuando el pan tenga el mismo tostado que el pedido (un bloque de color de más o de menos da Bien); la marca rosa solo sale en la primera. Fase 2: el cuchillo cruza una vez: mantén al entrar en la tostada y suelta al salir.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
     seq:[['bien','tostar'],['bien','untar'],['mal','tostar'],['mal','untar']],
     bot(g,D){const d=g._dbg();if(d.phase===2){if(d.swapT<2||!d.u||d.u.st!=='pass')return;if(d.u.sx==null&&d.kx>=d.e[0])return 'down';if(d.h2&&d.kx>=d.e[1])return 'up';return;}if(!d.b)return;if(d.st==='ready'){D.rt=(D.rt||0)+D.dt;if(D.rt>0.5){D.rt=0;return 'down';}}if(d.st==='toast'&&d.b.p>=d.b.target)return 'up';}},
-  tortilla:{name:'Tortilla de patatas',hint:'Pela la patata tira a tira (toca cuando el pelador llegue al final; luego gira sola), córtala a ojo en los trozos que pida la receta (3 a 6, lo más iguales posible), casca los huevos, bate a ritmo y dale la vuelta. Las marcas rosas solo salen la primera vez.',make:Tortilla,crop:[86,56],gesture:'mix',warm:0.5,view:D=>{const k=D.g._dbg().k;return k==='cortar'||k==='pelar'?[86,58]:k==='vuelta'?[86,36]:[98,36];},loopT:7,
+  tortilla:{name:'Tortilla de patatas',hint:'Pela la patata (gira sola: toca cuando una franja de piel pase por la línea del pelador), córtala a ojo en los trozos que pida la receta (3 a 6, lo más iguales posible), casca los huevos, bate a ritmo y dale la vuelta. Las marcas rosas solo salen la primera vez.',make:Tortilla,crop:[86,56],gesture:'mix',warm:0.5,view:D=>{const k=D.g._dbg().k;return k==='cortar'||k==='pelar'?[86,58]:k==='vuelta'?[86,36]:[98,36];},loopT:7,
     bot(g,D){const d=g._dbg(),p=d.p;if(!d.ready)return;
-      if(d.k==='pelar'){if(p.mv&&p.pe>=d.pend-0.3)return 'tap';return;}
+      if(d.k==='pelar'){if(p.got>=p.n||p.sw)return;for(const q of p.sk){if(q.done)continue;const v=Math.atan2(Math.sin(q.a+p.rot),Math.cos(q.a+p.rot));if(v>-0.02&&v<0.06)return 'tap';}return;}
       if(d.k==='cortar'&&p.cuts<p.n&&d.past>=p.T-0.1)return 'tap';
       if(d.k==='huevo'&&!p.open){if(!p.hold)return 'down';if(p.c>=p.target-0.004)return 'up';}
       if(d.k==='batir'&&p.fin==null){D.cd=(D.cd||0)-(D.dt||0.016);if(p.s<p.z-0.03&&D.cd<=0){D.cd=0.09;return 'tap';}}
