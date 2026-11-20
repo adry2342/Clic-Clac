@@ -13,7 +13,7 @@
 const EGG={raw:'#ffd34d',beat:'#ffe07a',cook:['#ffe58a','#ffd36b','#f7bf55','#e8a245','#c9803a']};
 const TCT=128,TKX=146,TBW=146,TPN=144,TPL=284,TGA=216;
 const POT={a:'#fff0b8',b:'#f2d58a',c:'#fffbe2',d:'#f7e3a0'},SKIN={a:'#dcae78',d:'#c08f5c',s:'#9c6d45',l:'#ecc897'};
-const TCUE={pelar:'Pela: toca cuando la piel pase por la línea del pelador',cortar:'Corta en trozos iguales: toca a ojo',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
+const TCUE={pelar:'Pela: toca justo cuando el pelador llegue al final',cortar:'Corta en trozos iguales: toca a ojo',huevo:'Casca el huevo: mantén para apretar y suelta en la marca',
   batir:'Bate a ritmo: toca para que la aguja no salga de la zona rosa',vuelta:'Dale la vuelta: mantén para coger impulso y suelta en la marca',servir:''};
 function drawTortillaPanel(c,k){
   // pared de azulejos tipo metro (lavanda) continua entre paneles
@@ -98,11 +98,12 @@ function Tortilla(rng,preview){
   const Ns=[3,4,5,6].sort(()=>rng()-0.5);
   for(let k=0;k<2;k++){
     const N=Ns[k],len=72+Math.round(rng()*26),T=len/N,pv=(44+rng()*12)*(1+k*0.15);
-    // pelar: la patata gira; tiene n franjas de piel alrededor y cada toque arranca una
-    {const n=3+k,off=rng()*6.28;ph.push({k:'pelar',st:0,tort:k,len,n,sk:Array.from({length:n},(_,i)=>({a:off+i*2*Math.PI/n,done:false})),
-      om:(1.2+rng()*0.4)*(1+k*0.2),rot:-off+1.3,
+    // pelar: la patata tiene n franjas de piel; el pelador recorre la franja de delante y tocas justo al llegar al final.
+    // Luego la patata gira sola y trae la siguiente franja (cada una a su velocidad)
+    {const n=3+k,off=rng()*6.28;ph.push({k:'pelar',st:0,tort:k,len,n,sk:Array.from({length:n},(_,i)=>({a:off+i*2*Math.PI/n,v:pv*(0.8+rng()*0.45)})),
+      rot:-off,
       // entre franja y franja ya asoma un poco de carne: así se ve dónde empieza y acaba cada tira
-      cuts:Array.from({length:n},(_,i)=>{const g=off+(i+0.5)*2*Math.PI/n,h=0.42*Math.PI/n;return [g-h,g+h];})});TOTAL+=n;}
+      cuts:Array.from({length:n},(_,i)=>{const g=off+(i+0.5)*2*Math.PI/n,h=0.3*Math.PI/n;return [g-h,g+h,1e9];})});TOTAL+=n;}
     ph.push({k:'cortar',st:0,tort:k,n:N-1,N,T,len,base:T*(1.05+rng()*0.35)*(1+k*0.12)});TOTAL+=N;
     const ne=2+(k===1&&rng()<0.6?1:0);
     for(let e=0;e<ne;e++){ph.push({k:'huevo',st:1,egg:e,r:(0.5+rng()*0.25)*(1+k*0.18),f:1.1+rng()*0.9,pp:rng()*6,target:0.5+rng()*0.3});TOTAL++;}
@@ -124,8 +125,8 @@ function Tortilla(rng,preview){
     const p=P();if(!p){return;}
     p.t=0;p.init=true;
     if(p.k==='pelar'){A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peel:true};A.peels=[];A.slices=[];A.pile=0;A.scoop=0;
-      p.got=0;p.sw=null;p.endT=0;A.kin=0;
-      p.bn=p.tort===0?['Paso 1','¡A pelar!','La patata gira sola. Toca cuando una franja de piel pase justo por la línea del pelador: cada toque arranca una tira.',2.6]:['Otra tortilla','¡A pelar!','Más franjas y gira más deprisa.',1.6];}
+      p.got=0;p.pe=null;p.mv=false;p.res=null;p.turn=null;p.endT=0;p.wt=0.35;A.kin=0;
+      p.bn=p.tort===0?['Paso 1','¡A pelar!','El pelador recorre la tira de piel solo: toca justo cuando llegue al final de la patata. Luego la patata gira y viene la siguiente tira.',2.6]:['Otra tortilla','¡A pelar!','Más tiras y más deprisa.',1.6];}
     if(p.k==='cortar'){if(!A.pot||!A.pot.peeled)A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peeled:true};
       A.pot.push=0;A.kin=0;p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];p.hint=HC;
       p.bn=p.tort===0?['Paso 2','¡En '+p.N+' trozos!','Toca para cortar: '+p.N+' trozos lo más iguales posible, a ojo. La primera vez verás unas marcas rosas.',2.4,'cortar']:['Paso 2','¡En '+p.N+' trozos!',p.tort===0?'Toca para cortar: '+p.N+' trozos lo más iguales posible. Las marcas rosas solo salen esta vez.':'Ahora a ojo, sin marcas: '+p.N+' trozos iguales.',2.4];}
@@ -138,7 +139,7 @@ function Tortilla(rng,preview){
   function next(){pi++;if(pi<ph.length)enter();}
   enter();
   if(TDEMO){const k=ph.findIndex(q=>q.k===TDEMO);if(k>0){pi=k;enter();camX=ph[pi].st*W;cam=null;wait=0.1;if(TDEMO==='batir'){A.bowlSl=3;A.eggs=2;A.yolks=[{t:1,x:TBW-20},{t:1,x:TBW-4}];}}TDEMO=null;}
-  if(preview){const p=P();p.sk[0].done=true;p.got=1;p.cuts.push([-p.rot-0.8,-p.rot+0.8]);p.rot+=1.2;for(let k=0;k<5;k++)A.peels.push({x:TKX+18-k*9,y:TCT-12,vx:0,vy:0,t:1,rest:true,s:k%2});}
+  if(preview){const p=P();p.pe=A.pot.x0+Math.round(A.pot.len*0.55);p.mv=true;p.cur=[-p.rot-Math.PI/p.n,-p.rot+Math.PI/p.n,p.pe-A.pot.x0];p.cuts.push(p.cur);for(let k=0;k<5;k++)A.peels.push({x:TKX+18-k*9,y:TCT-12,vx:0,vy:0,t:1,rest:true,s:k%2});}
   const active=()=>!cam&&wait<=0;
   const self={_A:A,_flip:()=>A.flip,_dbg:()=>{const p=P()||{};return {k:p.k,ready:active(),p,past:A.pot?TKX-A.pot.x0:0,pend:A.pot?A.pot.x0+A.pot.len-4:0,z:p.z};},unit:'Paso',total:TOTAL,mood:'tortilla',hold:true,
     inPractice(){return false;},progress(){return done;},
@@ -162,11 +163,17 @@ function Tortilla(rng,preview){
       if(p.hint)p.hint.step(dt);
       p.t+=dt;
       if(p.k==='pelar'){
-        if(p.sw){p.sw.t+=dt;const u=Math.min(1,p.sw.t/0.24),xx=A.pot.x0+4+u*(A.pot.len-8);
-          if(p.sw.skin&&Math.floor(xx/6)!==Math.floor((p.sw.lx||xx-6)/6))A.peels.push({x:xx,y:TCT-28,vx:-10-Math.random()*30,vy:-50-Math.random()*30,t:0,rest:false,s:Math.random()<0.5?1:0});
-          p.sw.lx=xx;if(A.peels.length>60)A.peels.shift();if(p.sw.t>0.32)p.sw=null;}
-        p.rot+=p.om*dt*(p.got>=p.n?Math.max(0,1-p.endT*2):1);
-        if(p.got>=p.n&&!p.sw){p.endT+=dt;if(p.endT>0.7){A.pot.peeled=true;A.pot.peel=false;next();}}
+        const pot=A.pot,end=pot.x0+pot.len-4,q=p.sk[p.got];
+        // giro de la patata hacia la siguiente franja
+        if(p.turn){p.turn.t+=dt;const u=inout(Math.min(1,p.turn.t/0.55));p.rot=p.turn.from+(p.turn.to-p.turn.from)*u;if(p.turn.t>=0.55){p.turn=null;p.wt=0.25;}return;}
+        if(p.res){p.res.t+=dt;if(p.res.t>0.45){p.res=null;if(p.got>=p.n){pot.peeled=true;pot.peel=false;next();return;}
+            const to=-p.sk[p.got].a;let from=p.rot;while(to-from>Math.PI)from+=2*Math.PI;while(from-to>Math.PI)from-=2*Math.PI;p.rot=from;p.turn={t:0,from,to};p.pe=null;}return;}
+        if(!active())return;
+        if(p.pe==null){p.wt-=dt;if(p.wt>0)return;p.pe=pot.x0+3;p.mv=true;p.cur=[-p.rot-Math.PI/p.n,-p.rot+Math.PI/p.n,3];p.cuts.push(p.cur);Snd.burst(3200,.04,.06,2);}
+        if(p.mv){const x0_=p.pe,v=q.v*Math.min(1,0.4+(p.pe-pot.x0)/20);p.pe+=v*dt;p.cur[2]=Math.min(pot.len,p.pe-pot.x0);
+          if(Math.floor(x0_/5)!==Math.floor(p.pe/5)&&p.pe<end+2)A.peels.push({x:p.pe-3,y:TCT-28,vx:-18-Math.random()*22,vy:-40-Math.random()*30,t:0,rest:false,s:Math.random()<0.5?1:0});
+          if(A.peels.length>60)A.peels.shift();
+          if(p.pe>end+12){p.mv=false;p.cur[2]=1e9;peelJ('F','▲ Te pasaste: el pelador se salió');}}
         return;
       }
       if(p.k==='cortar'){
@@ -203,13 +210,7 @@ function Tortilla(rng,preview){
     },
     press(){
       const p=P();if(!p||!active())return;
-      if(p.k==='pelar'&&p.got<p.n&&!p.sw){
-        // franja pendiente más cercana a la línea del pelador (ángulo 0 = de frente)
-        let best=null,bd=9;for(const q of p.sk){if(q.done)continue;const d=wrapA(q.a+p.rot);if(Math.abs(d)<Math.abs(bd)){bd=d;best=q;}}
-        const cutA=-p.rot,h=Math.PI/p.n;p.cuts.push([cutA-h,cutA+h]);p.sw={t:0,skin:true};Snd.burst(3200,.05,.12,2);
-        if(!best||Math.abs(bd)>0.75){p.sw.skin=false;Core.waste(TKX+60,58,'Ahí ya no había piel');return;}
-        best.done=true;p.got++;if(HP.a>0)HP.fade();
-        const j=J(Math.abs(bd),0.16,0.3,0.45);judge(j,bd>0?'▲ Tarde: la piel ya había pasado':'▼ Pronto: la piel aún no llegaba',TKX+60,58);}
+      if(p.k==='pelar'&&p.mv){p.mv=false;const e=p.pe-(A.pot.x0+A.pot.len-4),j=J(Math.abs(e),3,6,10);if(e>=0)p.cur[2]=1e9;peelJ(j,e<0?'▼ Corto: quedó piel al final':'▲ Te pasaste');}
       else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,t=tolC(p.T);cut(J(Math.abs(e),t[0],t[1],t[2]),e<0?'▼ Pequeño: espera más':'▲ Grande: corta antes');}
       else if(p.k==='huevo'&&!p.open){p.hold=true;p.ht=0;}
       else if(p.k==='batir'&&p.fin==null){p.s=Math.min(1.05,p.s+0.12*(1-0.35*p.s));Snd.burst(4200,.05,.1,1.5);}
@@ -225,6 +226,7 @@ function Tortilla(rng,preview){
         Snd.boing();judge(j,e<0?'▼ Poco impulso':'▲ Demasiado impulso',TPN,50);}
     }
   };
+  function peelJ(j,det){const p=P();p.got++;p.res={t:0};if(HP.a>0)HP.fade();Snd.tone(520,.06,'triangle',.04,0,380);judge(j,det,Math.min(TKX+110,p.pe),58);}
   function cut(j,det){
     const p=P(),pot=A.pot,w=Math.max(2,Math.min(pot.len-2,Math.round(TKX-pot.x0)));
     if(p.cuts===0&&p.hint&&p.hint.a>0){p.hint.fade();Core.note(TKX-30,24,'Ahora a ojo: sin marcas');}
@@ -261,9 +263,12 @@ function Tortilla(rng,preview){
         let skinAt=(xx,yy)=>xx>=x0+pot.len-pot.rem[yy<y+15?tb:bb];
         const PL=pot.peel&&p.k==='pelar'?p:null,cyP=y+15;
         // pelando: la patata gira sobre su eje largo; cada fila de la cara visible es un ángulo de la superficie
-        const skinA=al=>!PL.cuts.some(([a0,a1])=>{const m=(a0+a1)/2,h=(a1-a0)/2;return Math.abs(wrapA(al-m))<=h;});
+        // largo pelado (desde la punta izquierda) en el ángulo al; 0 = toda con piel
+        const peelL=al=>{let L=0;for(const [a0,a1,l] of PL.cuts){const m=(a0+a1)/2,h=(a1-a0)/2;if(Math.abs(wrapA(al-m))<=h)L=Math.max(L,l);}return L;};
+        const skinA=al=>peelL(al)<pot.len-2;
         if(PL){potX.clearRect(0,0,W,H);drawPotato(potX,x0,y,pot.len,pot.tip,POT.a);potX.globalCompositeOperation='source-atop';
-          for(let r=y-1;r<y+31;r++){const f=Math.max(-1,Math.min(1,(r+0.5-cyP)/14.5)),al=Math.asin(f)-PL.rot;if(skinA(al)){potX.fillStyle=Math.abs(f)>0.8?SKIN.d:SKIN.a;potX.fillRect(x0-3,r,pot.len+6,1);}
+          for(let r=y-1;r<y+31;r++){const f=Math.max(-1,Math.min(1,(r+0.5-cyP)/14.5)),al=Math.asin(f)-PL.rot,L=peelL(al);
+            if(L<pot.len-2){const xs=L>0?x0+Math.round(L):x0-3;potX.fillStyle=Math.abs(f)>0.8?SKIN.d:SKIN.a;potX.fillRect(xs,r,x0+pot.len+3-xs,1);if(L>0){potX.fillStyle=SKIN.l;potX.fillRect(xs,r,1,1);}}
             else if(Math.abs(f)<0.95&&(skinA(al-0.14)||skinA(al+0.14))){potX.fillStyle=SKIN.l;potX.fillRect(x0-3,r,pot.len+6,1);}}
           potX.globalCompositeOperation='source-over';c.drawImage(potC,0,0);
           skinAt=null;}
@@ -277,19 +282,18 @@ function Tortilla(rng,preview){
           obj(c,l=>{rr(l,hx+10,hy-3,16,13,C.pink,4);rr(l,hx-2,hy,15,16,'#ffe1cc',5);rr(l,hx-5,hy+4,6,8,'#ffe1cc',3);},{sel:true});
           R(c,hx+11,hy-2,14,1,C.pinkL);for(const k of [4,8,12])R(c,hx-4,hy+k,3,1,'#f2b9a0');R(c,hx+1,hy+1,9,1,'#fff3ea');}
         if(PL){
-          // guía rosa: la línea del pelador (de frente). Solo con la primera patata; luego se desvanece
-          if(HP.a>0){const a=HP.a,gc=Math.sin(Core.time*5)>0?C.pinkDD:C.pinkD;c.save();c.globalAlpha=a;
-            for(let k=0;k<3;k++){R(c,x0+pot.len+4+k,cyP-2+k,1,5-2*k,gc);}
-            for(let xx=x0+4;xx<x0+pot.len-4;xx+=6)R(c,xx,cyP,3,1,gc);
-            if(a<1)for(let k=0;k<6;k++)px(c,x0+10+k*12,cyP-4-Math.round((1-a)*16)-(k%3)*3,k%2?C.white:C.pinkL);c.restore();}
-          // pelador en horizontal delante de la patata: descansa a la izquierda y al tocar barre la patata de punta a punta
-          const u=PL.sw?Math.min(1,PL.sw.t/0.24):0,back=PL.sw&&PL.sw.t>0.24?ease(Math.min(1,(PL.sw.t-0.24)/0.08)):0,
-            ex=Math.round(x0-4+(u*(pot.len-4))*(1-back)),ey=cyP+(PL.sw&&u<1?0:1);
+          // guía rosa del final de la patata: solo en la primera tira; luego se desvanece
+          if(HP.a>0){const g=x0+pot.len-4,a=HP.a,gc=Math.sin(Core.time*5)>0?C.pinkDD:C.pinkD,lift=Math.round((1-a)*8);c.save();c.globalAlpha=a;
+            for(let k=0;k<3;k++){R(c,g-2+k,y-14+k-lift,5-2*k,1,gc);R(c,g-2+k,y+36-k+lift,5-2*k,1,gc);}
+            for(let yy=y-10;yy<y+34;yy+=4)R(c,g,yy,2,3,gc);
+            if(a<1)for(let k=0;k<6;k++)px(c,g-3+((k*5+Math.floor(Core.time*20))%7),y+30-k*8-Math.round((1-a)*16),k%2?C.white:C.pinkL);c.restore();}
+          // pelador en horizontal sobre la tira de delante: avanza solo por la patata y vuelve a la punta tras cada tira
+          const ex=Math.round(o0+(PL.pe!=null?PL.pe:pot.x0-4)),ey=cyP+(PL.mv&&Math.floor(Core.time*30)%2?1:0);
+          if(!PL.turn){
           obj(c,l=>{l.fillStyle=C.metal;l.fillRect(ex-1,ey-4,3,8);l.fillStyle=C.pinkD;l.fillRect(ex-17,ey-2,15,5);},{sel:true});
           R(c,ex,ey-3,1,6,C.metalL);R(c,ex-16,ey-2,13,1,C.pinkL);R(c,ex-3,ey-3,2,1,C.metalDD);R(c,ex-3,ey+3,2,1,C.metalDD);
-          // mano que lo sujeta (fina, por detrás del mango)
           obj(c,l=>{rr(l,ex-19,ey-6,11,11,'#ffe1cc',4);rr(l,ex-30,ey-7,12,11,C.lav,4);},{sel:true});R(c,ex-29,ey-6,10,1,C.lavL);R(c,ex-18,ey-3,8,1,'#fff3ea');
-          if(PL.sw&&u<1&&PL.sw.skin){px(c,ex+3,ey-3,C.white);R(c,ex+2,ey-6,3,2,SKIN.l);}
+          if(PL.mv){px(c,ex+3,ey-3,C.white);R(c,ex+2,ey-6,3,2,SKIN.l);}}
         }
       }
       if(p.k==='cortar'&&p.cuts<p.n&&p.hint&&p.hint.a>0&&A.pot){
@@ -312,19 +316,14 @@ function Tortilla(rng,preview){
       if(p.k!=='pelar'){
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
       const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36-(p.k==='cortar'?(1-Ease.outBack(A.kin))*90:0));
-      // cuchillo de cocina visto de frente y un poco desde arriba: la hoja se mete hacia el fondo (arriba a la derecha),
-      // el filo brilla abajo y el mango rosa sale hacia ti (abajo a la izquierda), sujeto por la mano
-      const by=ky+41,dx=s_=>Math.round(0.72*s_),dy=s_=>Math.round(0.3*s_);
-      const kb=s_=>by-dy(s_)-(s_>24?Math.round((s_-24)*(s_-24)*0.16):0),kt=s_=>by-15-dy(s_)+(s_>22?Math.round((s_-22)*0.55):0);
-      obj(c,l=>{l.fillStyle=C.metal;for(let s_=0;s_<=38;s_++){const t0=kt(s_),b0=kb(s_);if(b0>t0)l.fillRect(kx+dx(s_),t0,1,b0-t0+1);}
-        l.fillStyle=C.pinkD;for(let s_=-3;s_>=-20;s_--)l.fillRect(kx+dx(s_),by-15-dy(s_),1,6);},{sel:true});
-      for(let s_=0;s_<=38;s_++){const x=kx+dx(s_),t0=kt(s_),b0=kb(s_);if(b0-t0<2)continue;
-        R(c,x,t0,1,1,C.metalL);if(b0-t0>5)R(c,x,t0+2,1,Math.max(1,Math.round((b0-t0)*0.35)),'#eef0f8');R(c,x,b0-1,1,1,C.metalD);R(c,x,b0,1,1,C.white);}
-      for(let s_=0;s_<=2;s_++)R(c,kx+dx(-s_)-0,by-16-dy(-s_),1,8,C.metalD);
-      for(let s_=-3;s_>=-20;s_--){const x=kx+dx(s_),y=by-15-dy(s_);px(c,x,y,C.pinkL);px(c,x,y+5,C.pinkDD);}
-      for(const s_ of [-8,-15]){const x=kx+dx(s_),y=by-13-dy(s_);px(c,x,y,C.metalL);}
-      const hx2=kx+dx(-13),hy2=by-17-dy(-13);obj(c,l=>{rr(l,hx2-5,hy2,12,11,'#ffe1cc',4);rr(l,hx2-16,hy2+4,13,11,C.lav,4);},{sel:true});
-      R(c,hx2-15,hy2+5,11,1,C.lavL);R(c,hx2-4,hy2+1,8,1,'#fff3ea');R(c,hx2-4,hy2+5,9,1,'#f2b9a0');R(c,hx2-4,hy2+8,8,1,'#f2b9a0');
+      // cuchillo recto desde arriba: el filo cae justo en la línea de corte; el mango sube en diagonal hacia la mano
+      const sk=yy=>0;// hoja recta, justo encima de la línea de corte
+      obj(c,l=>{l.fillStyle=C.metal;for(let yy=0;yy<42;yy++){const w=yy>38?5-(yy-39):9;l.fillRect(kx-1+sk(yy),ky+yy,w,1);}
+        l.fillStyle=C.pinkD;for(let k=0;k<14;k++)l.fillRect(kx+8+Math.round(k*0.9),ky-3-k,6,3);},{sel:true});
+      for(let yy=2;yy<38;yy++){px(c,kx+sk(yy),ky+yy,C.metalL);px(c,kx+6+sk(yy),ky+yy,C.metalD);}
+      for(let yy=4;yy<34;yy+=1)px(c,kx+2+sk(yy),ky+yy,'#eef0f8');R(c,kx+sk(0),ky,8,1,C.metalD);
+      for(let k=2;k<13;k++)px(c,kx+9+Math.round(k*0.9),ky-3-k,C.pinkL);px(c,kx+13,ky-8,C.pinkDD);
+      const hx2=kx+17,hy2=ky-21;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
       if(A.knife>0.12){R(c,kx-8,TCT-11,3,1,C.white);R(c,kx+4,TCT-11,3,1,C.white);px(c,kx-10,TCT-13,C.white);px(c,kx+7,TCT-13,C.white);}
       }
     }

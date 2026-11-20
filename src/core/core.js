@@ -26,11 +26,11 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   sparkle(x,y){if(DEMO)return;for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*0.4,s=22+Math.random()*28;this.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-12,g:30,life:.55+Math.random()*.3,t:0,kind:'star',col:i%3?C.butter:C.white});}},
   drops(x,y,n){if(DEMO)return;for(let i=0;i<n;i++){this.parts.push({x:x+(Math.random()-.5)*6,y,vx:(Math.random()-.5)*70,vy:-30-Math.random()*45,g:240,life:.8,t:0,kind:'drop',col:'#9fd5ff'});}},
   // al terminar: un momento para ver la última nota, cartel de fin y luego los resultados
-  finish(){setTimeout(()=>{if(this.scene==='play')this.banner('Fin','¡Terminado!','Ahora verás tu nota…',2.2);},700);setTimeout(()=>showResults(),3000);},
+  finish(){setTimeout(()=>{if(this.scene==='play')this.banner('Fin','¡Terminado!','',2.2,null,true);},700);setTimeout(()=>showResults(),3000);},
   // cartel de cambio de fase: bloquea los clics mientras se lee
   bannerT:0,
   // con demo: en vez de un cartel que se va solo, se abre una ficha con el vídeo de la fase nueva y esperas a pulsar
-  banner(tag,title,sub,dur,demo){if(DEMO)return false;if(demo&&this.scene==='play'){this.cardWait=1.1;this.cardInfo={tag,title,sub,demo};return true;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.className='';el.hidden=false;void el.offsetWidth;Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
+  banner(tag,title,sub,dur,demo,quiet){if(DEMO)return false;if(demo&&this.scene==='play'){this.cardWait=1.1;this.cardInfo={tag,title,sub,demo};return true;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.querySelector('small').hidden=!sub;el.className='';el.hidden=false;void el.offsetWidth;if(!quiet)Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
   card:false,cardWait:0,cardInfo:null,
   // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
   note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);
