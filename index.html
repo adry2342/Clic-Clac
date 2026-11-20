@@ -118,6 +118,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .pop small{display:table; margin:calc(var(--u)*1.5px) auto 0; font-size:max(11px,calc(var(--u)*8px)); color:var(--cream); background:var(--ink); border-radius:calc(var(--u)*2px); padding:0 calc(var(--u)*3px)}
 .pop.prac b{opacity:.75}
 .pop.N b{background:var(--lavL); font-size:max(11px,calc(var(--u)*8px))}
+.pop.old{animation:popold .28s ease-out forwards !important}
+@keyframes popold{to{opacity:0; transform:translate(-50%,-130%) scale(.85)}}
 @keyframes pop{0%{transform:translate(-50%,-80%) scale(.7); opacity:0}12%{transform:translate(-50%,-100%) scale(1.06); opacity:1}24%{transform:translate(-50%,-100%) scale(1)}78%{transform:translate(-50%,-108%); opacity:1}100%{transform:translate(-50%,-122%); opacity:0}}
 
 /* Results */
@@ -522,14 +524,16 @@ const Snd={ctx:null,master:null,mus:null,sfxBus:null,water:null,mood:'menu',step
 function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
 
 /* ---------- núcleo ---------- */
-const JUDGE={P:{pts:100,word:'¡Perfecto!',sym:'★'},B:{pts:70,word:'Bien',sym:'●'},R:{pts:30,word:'Regular',sym:'▲'},F:{pts:0,word:'Fallo',sym:'✕'}};
+const JUDGE={P:{pts:100,word:'¡Perfecto!',sym:'★'},B:{pts:70,word:'Bien',sym:'●'},R:{pts:30,word:'Regular',sym:'◆'},F:{pts:0,word:'Fallo',sym:'✕'}};
 const RANKS=['D','C','B','A','S','S+'];
 const RMSG={'S+':'¡Todo perfecto! Maestría total.','S':'Casi perfecto. El S+ está a un paso.','A':'¡Muy bien!','B':'Bien hecho.','C':'Vas cogiendo el truco.','D':'Sigue practicando, ya sale.'};
 const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0,s:3,
   judge(j,x,y,practice,detail){
     if(DEMO){if(Demo&&!Demo.last)Demo.last={j,detail:detail||'',t:0};return;}
     Snd.judge(j);
-    const el=document.createElement('div');el.className='pop '+j+(practice?' prac':'');
+    // el cartel anterior se aparta y se desvanece deprisa para que nunca se solapen dos
+    const now_=performance.now();for(const o of $('stage').querySelectorAll('.pop:not(.old)'))if(now_-(+o.dataset.t||0)>150)o.classList.add('old');
+    const el=document.createElement('div');el.className='pop '+j+(practice?' prac':'');el.dataset.t=now_;
     // el cartel sube y se aparta del punto de impacto para no tapar lo que acabas de hacer
     const px_=Math.max(34,Math.min(W-34,x)),py_=Math.max(40,y-14);
     el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';
@@ -546,10 +550,13 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   },
   sparkle(x,y){if(DEMO)return;for(let i=0;i<9;i++){const a=i/9*Math.PI*2+Math.random()*0.4,s=22+Math.random()*28;this.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-12,g:30,life:.55+Math.random()*.3,t:0,kind:'star',col:i%3?C.butter:C.white});}},
   drops(x,y,n){if(DEMO)return;for(let i=0;i<n;i++){this.parts.push({x:x+(Math.random()-.5)*6,y,vx:(Math.random()-.5)*70,vy:-30-Math.random()*45,g:240,life:.8,t:0,kind:'drop',col:'#9fd5ff'});}},
-  finish(){setTimeout(()=>showResults(),550);},
+  // al terminar: un momento para ver la última nota, cartel de fin y luego los resultados
+  finish(){setTimeout(()=>{if(this.scene==='play')this.banner('Fin','¡Terminado!','Ahora verás tu nota…',2.2);},700);setTimeout(()=>showResults(),3000);},
   // cartel de cambio de fase: bloquea los clics mientras se lee
   bannerT:0,
-  banner(tag,title,sub,dur){if(DEMO)return;dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.className='';el.hidden=false;void el.offsetWidth;Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();},
+  // con demo: en vez de un cartel que se va solo, se abre una ficha con el vídeo de la fase nueva y esperas a pulsar
+  banner(tag,title,sub,dur,demo){if(DEMO)return false;if(demo&&this.scene==='play'){this.cardWait=1.1;this.cardInfo={tag,title,sub,demo};return true;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.className='';el.hidden=false;void el.offsetWidth;Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
+  card:false,cardWait:0,cardInfo:null,
   // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
   note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);
     el.style.left=(px_*this.s)+'px';el.style.top=(py_*this.s)+'px';el.innerHTML='<b>'+txt+'</b>';$('stage').appendChild(el);setTimeout(()=>el.remove(),1300);},
@@ -822,7 +829,7 @@ function Bottles(rng,preview){
       }
       const b=bs[cur];
       if(!b){bv+=(140-bv)*Math.min(1,dt*4);moveAll(bv*dt);endT+=dt;
-        if(endT>0.9){endT=0;bv=0;swapT=0;goPhase2();Core.banner('Fase 2','¡Tapones!','Toca para soltar el tapón. Cae un poquito: adelántate al cuello de la botella.');Snd.waterStop();}return;}
+        if(endT>0.9){endT=0;bv=0;swapT=0;goPhase2();Core.banner('Fase 2','¡Tapones!','Toca para soltar el tapón. Cae un poquito: adelántate al cuello de la botella.',2,'cap');Snd.waterStop();}return;}
       if(b.st==='wait'){const dist=FX-b.x,tv=Math.min(170,26+dist*3.4);bv+=(tv-bv)*Math.min(1,dt*7);let mv=bv*dt;if(dist<=0.4||b.x+mv>=FX){mv=Math.max(0,FX-b.x);b.st='pre';b.time=0;bv=0;}moveAll(mv);}
       else if(b.st==='pre'){b.time+=dt;if(b.time>=b.delay){b.st='fill';b.time=0;Snd.waterStart();}}
       else if(b.st==='fill'){
@@ -1309,7 +1316,7 @@ function Stapler(rng,preview){
         if(q.x>W+4&&!q.gone){q.gone=true;if(q.marks.some(m=>m.j&&m.j!=='F')){tray.push(q);Snd.tone(520,.06,'sine',.04);}}}
       for(let i=leaving.length-1;i>=0;i--){if(leaving[i].x>W+20)leaving.splice(i,1);}
       belt+=bv*dt;bvNow=bv;
-      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Tu compañero cruza en su silla con el montón en la cabeza. Toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',2.4);}}
+      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Tu compañero cruza en su silla con el montón en la cabeza. Toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',2.4,'apilar');}}
     },
     press(){
       if(phase===2){
@@ -1418,7 +1425,10 @@ function Stapler(rng,preview){
    ===================================================================== */
 const TX=150,TOP=124;
 const TOAST=['#fbecc9','#f9e2b3','#f6d69c','#f1c785','#ebb76f','#e2a55c','#d4914d','#c07c41','#a66637','#86512f','#5e3f2c','#3e2f2b'];
-function toastCol(p,d){const i=Math.max(0,Math.min(TOAST.length-1,Math.floor(p*10)+(d||0)));return TOAST[i];}
+// el tostado va por niveles: 8 tostadas distintas, una por cuadrado del indicador (el pedido es uno de ellos)
+const TLV=8,TLI=[0,2,3,4,5,7,8,10];
+const tlev=p=>Math.max(0,Math.min(TLV-1,Math.floor(p*TLV)));
+function toastCol(p,d){const i=Math.max(0,Math.min(TOAST.length-1,TLI[tlev(p)]+(d||0)));return TOAST[i];}
 const BREADS={
   molde:{name:'Pan de molde',rate:1/3.3,base:0,w:26,h:24,top:'bumps'},
   integral:{name:'Pan integral',rate:1/3.8,base:0.12,w:26,h:24,top:'flat',seeds:true},
@@ -1456,14 +1466,20 @@ function drawKitchenBg(c){
     obj(c,l=>{rr(l,x,40-h,14,h,'rgba(235,245,255,0.75)',2);rr(l,x+1,40-h+5,12,h-6,col,2);rr(l,x+1,40-h-3,12,4,lid,1);});
     R(c,x+2,40-h+2,1,h-6,'rgba(255,255,255,0.8)');rr(c,x+4,40-h+8,6,4,C.cream,1);
   }
-  // utensilios colgados
-  obj(c,l=>{R(l,104,10,72,2,C.metalD);
-    rr(l,112,12,2,22,C.woodD,0);rr(l,108,32,10,8,C.woodD,2);
-    R(l,130,12,2,20,C.metal);ell(l,131,36,5,4,C.metal);
-    R(l,148,12,2,18,C.pinkD);rr(l,145,29,8,10,C.pinkD,2);
-    R(l,166,12,2,24,C.metal);for(let k=0;k<4;k++)R(l,163+k*2,36,1,6,C.metal);
-  });
-  ell(c,131,35,3,2,C.metalD);
+  // utensilios colgados de una barra con ganchos: cuchara de madera, cucharón, espátula y varillas
+  obj(c,l=>{rr(l,102,9,76,3,C.metalD,1);rr(l,99,8,5,5,C.metalDD,2);rr(l,176,8,5,5,C.metalDD,2);});R(c,104,9,72,1,C.metalL);
+  for(const x of [113,131,149,167]){R(c,x-1,12,1,2,C.metalDD);R(c,x,13,1,2,C.metalDD);R(c,x+1,12,1,2,C.metalDD);}
+  // cuchara de madera
+  obj(c,l=>{rr(l,111,15,4,20,C.woodD,2);ell(l,113,40,5,7,C.woodD);});R(c,112,16,1,18,C.woodL);ell(c,113,40,3,5,C.wood);px(c,112,37,C.woodL);
+  // cucharón con agujero en el mango
+  obj(c,l=>{rr(l,129,15,4,22,C.metal,2);l.fillStyle=C.metal;for(let k=0;k<7;k++){const w=Math.round(Math.sqrt(49-(k-0)*(k-0))*1.0);l.fillRect(131-w,37+k,w*2+1,1);}rr(l,124,36,15,2,C.metal,1);});
+  R(c,130,16,1,20,C.metalL);px(c,131,18,C.metalDD);R(c,126,38,11,1,C.metalD);R(c,127,39,8,2,'#c9cfe0');
+  // espátula: mango rosa y pala con ranuras
+  obj(c,l=>{rr(l,147,15,4,14,C.pinkD,2);rr(l,148,28,2,4,C.metal,0);rr(l,144,31,10,12,C.metal,2);});
+  R(c,148,16,1,12,C.pinkL);px(c,149,17,C.pinkDD);for(let k=0;k<3;k++)R(c,146+k*3,34,1,7,C.metalD);R(c,145,32,8,1,C.metalL);
+  // varillas
+  obj(c,l=>{rr(l,165,15,4,13,C.mintDD,2);});R(c,166,16,1,11,C.mintL);
+  c.save();for(let i=0;i<3;i++){c.strokeStyle=i===1?C.metalL:C.metalD;c.lineWidth=1;c.beginPath();c.ellipse(167.5,35.5,1.5+i*1.6,8,0,0,Math.PI*2);c.stroke();}c.restore();R(c,166,27,3,2,C.metalD);
   // encimera y muebles
   obj(c,l=>{rr(l,-2,TOP,W+4,8,C.lavL,1);});
   R(c,0,TOP+1,W,1,C.white);dith(c,0,TOP+6,W,2,C.lav);
@@ -1504,10 +1520,10 @@ function Toaster(rng,preview){
   for(let i=0;i<N;i++){
     const B=i<PRACTICE?BREADS.molde:BREADS[keys[Math.floor(rng()*keys.length)]];
     const prog=i/(N-1);
-    const shade=[0.42,0.58,0.72][Math.floor(rng()*3)]+(rng()-0.5)*0.06;
+    const tl=3+Math.floor(rng()*4),shade=(tl+0.5)/TLV;
     // a partir de la cuarta: tostadora con turbo (de golpe tuesta más rápido) o pedido "a ojo" (sin marca: hay que igualar el color del pedido)
     const mr=rng(),mode=i<3?'normal':mr<0.36?'turbo':'normal';
-    items.push({B,mode,tt:0.45+rng()*0.6,el:0,target:Math.max(B.base+0.2,shade),rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
+    items.push({B,mode,tt:0.45+rng()*0.6,el:0,tl,target:shade,rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
   }
   // pistas que se desvanecen: la marca rosa de la aguja solo en la primera tostada y las guías de untar solo en la primera pasada
   const H1=Core.hint(),H2=Core.hint();
@@ -1590,14 +1606,17 @@ function Toaster(rng,preview){
     if(swapT>=2&&U()&&(u.st!=='out'||u.t<0.35)){const kxx=Math.round(kx)+0,lift=Math.round((1-u.dip)*8),ky=y0-20+lift;
       c.save();c.globalAlpha=0.35;R(c,kxx-3,y0+6,8,UTH-12,'#7a5a4a');c.restore();
       // el mango se queda un poco atrás mientras arrastra (inercia) y vuelve al soltar
-      const ln=Math.round(u.dip*3);
-      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);l.fillStyle=C.pinkD;for(let k=0;k<24;k++)l.fillRect(kxx-3-Math.round(ln*k/23),ky-22+(23-k),7,1);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
-      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);for(let k=2;k<20;k++)px(c,kxx-2-Math.round(ln*k/23),ky-22+(23-k),C.pinkL);}
+      // cuchillo de untar rígido: hoja redondeada de metal, virola y mango rosa con remaches (no se deforma)
+      const bl=UTH+8-lift;
+      obj(c,l=>{rr(l,kxx-4,ky,9,bl,C.metal,4);rr(l,kxx-3,ky-5,7,6,C.metalD,1);rr(l,kxx-4,ky-26,9,22,C.pinkD,4);},{sel:true});
+      R(c,kxx-2,ky+3,1,bl-6,C.metalL);R(c,kxx+3,ky+2,1,bl-6,C.metalD);R(c,kxx-2,ky-4,5,1,C.metalL);
+      R(c,kxx-3,ky-24,1,18,C.pinkL);R(c,kxx+3,ky-24,1,18,C.pinkDD);px(c,kxx,ky-20,C.metalL);px(c,kxx,ky-11,C.metalL);
+      rr(c,kxx-3,ky+bl-9,7,8,u.top.col,3);R(c,kxx-2,ky+bl-8,3,1,u.top.l);}
   }
   return {_dbg:()=>({st,b:items[cur],phase,kx,u:U(),swapT,e:U()&&stack.length?edges():[0,0],h2}),unit:'Paso',total:TOTAL,mood:'tostadora',hold:true,
     inPractice(){return false;},
     progress(){return done;},
-    cue(){return phase===1?'Fase 1 · Tuesta hasta el color del pedido':'Fase 2 · Mantén al entrar en la tostada y suelta al salir: una sola pasada';},
+    cue(){return phase===1?'Fase 1 · Suelta en el cuadrado del color del pedido':'Fase 2 · Mantén al entrar en la tostada y suelta al salir: una sola pasada';},
     update(dt){
       if(phase===2){update2(dt);return;}
       t+=dt;for(const s of smoke){s.t+=dt;s.y-=dt*14;s.x+=Math.sin(s.t*3+s.k)*dt*6;}
@@ -1605,7 +1624,7 @@ function Toaster(rng,preview){
       if(fly){fly.t+=dt;if(fly.t>=0.75){stack.push(fly.b);fly=null;}}
       H1.step(dt);
       const b=it();
-      if(!b){endT+=dt;if(endT>0.8){endT=0;goPhase2();Core.banner('Fase 2','¡A untar!','La espátula cruza una sola vez. Mantén justo cuando entre en la tostada y suelta justo cuando salga.');}return;}
+      if(!b){endT+=dt;if(endT>0.8){endT=0;goPhase2();Core.banner('Fase 2','¡A untar!','El cuchillo de untar cruza una sola vez. Mantén justo cuando entre en la tostada y suelta justo cuando salga.',2,'untar');}return;}
       if(st==='insert'){lever=0;if(t>0.55){st='ready';t=0;}}
       else if(st==='ready'){lever=0;}
       else if(st==='toast'){
@@ -1620,8 +1639,9 @@ function Toaster(rng,preview){
     },
     press(){if(phase===2){press2();return;}const b=it();if(!b)return;holding=true;if(st==='ready'){st='toast';t=0;Snd.burst(700,.06,.2);}},
     release(){holding=false;if(phase===2){release2();return;}const b=it();if(!b||st!=='toast')return;
-      const d=b.p-b.target,a=Math.abs(d),w=1;const j=a<=0.05*w?'P':a<=0.1*w?'B':a<=0.17*w?'R':'F';
-      pop(j,j==='P'?'':(d<0?'▼ Te quedaste corto':'▲ Te pasaste'));},
+      // perfecto = el mismo cuadrado que el pedido; bien = el de al lado; si no, fallo
+      const d=tlev(b.p)-b.tl,j=d===0?'P':Math.abs(d)===1?'B':'F';
+      pop(j,j==='P'?'':(d<0?'▼ Poco tostada':'▲ Muy tostada'));},
     draw(c){
       c.drawImage(bg,0,0);
       // tostadas apiladas en el plato
@@ -1637,57 +1657,56 @@ function Toaster(rng,preview){
       if(st==='pop'&&cur<items.length){rise=10+backOut(Math.min(1,t/0.32))*18;}
       const shown=st==='serve'?null:b&&(st!=='pop')?b:(st==='pop'?items[cur]:null);
       if(shown&&rise>-4){
-        const B=shown.B,bx=TX-B.w/2,by=76-rise;
-        c.save();c.beginPath();c.rect(0,0,W,77);c.clip();
+        const B=shown.B,bx=TX-B.w/2,by=75-rise;
+        c.save();c.beginPath();c.rect(0,0,W,76);c.clip();
         obj(c,l=>breadShape(l,bx,by,B,toastCol(shown.p),toastCol(shown.p,2)));
         breadDots(c,bx,by,B,shown.p);c.restore();
       }
-      // tostadora
-      obj(c,l=>{
-        rr(l,TX-32,78,64,46,C.mint,6);
-        rr(l,TX+30,88,6,30,C.mintD,2);
-        rr(l,TX-30,TOP-2,8,3,C.metalD,1);rr(l,TX+22,TOP-2,8,3,C.metalD,1);
-      },{sel:true});
-      // sombreado anime de la tostadora: banda de sombra a la derecha, luz reflejada en el borde y brillo
-      R(c,TX+22,82,6,40,C.mintD);R(c,TX+28,84,1,36,C.mintL);dith(c,TX+20,82,2,40,C.mintD);
-      R(c,TX-29,84,2,14,C.mintL);R(c,TX-29,104,2,16,C.mintL);R(c,TX-26,81,6,1,C.white);px(c,TX-29,82,C.white);px(c,TX-29,83,C.white);
-      R(c,TX-30,121,58,1,C.mintD);
-      R(c,TX-31,80,62,1,C.mintL);R(c,TX-31,100,62,3,C.metal);R(c,TX-31,100,62,1,C.metalL);R(c,TX-31,102,62,1,C.metalD);
-      // ranura
-      rr(c,TX-16,77,32,4,C.out,1);
-      if(st==='toast'){dith(c,TX-14,78,28,2,'#ff9d6e',Math.floor(Core.time*10));}
-      // ventana con el pan dentro
-      rr(c,TX-22,84,36,14,C.metalD,2);rr(c,TX-21,85,34,12,'#8a7aa8',2);R(c,TX-19,85,30,1,'#b9acd6');
-      if(st==='toast'&&b){
-        R(c,TX-20,86,1,10,'#ff9d6e');R(c,TX+11,86,1,10,'#ff9d6e');
-        const B=b.B;c.save();c.beginPath();c.rect(TX-20,86,32,10);c.clip();
-        breadShape(c,TX-4-B.w/2,86-6+Math.round((1-lever)*8),B,toastCol(b.p),toastCol(b.p,2));c.restore();
-        if(Math.floor(Core.time*4)%2)px(c,TX-19,87,'#ffd6b0');
-      }else{R(c,TX-20,86,1,10,C.lavDD);R(c,TX+11,86,1,10,C.lavDD);}
-      R(c,TX-20,86,3,1,'rgba(255,255,255,0.6)');R(c,TX-20,87,1,2,'rgba(255,255,255,0.6)');
-      // indicador de tostado: rampa de color, objetivo y aguja
-      const gx=TX-24,gy=108,gw=44;
-      rr(c,gx-2,gy-2,gw+4,9,'#8a7aa8',2);R(c,gx-1,gy-2,gw+2,1,'#b9acd6');
-      for(let i=0;i<gw;i++)R(c,gx+i,gy,1,5,toastCol(i/gw));
+      // tostadora retro: cuerpo redondeado menta, franja cromada, mirilla redonda, placa con el indicador, ruedecita y palanca
+      const glow=st==='toast'?0.5+0.5*Math.sin(Core.time*7):0;
+      obj(c,l=>{rr(l,TX-30,TOP-5,10,5,C.metalD,2);rr(l,TX+20,TOP-5,10,5,C.metalD,2);
+        rr(l,TX-38,76,76,46,C.mint,15);rr(l,TX+37,86,5,30,C.mintD,2);},{sel:true});
+      // volumen: luz arriba a la izquierda, sombra a la derecha y abajo
+      R(c,TX+26,84,8,30,C.mintD);dith(c,TX+22,84,4,30,C.mintD);R(c,TX-30,116,60,3,C.mintD);
+      R(c,TX-33,82,2,16,C.mintL);R(c,TX-28,78,14,1,C.white);R(c,TX-31,79,4,1,C.white);px(c,TX-33,81,C.white);
+      // ranura de arriba con el resplandor de las resistencias
+      rr(c,TX-20,74,40,5,C.metal,2);rr(c,TX-18,75,36,3,C.out,1);
+      if(st==='toast'){c.save();c.globalAlpha=0.5+0.4*glow;R(c,TX-17,76,34,1,'#ff9d6e');c.restore();}
+      // franja cromada con brillo
+      R(c,TX-38,99,76,5,C.metal);R(c,TX-38,99,76,1,C.metalL);R(c,TX-38,103,76,1,C.metalD);R(c,TX-30,100,10,1,C.white);
+      // mirilla redonda: se ve la tostada dentro y las resistencias
+      obj(c,l=>{ell(l,TX-14,88,11,8,C.metal);},{sel:true});ell(c,TX-14,88,9,6,'#6f5f92');
+      if(st==='toast'&&b){c.save();c.beginPath();c.ellipse(TX-14,88,9,6,0,0,Math.PI*2);c.clip();
+        R(c,TX-24,82,20,12,'rgba(255,140,90,'+(0.25+0.25*glow).toFixed(2)+')');
+        rr(c,TX-22,84+Math.round((1-lever)*6),16,12,toastCol(b.p,2),2);rr(c,TX-21,85+Math.round((1-lever)*6),14,10,toastCol(b.p),2);
+        for(let k=0;k<3;k++)R(c,TX-23,84+k*4,18,1,'rgba(255,157,110,'+(0.5+0.4*glow).toFixed(2)+')');c.restore();}
+      else{R(c,TX-21,86,14,1,'#8f80b5');R(c,TX-21,90,14,1,'#8f80b5');}
+      R(c,TX-19,84,4,1,'rgba(255,255,255,0.7)');px(c,TX-20,85,'rgba(255,255,255,0.7)');
+      // corazoncito y ruedecita de potencia
+      R(c,TX+3,86,2,1,C.pinkD);R(c,TX+6,86,2,1,C.pinkD);R(c,TX+2,87,7,2,C.pinkD);R(c,TX+3,89,5,1,C.pinkD);px(c,TX+5,90,C.pinkD);px(c,TX+3,87,C.pinkL);
+      obj(c,l=>{ell(l,TX+20,89,5,5,C.cream);},{sel:true});for(let k=0;k<5;k++){const a=-2.4+k*0.6;px(c,TX+20+Math.round(Math.cos(a)*7),89+Math.round(Math.sin(a)*7),C.mintDD);}
+      const da=-2.4+(st==='toast'?Math.min(1,lever)*2.4:0);R(c,TX+20,89,1,1,C.pinkDD);px(c,TX+20+Math.round(Math.cos(da)*3),89+Math.round(Math.sin(da)*3),C.pinkDD);
+      // placa crema con el indicador: 8 cuadrados, cada uno una tostada
+      const gx=TX-27,gy=108,sq=6;
+      obj(c,l=>{rr(l,gx-3,gy-3,8*(sq+1)+5,sq+6,C.cream,2);},{sel:true});
+      for(let i=0;i<TLV;i++){R(c,gx+i*(sq+1),gy,sq,sq,TOAST[TLI[i]]);R(c,gx+i*(sq+1),gy,sq,1,'rgba(255,255,255,0.35)');}
       if(b){
-        const tx=gx+Math.round(b.target*gw);
-        // marca rosa del punto justo: solo en la primera tostada; luego se desvanece y queda la muestra del pedido
+        const tx=gx+b.tl*(sq+1);
+        // marco rosa en el cuadrado del pedido: solo en la primera tostada; luego se desvanece y queda la muestra del pedido
         if(H1.a>0){const a=H1.a,ly=Math.round((1-a)*-5);c.save();c.globalAlpha=a;
-          R(c,tx-1,gy-5+ly,3,1,C.pinkDD);px(c,tx,gy-4+ly,C.pinkDD);R(c,tx-1,gy+7-ly,3,1,C.pinkDD);px(c,tx,gy+6-ly,C.pinkDD);
-          R(c,tx-2,gy-1,1,7,C.white);R(c,tx+2,gy-1,1,7,C.white);
-          if(a<1)for(let k=0;k<5;k++)px(c,tx-3+((k*5+Math.floor(Core.time*24))%7),gy-6-Math.round((1-a)*(8+k*3)),k%2?C.white:C.pinkL);c.restore();}
+          R(c,tx-1,gy-2+ly,sq+2,1,C.pinkDD);R(c,tx-1,gy+sq+1-ly,sq+2,1,C.pinkDD);R(c,tx-2,gy-1,1,sq+2,C.pinkDD);R(c,tx+sq+1,gy-1,1,sq+2,C.pinkDD);
+          if(a<1)for(let k=0;k<5;k++)px(c,tx-2+((k*5+Math.floor(Core.time*24))%9),gy-6-Math.round((1-a)*(8+k*3)),k%2?C.white:C.pinkL);c.restore();}
         if(H1.a<1&&st!=='pop'&&st!=='serve'){// sin marca: un ojito avisa de que hay que fiarse del color del pedido
-          c.save();c.globalAlpha=1-H1.a;obj(c,l=>{ell(l,gx+gw+9,gy+2,5,3,C.white);},{sel:true});ell(c,gx+gw+9,gy+2,1,1,C.lavDD);px(c,gx+gw+9,gy+1,C.out);px(c,gx+gw+10,gy+1,C.white);R(c,gx+gw+5,gy-2,1,1,C.out);R(c,gx+gw+9,gy-3,1,1,C.out);R(c,gx+gw+13,gy-2,1,1,C.out);c.restore();}
-        if(b.turbo&&st==='toast'){const f=Math.floor(Core.time*16)%2;for(let k=0;k<4;k++)px(c,TX-30+k*20+f,78-((k+f)%2),k%2?C.butter:'#ff9d6e');R(c,TX-31,100,62,1,f?'#ffb38a':C.metalL);}
-        b.np=b.np==null?b.p:b.np+(b.p-b.np)*0.35;const nx=gx+Math.min(gw-1,Math.round(Math.min(1.06,b.np)*gw/1.0));
-        if(st==='toast'||st==='pop'){R(c,nx,gy-2,1,9,C.out);px(c,nx,gy-3,C.out);}
+          const ex=gx+8*(sq+1)+8;c.save();c.globalAlpha=1-H1.a;obj(c,l=>{ell(l,ex,gy+3,5,3,C.white);},{sel:true});ell(c,ex,gy+3,1,1,C.lavDD);px(c,ex,gy+2,C.out);px(c,ex+1,gy+2,C.white);c.restore();}
+        if(b.turbo&&st==='toast'){const f=Math.floor(Core.time*16)%2;for(let k=0;k<4;k++)px(c,TX-30+k*20+f,74-((k+f)%2),k%2?C.butter:'#ff9d6e');R(c,TX-38,99,76,1,f?'#ffb38a':C.metalL);}
+        // el cuadrado en el que está ahora la tostada se ilumina con un marco blanco que late
+        if(st==='toast'||st==='pop'){const k=tlev(b.p),x=gx+k*(sq+1),on=Math.floor(Core.time*6)%2;R(c,x-1,gy-1,sq+2,1,on?C.white:C.out);R(c,x-1,gy+sq,sq+2,1,on?C.white:C.out);R(c,x-1,gy,1,sq,on?C.white:C.out);R(c,x+sq,gy,1,sq,on?C.white:C.out);
+          obj(c,l=>{l.fillStyle=C.lavDD;for(let q=0;q<3;q++)l.fillRect(x+sq/2-2+q,gy+sq+2+q,5-2*q,1);},{sel:true});}
       }
-      // palanca
-      const ly=90+Math.round(Math.max(-0.25,Math.min(1.1,lv.x))*22);
-      R(c,TX+32,90,2,26,C.mintDD);
-      obj(c,l=>{rr(l,TX+30,ly,12,6,C.pink,2);});R(c,TX+32,ly+1,8,1,C.pinkL);
-      // rueda
-      obj(c,l=>{ell(l,TX+22,90,4,4,C.cream);});px(c,TX+22,87,C.pinkDD);px(c,TX+22,88,C.pinkDD);
+      // palanca lateral
+      const ly=88+Math.round(Math.max(-0.25,Math.min(1.1,lv.x))*22);
+      R(c,TX+39,88,2,26,C.mintDD);
+      obj(c,l=>{rr(l,TX+37,ly,12,6,C.pink,3);},{sel:true});R(c,TX+39,ly+1,8,1,C.pinkL);
       // tostada volando al plato
       if(fly){const B=fly.b.B,f=Math.min(1,fly.t/0.55),x0=TX-B.w/2,x1=260-B.w/2,y0=76-28,y1=TOP-8-stack.length*3-B.h;
         if(fly.t<0.55){const g=inout(f),x=Math.round(x0+(x1-x0)*g),y=Math.round(y0+(y1-y0)*f*f-Math.sin(f*Math.PI)*12);
@@ -1696,10 +1715,10 @@ function Toaster(rng,preview){
         else{const k=(fly.t-0.55)/0.2,h=Math.max(3,Math.round(7-backOut(k)*4)),y=TOP-8-stack.length*3+3-h;obj(c,l=>{rr(l,246,y,28,h,toastCol(fly.b.p),1);});}}
       for(const s of smoke){const a=Math.max(0,0.7-s.t*0.5);dith(c,s.x,s.y,4,3,'rgba(120,110,130,'+a+')',Math.floor(s.t*8));}
       // pedido
-      if(b){obj(c,l=>{rr(l,196,72,30,40,C.paper,2);});
+      if(b){const ox=16,oy=-14;c.save();c.translate(ox,oy);R(c,210,69,1,3,C.out);obj(c,l=>{rr(l,196,72,30,40,C.paper,2);ell(l,211,71,2,2,C.pinkD);});
         R(c,200,76,22,2,C.pinkD);const B=b.B;
         c.save();c.translate(199,82);c.scale(0.9,0.9);const BB2={...B,w:Math.min(24,B.w),h:Math.min(22,B.h)};breadShape(c,0,0,BB2,toastCol(b.target),toastCol(b.target,2));breadDots(c,0,0,BB2,b.target);c.restore();
-        R(c,200,107,22,1,C.lavD);}
+        R(c,200,107,22,1,C.lavD);c.restore();}
       if(phase===2)draw2(c);
     }
   };
@@ -1756,7 +1775,7 @@ function drawTortillaPanel(c,k){
       R(c,x+2,62-h+2,1,h-5,'rgba(255,255,255,0.85)');}
     obj(c,l=>{R(l,276,30,40,2,C.woodD);rr(l,282,32,24,34,C.pinkL,2);});
     for(let y=36;y<64;y+=6)R(c,284,y,20,2,C.pink);R(c,282,32,24,1,C.white);
-    obj(c,l=>{rr(l,196,10,36,36,C.cream,18);});ell(c,214,28,13,13,C.peachL);ell(c,214,28,9,9,C.peach);ell(c,210,24,3,2,C.white);
+    obj(c,l=>{rr(l,162,10,36,36,C.cream,18);});ell(c,180,28,13,13,C.peachL);ell(c,180,28,9,9,C.peach);ell(c,176,24,3,2,C.white);
   }
   if(k===2){
     // barra con utensilios colgados y campana extractora
@@ -1835,10 +1854,10 @@ function Tortilla(rng,preview){
       p.bn=p.tort===0?['Paso 1','¡A pelar!','La patata gira sola. Toca cuando una franja de piel pase justo por la línea del pelador: cada toque arranca una tira.',2.6]:['Otra tortilla','¡A pelar!','Más franjas y gira más deprisa.',1.6];}
     if(p.k==='cortar'){if(!A.pot||!A.pot.peeled)A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peeled:true};
       A.pot.push=0;A.kin=0;p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];p.hint=HC;
-      p.bn=['Paso 2','¡En '+p.N+' trozos!',p.tort===0?'Toca para cortar: '+p.N+' trozos lo más iguales posible. Las marcas rosas solo salen esta vez.':'Ahora a ojo, sin marcas: '+p.N+' trozos iguales.',2.4];}
-    if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;}
-    if(p.k==='batir'){p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
-    if(p.k==='vuelta'){p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
+      p.bn=p.tort===0?['Paso 2','¡En '+p.N+' trozos!','Toca para cortar: '+p.N+' trozos lo más iguales posible, a ojo. La primera vez verás unas marcas rosas.',2.4,'cortar']:['Paso 2','¡En '+p.N+' trozos!',p.tort===0?'Toca para cortar: '+p.N+' trozos lo más iguales posible. Las marcas rosas solo salen esta vez.':'Ahora a ojo, sin marcas: '+p.N+' trozos iguales.',2.4];}
+    if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;if(p.egg===0&&!ph.some(q=>q.k==='huevo'&&q.bnDone))p.bn=['Paso 3','¡Casca los huevos!','Mantén para apretar el huevo contra el bol y suelta cuando la aguja llegue a la marca.',2,'huevo'];}
+    if(p.k==='batir'){if(!ph.some(q=>q.k==='batir'&&q.bnDone))p.bn=['Paso 4','¡A batir!','Toca a ritmo para que la aguja no se salga de la zona rosa, que se mueve.',2,'batir'];p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
+    if(p.k==='vuelta'){if(!ph.some(q=>q.k==='vuelta'&&q.bnDone))p.bn=['Paso 5','¡Dale la vuelta!','Mantén para coger impulso y suelta cuando la aguja esté en la marca.',2,'vuelta'];p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
     if(p.k==='servir'){A.serve={t:0};}
     const to=p.st*W;if(Math.abs(to-camX)>1){cam={from:camX,to,t:0,d:0.55+Math.abs(to-camX)*0.0011};wait=0.25;}else wait=p.k==='servir'?0:0.15;
   }
@@ -1864,7 +1883,7 @@ function Tortilla(rng,preview){
       const p=P();
       if(!p){endT+=dt;if(endT>0.8&&!ended){ended=true;Core.finish();}return;}
       // cartel de cada paso nuevo (al llegar, no al crear el juego); el paso espera a que se lea
-      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3]);if(!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
+      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;if(!Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3],p.bn[4])&&!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
       if(!cam&&p.note&&!DEMO){Core.note(TKX+40,24,p.note);p.note=null;}
       if(p.hint)p.hint.step(dt);
       p.t+=dt;
@@ -1884,7 +1903,7 @@ function Tortilla(rng,preview){
           A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.N;pot.gone=true;next();}return;}
         if(!active())return;
         const v=p.base;pot.x0-=v*dt;pot.push=v;
-        if(TKX-pot.x0>Math.min(p.T*1.8,pot.len-3))cut('F','▲ Trozo muy grande');
+        if(TKX-pot.x0>Math.min(p.T*1.8,pot.len-3))cut('F','▲ Muy grande: corta antes');
       }
       else if(p.k==='huevo'){
         if(p.open){p.open.t+=dt;if(p.open.t>0.75)next();return;}
@@ -1917,7 +1936,7 @@ function Tortilla(rng,preview){
         if(!best||Math.abs(bd)>0.75){p.sw.skin=false;Core.waste(TKX+60,58,'Ahí ya no había piel');return;}
         best.done=true;p.got++;if(HP.a>0)HP.fade();
         const j=J(Math.abs(bd),0.16,0.3,0.45);judge(j,bd>0?'▲ Tarde: la piel ya había pasado':'▼ Pronto: la piel aún no llegaba',TKX+60,58);}
-      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,t=tolC(p.T);cut(J(Math.abs(e),t[0],t[1],t[2]),e<0?'▼ Trozo pequeño':'▲ Trozo grande');}
+      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,t=tolC(p.T);cut(J(Math.abs(e),t[0],t[1],t[2]),e<0?'▼ Pequeño: espera más':'▲ Grande: corta antes');}
       else if(p.k==='huevo'&&!p.open){p.hold=true;p.ht=0;}
       else if(p.k==='batir'&&p.fin==null){p.s=Math.min(1.05,p.s+0.12*(1-0.35*p.s));Snd.burst(4200,.05,.1,1.5);}
       else if(p.k==='vuelta'&&p.pre<=0&&!A.flip){p.hold=true;p.ht=0;p.p=0;}
@@ -2019,14 +2038,19 @@ function Tortilla(rng,preview){
       if(p.k!=='pelar'){
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
       const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36-(p.k==='cortar'?(1-Ease.outBack(A.kin))*90:0));
-      // cuchilla en 3/4: el filo cae justo en la línea de corte; el mango sube en diagonal hacia la mano
-      const sk=yy=>Math.round((41-yy)*0.22);
-      obj(c,l=>{l.fillStyle=C.metal;for(let yy=0;yy<42;yy++){const w=yy>38?5-(yy-39):9;l.fillRect(kx-1+sk(yy),ky+yy,w,1);}
-        l.fillStyle=C.pinkD;for(let k=0;k<14;k++)l.fillRect(kx+8+Math.round(k*0.9),ky-3-k,6,3);},{sel:true});
-      for(let yy=2;yy<38;yy++){px(c,kx+sk(yy),ky+yy,C.metalL);px(c,kx+6+sk(yy),ky+yy,C.metalD);}
-      for(let yy=4;yy<34;yy+=1)px(c,kx+2+sk(yy),ky+yy,'#eef0f8');R(c,kx+sk(0),ky,8,1,C.metalD);
-      for(let k=2;k<13;k++)px(c,kx+9+Math.round(k*0.9),ky-3-k,C.pinkL);px(c,kx+13,ky-8,C.pinkDD);
-      const hx2=kx+17,hy2=ky-21;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
+      // cuchillo de cocina visto de frente y un poco desde arriba: la hoja se mete hacia el fondo (arriba a la derecha),
+      // el filo brilla abajo y el mango rosa sale hacia ti (abajo a la izquierda), sujeto por la mano
+      const by=ky+41,dx=s_=>Math.round(0.72*s_),dy=s_=>Math.round(0.3*s_);
+      const kb=s_=>by-dy(s_)-(s_>24?Math.round((s_-24)*(s_-24)*0.16):0),kt=s_=>by-15-dy(s_)+(s_>22?Math.round((s_-22)*0.55):0);
+      obj(c,l=>{l.fillStyle=C.metal;for(let s_=0;s_<=38;s_++){const t0=kt(s_),b0=kb(s_);if(b0>t0)l.fillRect(kx+dx(s_),t0,1,b0-t0+1);}
+        l.fillStyle=C.pinkD;for(let s_=-3;s_>=-20;s_--)l.fillRect(kx+dx(s_),by-15-dy(s_),1,6);},{sel:true});
+      for(let s_=0;s_<=38;s_++){const x=kx+dx(s_),t0=kt(s_),b0=kb(s_);if(b0-t0<2)continue;
+        R(c,x,t0,1,1,C.metalL);if(b0-t0>5)R(c,x,t0+2,1,Math.max(1,Math.round((b0-t0)*0.35)),'#eef0f8');R(c,x,b0-1,1,1,C.metalD);R(c,x,b0,1,1,C.white);}
+      for(let s_=0;s_<=2;s_++)R(c,kx+dx(-s_)-0,by-16-dy(-s_),1,8,C.metalD);
+      for(let s_=-3;s_>=-20;s_--){const x=kx+dx(s_),y=by-15-dy(s_);px(c,x,y,C.pinkL);px(c,x,y+5,C.pinkDD);}
+      for(const s_ of [-8,-15]){const x=kx+dx(s_),y=by-13-dy(s_);px(c,x,y,C.metalL);}
+      const hx2=kx+dx(-13),hy2=by-17-dy(-13);obj(c,l=>{rr(l,hx2-5,hy2,12,11,'#ffe1cc',4);rr(l,hx2-16,hy2+4,13,11,C.lav,4);},{sel:true});
+      R(c,hx2-15,hy2+5,11,1,C.lavL);R(c,hx2-4,hy2+1,8,1,'#fff3ea');R(c,hx2-4,hy2+5,9,1,'#f2b9a0');R(c,hx2-4,hy2+8,8,1,'#f2b9a0');
       if(A.knife>0.12){R(c,kx-8,TCT-11,3,1,C.white);R(c,kx+4,TCT-11,3,1,C.white);px(c,kx-10,TCT-13,C.white);px(c,kx+7,TCT-13,C.white);}
       }
     }
@@ -2131,6 +2155,7 @@ function Tortilla(rng,preview){
 
 /* ---------- Minijuego 5: Fotos a coches ---------- */
 const VFX=160,ROADF=122,ROADN=138,FCY=124;
+const FPY=40;// nota de la foto: arriba, lejos de la cruceta del visor
 const RING=(()=>{const r=[],seen=new Set();for(let a=0;a<360;a+=2){const t=a*Math.PI/180,x=Math.round(Math.cos(t)*11),y=Math.round(Math.sin(t)*11),k=x+','+y;if(!seen.has(k)){seen.add(k);r.push([x,y]);}}return r;})();
 // máscara del visor (precalculada): todo oscuro salvo un agujero de esquinas muy redondeadas
 const VIEW=(()=>{const v=mk(W,H),x=v.getContext('2d');const L=34,T=20,Rr=W-34,B=H-12,r=22;
@@ -2413,8 +2438,8 @@ function Fotos(rng,preview){
       for(const r of roll)r.t+=dt;
       if(phase===1){
         time+=dt;place();
-        for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,150,false,film>0?'Se escapó':'Sin carrete');}}
-        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4);}}
+        for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,FPY,false,film>0?'Se escapó':'Sin carrete');}}
+        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4,'revelar');}}
         return;}
       if(phase===2){
         rockT+=dt*(holding?1:0.25);if(di>=1||(di===0&&dst==='out'))stripA=Math.max(0,stripA-dt*1.5);
@@ -2424,7 +2449,7 @@ function Fotos(rng,preview){
         if(dst==='in'){if(dT>0.7){dst='ready';dT=0;}}
         else if(dst==='dev'&&p){p.d+=p.rate*(0.6+0.8*Math.min(1.3,p.d))*dt;if(p.d>=1.45)judge2('F','▲ Te pasaste: se quemó');}
         else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';if(di===1&&dst==='in')Core.note(160,62,'Ahora sin guía: suelta cuando se vea bien');}
-        else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.1);}
+        else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.4,'tender');}
         return;}
       // fase 3
       if(sw)sw.t+=dt;
@@ -2441,9 +2466,9 @@ function Fotos(rng,preview){
         film--;flash=0.16;pressT=0.14;Snd.shutter();
         let best=null,be=1e9;for(const car of cars){if(car.j||!car.on)continue;const e=err(car);if(Math.abs(e)<Math.abs(be)){be=e;best=car;}}
         shotPending={j:null};
-        if(!best||Math.abs(be)>0.3){shotPending.j='E';Core.waste(VFX,150,'Foto movida: no había coche');return;}
+        if(!best||Math.abs(be)>0.3){shotPending.j='E';Core.waste(VFX,FPY,'Foto movida: no había coche');return;}
         const j=J(Math.abs(be));best.j=j;shotPending.j=j;done++;
-        Core.judge(j,VFX,150,false,j==='P'?'':(be>0?'◀ Pronto':'Tarde ▶'));
+        Core.judge(j,VFX,FPY,false,j==='P'?'':(be>0?'◀ Pronto':'Tarde ▶'));
         return;}
       if(phase===2){if(dst==='ready'){dst='dev';holding=true;dT=0;Snd.burst(700,.06,.2);}return;}
       if(phase===3&&hst==='swing'){
@@ -2595,7 +2620,7 @@ const GAMES={
     bot(g){const P=g._ph();
       if(P.phase===2){if(P.st2!=='swing')return;const e=(P.sx-P.topX)*Math.sign(P.vx||1);if(e>=-Math.abs(P.vx)*0.018&&e<=0.6)return 'tap';return;}
       const s=P.cur;if(!s||s.st!=='slide')return;for(const m of s.marks){if(m.j)continue;const d=s.x+m.o-SHX;if(d>=-0.5&&d<4)return 'tap';}}},
-  tostadora:{name:'Tostadora',hint:'Fase 1: mantén para bajar la palanca y suelta cuando la tostada tenga el color del pedido; la marca rosa solo sale en la primera. Fase 2: la espátula cruza una vez: mantén al entrar en la tostada y suelta al salir; las guías solo salen en la primera pasada.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
+  tostadora:{name:'Tostadora',hint:'Fase 1: mantén para bajar la palanca y suelta cuando la tostada llegue al cuadrado del mismo color que el pedido (el de al lado da Bien); el marco rosa solo sale en la primera. Fase 2: el cuchillo cruza una vez: mantén al entrar en la tostada y suelta al salir.',make:Toaster,crop:[86,48],gesture:'hold',lag:0.3,lagDown:true,view:[86,52],loopT:7.6,
     seq:[['bien','tostar'],['bien','untar'],['mal','tostar'],['mal','untar']],
     bot(g,D){const d=g._dbg();if(d.phase===2){if(d.swapT<2||!d.u||d.u.st!=='pass')return;if(d.u.sx==null&&d.kx>=d.e[0])return 'down';if(d.h2&&d.kx>=d.e[1])return 'up';return;}if(!d.b)return;if(d.st==='ready'){D.rt=(D.rt||0)+D.dt;if(D.rt>0.5){D.rt=0;return 'down';}}if(d.st==='toast'&&d.b.p>=d.b.target)return 'up';}},
   tortilla:{name:'Tortilla de patatas',hint:'Pela la patata (gira sola: toca cuando una franja de piel pase por la línea del pelador), córtala a ojo en los trozos que pida la receta (3 a 6, lo más iguales posible), casca los huevos, bate a ritmo y dale la vuelta. Las marcas rosas solo salen la primera vez.',make:Tortilla,crop:[86,56],gesture:'mix',warm:0.5,view:D=>{const k=D.g._dbg().k;return k==='cortar'||k==='pelar'?[86,58]:k==='vuelta'?[86,36]:[98,36];},loopT:7,
@@ -2661,6 +2686,7 @@ syncToggles();
 function show(id,on){$(id).hidden=!on;}
 function wipe(){if(!reduce)Core.wipe=0.55;}
 function setScene(s){
+  if(s!=='play'){Core.card=false;Core.cardWait=0;}
   Core.scene=s;stage.classList.toggle('menubg',s==='menu');show('menu',s==='menu');show('intro',s==='intro');show('hud',s==='play');show('results',s==='results');show('pause',false);Core.paused=false;
 }
 function openGame(id){
@@ -2668,10 +2694,14 @@ function openGame(id){
   const seed=(Math.random()*1e9)>>>0;Core.gameId=id;Core.parts=[];TDEMO=null;
   Core.run={id,seed,counts:{P:0,B:0,R:0,F:0},n:0,pts:0,streak:0,best:0};
   Core.game=GAMES[id].make(mulberry32(seed));Snd.setMood(Core.game.mood);
-  $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;$('hName').textContent=GAMES[id].name;
+  $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;document.querySelector('#intro .go').textContent='Pulsa para empezar';$('hName').textContent=GAMES[id].name;
   lastHud='';setScene('intro');wipe();
 }
-function startPlay(){Demo=null;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
+function openCard(){const I=Core.cardInfo;Core.card=true;release();
+  $('inName').textContent=I.tag+' · '+I.title;$('inHint').textContent=I.sub;document.querySelector('#intro .go').textContent='Pulsa para continuar';
+  demoStart(Core.gameId,'bien',I.demo);show('intro',true);}
+function closeCard(){Core.card=false;Demo=null;show('intro',false);Core.ready=1.2;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';Snd.ui();}
+function startPlay(){Demo=null;Core.card=false;Core.cardWait=0;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
 function toMenu(){Feel.reset();$('ready').hidden=true;$('phase').hidden=true;Core.bannerT=0;Core.ready=0;Snd.waterStop();Snd.sizzle(false);$('hCue').hidden=true;lastCue='';Snd.setMood('menu');Core.game=null;buildMenu();setScene('menu');wipe();const f=document.querySelector('.card:not(:disabled)');f&&f.focus({preventScroll:true});}
 function rankOf(r){if(r.n===0)return 'D';if(r.counts.P===r.n)return 'S+';const p=r.pts/(100*r.n)*100;return p>=95?'S':p>=85?'A':p>=70?'B':p>=50?'C':'D';}
 function showResults(){
@@ -2702,7 +2732,7 @@ $('pauseBtn').addEventListener('click',e=>{e.stopPropagation();pause(true);});
 
 /* ---------- un solo botón ---------- */
 function release(){if(Core.scene==='play'&&!Core.paused&&Core.game.release)Core.game.release();}
-function press(){Snd.init();if(Core.scene==='intro'){startPlay();return;}if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
+function press(){Snd.init();if(Core.scene==='intro'){startPlay();return;}if(Core.card){closeCard();return;}if(Core.cardWait>0)return;if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
 stage.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();press();});
 addEventListener('pointerup',release);addEventListener('pointercancel',release);
 addEventListener('keyup',e=>{if(e.key==='Escape'||e.key==='Tab')return;release();});
@@ -2818,10 +2848,10 @@ let Demo=null;const demoFull=mk(W,H),demoCv=$('demo'),demoCx=demoCv.getContext('
 // La intro es un vídeo corto que se juega solo: primero un intento perfecto ("Así") y luego uno con
 // error ("Si te retrasas…"), con el resultado a la vista. Así no hacen falta rondas de práctica.
 const TSEQ=[['bien','pelar'],['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
-function demoStart(id,phase){
+function demoStart(id,phase,only){
   // la tortilla enseña sus gestos, uno por vuelta del vídeo
-  const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
-  Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
+  const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(only){TDEMO=only;}else if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
+  Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),only,t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
   DEMO=true;try{for(let w=GAMES[id].warm||0;w>0;w-=1/30)Demo.g.update(1/30);}finally{DEMO=false;}Demo.last=null;
   $('demoTag').textContent=Demo.phase==='bien'?'✓ Así sí':'✕ Así no: con retraso';$('demoTag').className='demo-tag '+Demo.phase;demoWord('','');
 }
@@ -2833,7 +2863,7 @@ function demoAct(D,a){
 }
 function demoStep(dt){
   const D=Demo,G=GAMES[D.id];D.t+=dt;D.dt=dt;
-  if(D.t>G.loopT+2||(D.last&&D.last.t>1.6)){demoStart(D.id,D.phase==='bien'?'mal':'bien');return;}
+  if(D.t>G.loopT+2||(D.last&&D.last.t>1.6)){demoStart(D.id,D.phase==='bien'?'mal':'bien',D.only);return;}
   DEMO=true;
   try{
     // al acertar o fallar, la imagen se congela un momento para que se vea bien el resultado
@@ -2856,11 +2886,12 @@ function frame(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;Core.time+=dt;pollPads();
   if(Core.scene==='play'&&!Core.paused&&Core.ready>0){Core.ready-=dt;const el=$('ready');
     if(Core.ready<=0.55&&el.className!=='r2'){el.textContent='¡Ya!';el.className='r2';}if(Core.ready<=0)el.hidden=true;}
-  const running=Core.scene==='play'&&!Core.paused&&!(Core.ready>0);
+  if(Core.scene==='play'&&!Core.paused&&Core.cardWait>0){Core.cardWait-=dt;if(Core.cardWait<=0)openCard();}
+  const running=Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!Core.card&&!(Core.cardWait>0);
   // parada de impacto: el mundo se congela un instante tras un Perfecto
   if(running){if(Feel.stopT>0)Feel.stopT-=dt;else{Core.game.update(dt);Anim.update(dt);}Feel.update(dt);}
   if(Core.bannerT>0&&!Core.paused){Core.bannerT-=dt;const el=$('phase');if(Core.bannerT<=0.3&&el.className!=='out')el.className='out';if(Core.bannerT<=0||Core.scene!=='play')el.hidden=true;}
-  if(Core.scene==='intro'&&Demo)demoStep(dt);
+  if((Core.scene==='intro'||Core.card)&&Demo&&!Core.paused)demoStep(dt);
   ctx.setTransform(1,0,0,1,0,0);let sx=0;if(Core.shake>0&&running){Core.shake-=dt;sx=(Math.floor(Core.time*60)%2)?1:-1;}
   ctx.translate(sx,0);
   if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);

@@ -1,5 +1,6 @@
 /* ---------- Minijuego 5: Fotos a coches ---------- */
 const VFX=160,ROADF=122,ROADN=138,FCY=124;
+const FPY=40;// nota de la foto: arriba, lejos de la cruceta del visor
 const RING=(()=>{const r=[],seen=new Set();for(let a=0;a<360;a+=2){const t=a*Math.PI/180,x=Math.round(Math.cos(t)*11),y=Math.round(Math.sin(t)*11),k=x+','+y;if(!seen.has(k)){seen.add(k);r.push([x,y]);}}return r;})();
 // máscara del visor (precalculada): todo oscuro salvo un agujero de esquinas muy redondeadas
 const VIEW=(()=>{const v=mk(W,H),x=v.getContext('2d');const L=34,T=20,Rr=W-34,B=H-12,r=22;
@@ -282,8 +283,8 @@ function Fotos(rng,preview){
       for(const r of roll)r.t+=dt;
       if(phase===1){
         time+=dt;place();
-        for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,150,false,film>0?'Se escapó':'Sin carrete');}}
-        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4);}}
+        for(const car of cars){if(!car.j&&car.on&&err(car)<-0.16){car.j='F';done++;Core.judge('F',VFX,FPY,false,film>0?'Se escapó':'Sin carrete');}}
+        if(cars.every(c=>c.j)){endT+=dt;if(endT>0.9){endT=0;goPhase2();Core.banner('Fase 2','Cuarto oscuro','Mantén para mecer la cubeta: la foto irá apareciendo. Suelta cuando se vea bien; si te pasas, se quema. Solo la primera trae indicador.',2.4,'revelar');}}
         return;}
       if(phase===2){
         rockT+=dt*(holding?1:0.25);if(di>=1||(di===0&&dst==='out'))stripA=Math.max(0,stripA-dt*1.5);
@@ -293,7 +294,7 @@ function Fotos(rng,preview){
         if(dst==='in'){if(dT>0.7){dst='ready';dT=0;}}
         else if(dst==='dev'&&p){p.d+=p.rate*(0.6+0.8*Math.min(1.3,p.d))*dt;if(p.d>=1.45)judge2('F','▲ Te pasaste: se quemó');}
         else if(dst==='out'&&dT>0.75){di++;dT=0;dst=di<N2?'in':'end';if(di===1&&dst==='in')Core.note(160,62,'Ahora sin guía: suelta cuando se vea bien');}
-        else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.1);}
+        else if(dst==='end'&&dT>0.6){goPhase3();Core.banner('Fase 3','¡A tender!','La foto se balancea colgando del hilo. Toca cuando pase justo bajo la pinza rosa.',2.4,'tender');}
         return;}
       // fase 3
       if(sw)sw.t+=dt;
@@ -310,9 +311,9 @@ function Fotos(rng,preview){
         film--;flash=0.16;pressT=0.14;Snd.shutter();
         let best=null,be=1e9;for(const car of cars){if(car.j||!car.on)continue;const e=err(car);if(Math.abs(e)<Math.abs(be)){be=e;best=car;}}
         shotPending={j:null};
-        if(!best||Math.abs(be)>0.3){shotPending.j='E';Core.waste(VFX,150,'Foto movida: no había coche');return;}
+        if(!best||Math.abs(be)>0.3){shotPending.j='E';Core.waste(VFX,FPY,'Foto movida: no había coche');return;}
         const j=J(Math.abs(be));best.j=j;shotPending.j=j;done++;
-        Core.judge(j,VFX,150,false,j==='P'?'':(be>0?'◀ Pronto':'Tarde ▶'));
+        Core.judge(j,VFX,FPY,false,j==='P'?'':(be>0?'◀ Pronto':'Tarde ▶'));
         return;}
       if(phase===2){if(dst==='ready'){dst='dev';holding=true;dT=0;Snd.burst(700,.06,.2);}return;}
       if(phase===3&&hst==='swing'){

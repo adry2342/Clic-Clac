@@ -261,7 +261,7 @@ function Bottles(rng,preview){
       }
       const b=bs[cur];
       if(!b){bv+=(140-bv)*Math.min(1,dt*4);moveAll(bv*dt);endT+=dt;
-        if(endT>0.9){endT=0;bv=0;swapT=0;goPhase2();Core.banner('Fase 2','¡Tapones!','Toca para soltar el tapón. Cae un poquito: adelántate al cuello de la botella.');Snd.waterStop();}return;}
+        if(endT>0.9){endT=0;bv=0;swapT=0;goPhase2();Core.banner('Fase 2','¡Tapones!','Toca para soltar el tapón. Cae un poquito: adelántate al cuello de la botella.',2,'cap');Snd.waterStop();}return;}
       if(b.st==='wait'){const dist=FX-b.x,tv=Math.min(170,26+dist*3.4);bv+=(tv-bv)*Math.min(1,dt*7);let mv=bv*dt;if(dist<=0.4||b.x+mv>=FX){mv=Math.max(0,FX-b.x);b.st='pre';b.time=0;bv=0;}moveAll(mv);}
       else if(b.st==='pre'){b.time+=dt;if(b.time>=b.delay){b.st='fill';b.time=0;Snd.waterStart();}}
       else if(b.st==='fill'){

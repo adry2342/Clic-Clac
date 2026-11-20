@@ -49,7 +49,7 @@ function drawTortillaPanel(c,k){
       R(c,x+2,62-h+2,1,h-5,'rgba(255,255,255,0.85)');}
     obj(c,l=>{R(l,276,30,40,2,C.woodD);rr(l,282,32,24,34,C.pinkL,2);});
     for(let y=36;y<64;y+=6)R(c,284,y,20,2,C.pink);R(c,282,32,24,1,C.white);
-    obj(c,l=>{rr(l,196,10,36,36,C.cream,18);});ell(c,214,28,13,13,C.peachL);ell(c,214,28,9,9,C.peach);ell(c,210,24,3,2,C.white);
+    obj(c,l=>{rr(l,162,10,36,36,C.cream,18);});ell(c,180,28,13,13,C.peachL);ell(c,180,28,9,9,C.peach);ell(c,176,24,3,2,C.white);
   }
   if(k===2){
     // barra con utensilios colgados y campana extractora
@@ -128,10 +128,10 @@ function Tortilla(rng,preview){
       p.bn=p.tort===0?['Paso 1','¡A pelar!','La patata gira sola. Toca cuando una franja de piel pase justo por la línea del pelador: cada toque arranca una tira.',2.6]:['Otra tortilla','¡A pelar!','Más franjas y gira más deprisa.',1.6];}
     if(p.k==='cortar'){if(!A.pot||!A.pot.peeled)A.pot={x0:TKX+20,len:p.len,tip:true,push:0,rem:[0,0],rolled:true,hop:0,peeled:true};
       A.pot.push=0;A.kin=0;p.cuts=0;A.pile=0;A.scoop=0;A.slices=[];p.hint=HC;
-      p.bn=['Paso 2','¡En '+p.N+' trozos!',p.tort===0?'Toca para cortar: '+p.N+' trozos lo más iguales posible. Las marcas rosas solo salen esta vez.':'Ahora a ojo, sin marcas: '+p.N+' trozos iguales.',2.4];}
-    if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;}
-    if(p.k==='batir'){p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
-    if(p.k==='vuelta'){p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
+      p.bn=p.tort===0?['Paso 2','¡En '+p.N+' trozos!','Toca para cortar: '+p.N+' trozos lo más iguales posible, a ojo. La primera vez verás unas marcas rosas.',2.4,'cortar']:['Paso 2','¡En '+p.N+' trozos!',p.tort===0?'Toca para cortar: '+p.N+' trozos lo más iguales posible. Las marcas rosas solo salen esta vez.':'Ahora a ojo, sin marcas: '+p.N+' trozos iguales.',2.4];}
+    if(p.k==='huevo'){p.c=0;p.hold=false;p.open=null;if(p.egg===0&&!ph.some(q=>q.k==='huevo'&&q.bnDone))p.bn=['Paso 3','¡Casca los huevos!','Mantén para apretar el huevo contra el bol y suelta cuando la aguja llegue a la marca.',2,'huevo'];}
+    if(p.k==='batir'){if(!ph.some(q=>q.k==='batir'&&q.bnDone))p.bn=['Paso 4','¡A batir!','Toca a ritmo para que la aguja no se salga de la zona rosa, que se mueve.',2,'batir'];p.s=0;p.inz=0;p.cnt=0;p.lo=0;p.hi=0;p.z=0.5;}
+    if(p.k==='vuelta'){if(!ph.some(q=>q.k==='vuelta'&&q.bnDone))p.bn=['Paso 5','¡Dale la vuelta!','Mantén para coger impulso y suelta cuando la aguja esté en la marca.',2,'vuelta'];p.pre=1.5;p.p=0;p.hold=false;p.ht=0;A.pan=0;A.cook=0;A.flip=null;A.burn=0;}
     if(p.k==='servir'){A.serve={t:0};}
     const to=p.st*W;if(Math.abs(to-camX)>1){cam={from:camX,to,t:0,d:0.55+Math.abs(to-camX)*0.0011};wait=0.25;}else wait=p.k==='servir'?0:0.15;
   }
@@ -157,7 +157,7 @@ function Tortilla(rng,preview){
       const p=P();
       if(!p){endT+=dt;if(endT>0.8&&!ended){ended=true;Core.finish();}return;}
       // cartel de cada paso nuevo (al llegar, no al crear el juego); el paso espera a que se lea
-      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3]);if(!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
+      if(!cam&&p.bn&&!p.bnDone){p.bnDone=1;if(!Core.banner(p.bn[0],p.bn[1],p.bn[2],p.bn[3],p.bn[4])&&!DEMO)wait=Math.max(wait,p.bn[3]+0.05);}
       if(!cam&&p.note&&!DEMO){Core.note(TKX+40,24,p.note);p.note=null;}
       if(p.hint)p.hint.step(dt);
       p.t+=dt;
@@ -177,7 +177,7 @@ function Tortilla(rng,preview){
           A.scoop+=dt;if(A.scoop>0.75){A.bowlSl+=p.N;pot.gone=true;next();}return;}
         if(!active())return;
         const v=p.base;pot.x0-=v*dt;pot.push=v;
-        if(TKX-pot.x0>Math.min(p.T*1.8,pot.len-3))cut('F','▲ Trozo muy grande');
+        if(TKX-pot.x0>Math.min(p.T*1.8,pot.len-3))cut('F','▲ Muy grande: corta antes');
       }
       else if(p.k==='huevo'){
         if(p.open){p.open.t+=dt;if(p.open.t>0.75)next();return;}
@@ -210,7 +210,7 @@ function Tortilla(rng,preview){
         if(!best||Math.abs(bd)>0.75){p.sw.skin=false;Core.waste(TKX+60,58,'Ahí ya no había piel');return;}
         best.done=true;p.got++;if(HP.a>0)HP.fade();
         const j=J(Math.abs(bd),0.16,0.3,0.45);judge(j,bd>0?'▲ Tarde: la piel ya había pasado':'▼ Pronto: la piel aún no llegaba',TKX+60,58);}
-      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,t=tolC(p.T);cut(J(Math.abs(e),t[0],t[1],t[2]),e<0?'▼ Trozo pequeño':'▲ Trozo grande');}
+      else if(p.k==='cortar'&&p.cuts<p.n){const e=TKX-A.pot.x0-p.T,t=tolC(p.T);cut(J(Math.abs(e),t[0],t[1],t[2]),e<0?'▼ Pequeño: espera más':'▲ Grande: corta antes');}
       else if(p.k==='huevo'&&!p.open){p.hold=true;p.ht=0;}
       else if(p.k==='batir'&&p.fin==null){p.s=Math.min(1.05,p.s+0.12*(1-0.35*p.s));Snd.burst(4200,.05,.1,1.5);}
       else if(p.k==='vuelta'&&p.pre<=0&&!A.flip){p.hold=true;p.ht=0;p.p=0;}
@@ -312,14 +312,19 @@ function Tortilla(rng,preview){
       if(p.k!=='pelar'){
       // cuchillo (sube y baja de golpe al cortar) con la mano encima
       const kd=A.knife>0?(A.knife>0.16?ease((0.24-A.knife)/0.08):1-inout((0.16-A.knife)/0.16)):0,ky=Math.round(TCT-88+kd*36-(p.k==='cortar'?(1-Ease.outBack(A.kin))*90:0));
-      // cuchilla en 3/4: el filo cae justo en la línea de corte; el mango sube en diagonal hacia la mano
-      const sk=yy=>Math.round((41-yy)*0.22);
-      obj(c,l=>{l.fillStyle=C.metal;for(let yy=0;yy<42;yy++){const w=yy>38?5-(yy-39):9;l.fillRect(kx-1+sk(yy),ky+yy,w,1);}
-        l.fillStyle=C.pinkD;for(let k=0;k<14;k++)l.fillRect(kx+8+Math.round(k*0.9),ky-3-k,6,3);},{sel:true});
-      for(let yy=2;yy<38;yy++){px(c,kx+sk(yy),ky+yy,C.metalL);px(c,kx+6+sk(yy),ky+yy,C.metalD);}
-      for(let yy=4;yy<34;yy+=1)px(c,kx+2+sk(yy),ky+yy,'#eef0f8');R(c,kx+sk(0),ky,8,1,C.metalD);
-      for(let k=2;k<13;k++)px(c,kx+9+Math.round(k*0.9),ky-3-k,C.pinkL);px(c,kx+13,ky-8,C.pinkDD);
-      const hx2=kx+17,hy2=ky-21;obj(c,l=>{rr(l,hx2-4,hy2-2,15,14,'#ffe1cc',5);rr(l,hx2+8,hy2-6,15,12,C.lav,4);},{sel:true});R(c,hx2+9,hy2-5,13,1,C.lavL);R(c,hx2-3,hy2+4,10,1,'#f2b9a0');R(c,hx2-3,hy2+7,9,1,'#f2b9a0');R(c,hx2-1,hy2,7,1,'#fff3ea');
+      // cuchillo de cocina visto de frente y un poco desde arriba: la hoja se mete hacia el fondo (arriba a la derecha),
+      // el filo brilla abajo y el mango rosa sale hacia ti (abajo a la izquierda), sujeto por la mano
+      const by=ky+41,dx=s_=>Math.round(0.72*s_),dy=s_=>Math.round(0.3*s_);
+      const kb=s_=>by-dy(s_)-(s_>24?Math.round((s_-24)*(s_-24)*0.16):0),kt=s_=>by-15-dy(s_)+(s_>22?Math.round((s_-22)*0.55):0);
+      obj(c,l=>{l.fillStyle=C.metal;for(let s_=0;s_<=38;s_++){const t0=kt(s_),b0=kb(s_);if(b0>t0)l.fillRect(kx+dx(s_),t0,1,b0-t0+1);}
+        l.fillStyle=C.pinkD;for(let s_=-3;s_>=-20;s_--)l.fillRect(kx+dx(s_),by-15-dy(s_),1,6);},{sel:true});
+      for(let s_=0;s_<=38;s_++){const x=kx+dx(s_),t0=kt(s_),b0=kb(s_);if(b0-t0<2)continue;
+        R(c,x,t0,1,1,C.metalL);if(b0-t0>5)R(c,x,t0+2,1,Math.max(1,Math.round((b0-t0)*0.35)),'#eef0f8');R(c,x,b0-1,1,1,C.metalD);R(c,x,b0,1,1,C.white);}
+      for(let s_=0;s_<=2;s_++)R(c,kx+dx(-s_)-0,by-16-dy(-s_),1,8,C.metalD);
+      for(let s_=-3;s_>=-20;s_--){const x=kx+dx(s_),y=by-15-dy(s_);px(c,x,y,C.pinkL);px(c,x,y+5,C.pinkDD);}
+      for(const s_ of [-8,-15]){const x=kx+dx(s_),y=by-13-dy(s_);px(c,x,y,C.metalL);}
+      const hx2=kx+dx(-13),hy2=by-17-dy(-13);obj(c,l=>{rr(l,hx2-5,hy2,12,11,'#ffe1cc',4);rr(l,hx2-16,hy2+4,13,11,C.lav,4);},{sel:true});
+      R(c,hx2-15,hy2+5,11,1,C.lavL);R(c,hx2-4,hy2+1,8,1,'#fff3ea');R(c,hx2-4,hy2+5,9,1,'#f2b9a0');R(c,hx2-4,hy2+8,8,1,'#f2b9a0');
       if(A.knife>0.12){R(c,kx-8,TCT-11,3,1,C.white);R(c,kx+4,TCT-11,3,1,C.white);px(c,kx-10,TCT-13,C.white);px(c,kx+7,TCT-13,C.white);}
       }
     }

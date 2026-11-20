@@ -4,7 +4,10 @@
    ===================================================================== */
 const TX=150,TOP=124;
 const TOAST=['#fbecc9','#f9e2b3','#f6d69c','#f1c785','#ebb76f','#e2a55c','#d4914d','#c07c41','#a66637','#86512f','#5e3f2c','#3e2f2b'];
-function toastCol(p,d){const i=Math.max(0,Math.min(TOAST.length-1,Math.floor(p*10)+(d||0)));return TOAST[i];}
+// el tostado va por niveles: 8 tostadas distintas, una por cuadrado del indicador (el pedido es uno de ellos)
+const TLV=8,TLI=[0,2,3,4,5,7,8,10];
+const tlev=p=>Math.max(0,Math.min(TLV-1,Math.floor(p*TLV)));
+function toastCol(p,d){const i=Math.max(0,Math.min(TOAST.length-1,TLI[tlev(p)]+(d||0)));return TOAST[i];}
 const BREADS={
   molde:{name:'Pan de molde',rate:1/3.3,base:0,w:26,h:24,top:'bumps'},
   integral:{name:'Pan integral',rate:1/3.8,base:0.12,w:26,h:24,top:'flat',seeds:true},
@@ -42,14 +45,20 @@ function drawKitchenBg(c){
     obj(c,l=>{rr(l,x,40-h,14,h,'rgba(235,245,255,0.75)',2);rr(l,x+1,40-h+5,12,h-6,col,2);rr(l,x+1,40-h-3,12,4,lid,1);});
     R(c,x+2,40-h+2,1,h-6,'rgba(255,255,255,0.8)');rr(c,x+4,40-h+8,6,4,C.cream,1);
   }
-  // utensilios colgados
-  obj(c,l=>{R(l,104,10,72,2,C.metalD);
-    rr(l,112,12,2,22,C.woodD,0);rr(l,108,32,10,8,C.woodD,2);
-    R(l,130,12,2,20,C.metal);ell(l,131,36,5,4,C.metal);
-    R(l,148,12,2,18,C.pinkD);rr(l,145,29,8,10,C.pinkD,2);
-    R(l,166,12,2,24,C.metal);for(let k=0;k<4;k++)R(l,163+k*2,36,1,6,C.metal);
-  });
-  ell(c,131,35,3,2,C.metalD);
+  // utensilios colgados de una barra con ganchos: cuchara de madera, cucharón, espátula y varillas
+  obj(c,l=>{rr(l,102,9,76,3,C.metalD,1);rr(l,99,8,5,5,C.metalDD,2);rr(l,176,8,5,5,C.metalDD,2);});R(c,104,9,72,1,C.metalL);
+  for(const x of [113,131,149,167]){R(c,x-1,12,1,2,C.metalDD);R(c,x,13,1,2,C.metalDD);R(c,x+1,12,1,2,C.metalDD);}
+  // cuchara de madera
+  obj(c,l=>{rr(l,111,15,4,20,C.woodD,2);ell(l,113,40,5,7,C.woodD);});R(c,112,16,1,18,C.woodL);ell(c,113,40,3,5,C.wood);px(c,112,37,C.woodL);
+  // cucharón con agujero en el mango
+  obj(c,l=>{rr(l,129,15,4,22,C.metal,2);l.fillStyle=C.metal;for(let k=0;k<7;k++){const w=Math.round(Math.sqrt(49-(k-0)*(k-0))*1.0);l.fillRect(131-w,37+k,w*2+1,1);}rr(l,124,36,15,2,C.metal,1);});
+  R(c,130,16,1,20,C.metalL);px(c,131,18,C.metalDD);R(c,126,38,11,1,C.metalD);R(c,127,39,8,2,'#c9cfe0');
+  // espátula: mango rosa y pala con ranuras
+  obj(c,l=>{rr(l,147,15,4,14,C.pinkD,2);rr(l,148,28,2,4,C.metal,0);rr(l,144,31,10,12,C.metal,2);});
+  R(c,148,16,1,12,C.pinkL);px(c,149,17,C.pinkDD);for(let k=0;k<3;k++)R(c,146+k*3,34,1,7,C.metalD);R(c,145,32,8,1,C.metalL);
+  // varillas
+  obj(c,l=>{rr(l,165,15,4,13,C.mintDD,2);});R(c,166,16,1,11,C.mintL);
+  c.save();for(let i=0;i<3;i++){c.strokeStyle=i===1?C.metalL:C.metalD;c.lineWidth=1;c.beginPath();c.ellipse(167.5,35.5,1.5+i*1.6,8,0,0,Math.PI*2);c.stroke();}c.restore();R(c,166,27,3,2,C.metalD);
   // encimera y muebles
   obj(c,l=>{rr(l,-2,TOP,W+4,8,C.lavL,1);});
   R(c,0,TOP+1,W,1,C.white);dith(c,0,TOP+6,W,2,C.lav);
@@ -90,10 +99,10 @@ function Toaster(rng,preview){
   for(let i=0;i<N;i++){
     const B=i<PRACTICE?BREADS.molde:BREADS[keys[Math.floor(rng()*keys.length)]];
     const prog=i/(N-1);
-    const shade=[0.42,0.58,0.72][Math.floor(rng()*3)]+(rng()-0.5)*0.06;
+    const tl=3+Math.floor(rng()*4),shade=(tl+0.5)/TLV;
     // a partir de la cuarta: tostadora con turbo (de golpe tuesta más rápido) o pedido "a ojo" (sin marca: hay que igualar el color del pedido)
     const mr=rng(),mode=i<3?'normal':mr<0.36?'turbo':'normal';
-    items.push({B,mode,tt:0.45+rng()*0.6,el:0,target:Math.max(B.base+0.2,shade),rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
+    items.push({B,mode,tt:0.45+rng()*0.6,el:0,tl,target:shade,rate:B.rate*(1+prog*0.4)*(0.92+rng()*0.16),practice:i<PRACTICE,p:B.base,j:null});
   }
   // pistas que se desvanecen: la marca rosa de la aguja solo en la primera tostada y las guías de untar solo en la primera pasada
   const H1=Core.hint(),H2=Core.hint();
@@ -176,14 +185,17 @@ function Toaster(rng,preview){
     if(swapT>=2&&U()&&(u.st!=='out'||u.t<0.35)){const kxx=Math.round(kx)+0,lift=Math.round((1-u.dip)*8),ky=y0-20+lift;
       c.save();c.globalAlpha=0.35;R(c,kxx-3,y0+6,8,UTH-12,'#7a5a4a');c.restore();
       // el mango se queda un poco atrás mientras arrastra (inercia) y vuelve al soltar
-      const ln=Math.round(u.dip*3);
-      obj(c,l=>{rr(l,kxx-4,ky,9,UTH+10-lift,C.metal,4);l.fillStyle=C.pinkD;for(let k=0;k<24;k++)l.fillRect(kxx-3-Math.round(ln*k/23),ky-22+(23-k),7,1);},{sel:true});R(c,kxx-2,ky+3,1,UTH+2-lift,C.metalL);
-      rr(c,kxx-3,ky+UTH-6-lift,7,8,u.top.col,3);for(let k=2;k<20;k++)px(c,kxx-2-Math.round(ln*k/23),ky-22+(23-k),C.pinkL);}
+      // cuchillo de untar rígido: hoja redondeada de metal, virola y mango rosa con remaches (no se deforma)
+      const bl=UTH+8-lift;
+      obj(c,l=>{rr(l,kxx-4,ky,9,bl,C.metal,4);rr(l,kxx-3,ky-5,7,6,C.metalD,1);rr(l,kxx-4,ky-26,9,22,C.pinkD,4);},{sel:true});
+      R(c,kxx-2,ky+3,1,bl-6,C.metalL);R(c,kxx+3,ky+2,1,bl-6,C.metalD);R(c,kxx-2,ky-4,5,1,C.metalL);
+      R(c,kxx-3,ky-24,1,18,C.pinkL);R(c,kxx+3,ky-24,1,18,C.pinkDD);px(c,kxx,ky-20,C.metalL);px(c,kxx,ky-11,C.metalL);
+      rr(c,kxx-3,ky+bl-9,7,8,u.top.col,3);R(c,kxx-2,ky+bl-8,3,1,u.top.l);}
   }
   return {_dbg:()=>({st,b:items[cur],phase,kx,u:U(),swapT,e:U()&&stack.length?edges():[0,0],h2}),unit:'Paso',total:TOTAL,mood:'tostadora',hold:true,
     inPractice(){return false;},
     progress(){return done;},
-    cue(){return phase===1?'Fase 1 · Tuesta hasta el color del pedido':'Fase 2 · Mantén al entrar en la tostada y suelta al salir: una sola pasada';},
+    cue(){return phase===1?'Fase 1 · Suelta en el cuadrado del color del pedido':'Fase 2 · Mantén al entrar en la tostada y suelta al salir: una sola pasada';},
     update(dt){
       if(phase===2){update2(dt);return;}
       t+=dt;for(const s of smoke){s.t+=dt;s.y-=dt*14;s.x+=Math.sin(s.t*3+s.k)*dt*6;}
@@ -191,7 +203,7 @@ function Toaster(rng,preview){
       if(fly){fly.t+=dt;if(fly.t>=0.75){stack.push(fly.b);fly=null;}}
       H1.step(dt);
       const b=it();
-      if(!b){endT+=dt;if(endT>0.8){endT=0;goPhase2();Core.banner('Fase 2','¡A untar!','La espátula cruza una sola vez. Mantén justo cuando entre en la tostada y suelta justo cuando salga.');}return;}
+      if(!b){endT+=dt;if(endT>0.8){endT=0;goPhase2();Core.banner('Fase 2','¡A untar!','El cuchillo de untar cruza una sola vez. Mantén justo cuando entre en la tostada y suelta justo cuando salga.',2,'untar');}return;}
       if(st==='insert'){lever=0;if(t>0.55){st='ready';t=0;}}
       else if(st==='ready'){lever=0;}
       else if(st==='toast'){
@@ -206,8 +218,9 @@ function Toaster(rng,preview){
     },
     press(){if(phase===2){press2();return;}const b=it();if(!b)return;holding=true;if(st==='ready'){st='toast';t=0;Snd.burst(700,.06,.2);}},
     release(){holding=false;if(phase===2){release2();return;}const b=it();if(!b||st!=='toast')return;
-      const d=b.p-b.target,a=Math.abs(d),w=1;const j=a<=0.05*w?'P':a<=0.1*w?'B':a<=0.17*w?'R':'F';
-      pop(j,j==='P'?'':(d<0?'▼ Te quedaste corto':'▲ Te pasaste'));},
+      // perfecto = el mismo cuadrado que el pedido; bien = el de al lado; si no, fallo
+      const d=tlev(b.p)-b.tl,j=d===0?'P':Math.abs(d)===1?'B':'F';
+      pop(j,j==='P'?'':(d<0?'▼ Poco tostada':'▲ Muy tostada'));},
     draw(c){
       c.drawImage(bg,0,0);
       // tostadas apiladas en el plato
@@ -223,57 +236,56 @@ function Toaster(rng,preview){
       if(st==='pop'&&cur<items.length){rise=10+backOut(Math.min(1,t/0.32))*18;}
       const shown=st==='serve'?null:b&&(st!=='pop')?b:(st==='pop'?items[cur]:null);
       if(shown&&rise>-4){
-        const B=shown.B,bx=TX-B.w/2,by=76-rise;
-        c.save();c.beginPath();c.rect(0,0,W,77);c.clip();
+        const B=shown.B,bx=TX-B.w/2,by=75-rise;
+        c.save();c.beginPath();c.rect(0,0,W,76);c.clip();
         obj(c,l=>breadShape(l,bx,by,B,toastCol(shown.p),toastCol(shown.p,2)));
         breadDots(c,bx,by,B,shown.p);c.restore();
       }
-      // tostadora
-      obj(c,l=>{
-        rr(l,TX-32,78,64,46,C.mint,6);
-        rr(l,TX+30,88,6,30,C.mintD,2);
-        rr(l,TX-30,TOP-2,8,3,C.metalD,1);rr(l,TX+22,TOP-2,8,3,C.metalD,1);
-      },{sel:true});
-      // sombreado anime de la tostadora: banda de sombra a la derecha, luz reflejada en el borde y brillo
-      R(c,TX+22,82,6,40,C.mintD);R(c,TX+28,84,1,36,C.mintL);dith(c,TX+20,82,2,40,C.mintD);
-      R(c,TX-29,84,2,14,C.mintL);R(c,TX-29,104,2,16,C.mintL);R(c,TX-26,81,6,1,C.white);px(c,TX-29,82,C.white);px(c,TX-29,83,C.white);
-      R(c,TX-30,121,58,1,C.mintD);
-      R(c,TX-31,80,62,1,C.mintL);R(c,TX-31,100,62,3,C.metal);R(c,TX-31,100,62,1,C.metalL);R(c,TX-31,102,62,1,C.metalD);
-      // ranura
-      rr(c,TX-16,77,32,4,C.out,1);
-      if(st==='toast'){dith(c,TX-14,78,28,2,'#ff9d6e',Math.floor(Core.time*10));}
-      // ventana con el pan dentro
-      rr(c,TX-22,84,36,14,C.metalD,2);rr(c,TX-21,85,34,12,'#8a7aa8',2);R(c,TX-19,85,30,1,'#b9acd6');
-      if(st==='toast'&&b){
-        R(c,TX-20,86,1,10,'#ff9d6e');R(c,TX+11,86,1,10,'#ff9d6e');
-        const B=b.B;c.save();c.beginPath();c.rect(TX-20,86,32,10);c.clip();
-        breadShape(c,TX-4-B.w/2,86-6+Math.round((1-lever)*8),B,toastCol(b.p),toastCol(b.p,2));c.restore();
-        if(Math.floor(Core.time*4)%2)px(c,TX-19,87,'#ffd6b0');
-      }else{R(c,TX-20,86,1,10,C.lavDD);R(c,TX+11,86,1,10,C.lavDD);}
-      R(c,TX-20,86,3,1,'rgba(255,255,255,0.6)');R(c,TX-20,87,1,2,'rgba(255,255,255,0.6)');
-      // indicador de tostado: rampa de color, objetivo y aguja
-      const gx=TX-24,gy=108,gw=44;
-      rr(c,gx-2,gy-2,gw+4,9,'#8a7aa8',2);R(c,gx-1,gy-2,gw+2,1,'#b9acd6');
-      for(let i=0;i<gw;i++)R(c,gx+i,gy,1,5,toastCol(i/gw));
+      // tostadora retro: cuerpo redondeado menta, franja cromada, mirilla redonda, placa con el indicador, ruedecita y palanca
+      const glow=st==='toast'?0.5+0.5*Math.sin(Core.time*7):0;
+      obj(c,l=>{rr(l,TX-30,TOP-5,10,5,C.metalD,2);rr(l,TX+20,TOP-5,10,5,C.metalD,2);
+        rr(l,TX-38,76,76,46,C.mint,15);rr(l,TX+37,86,5,30,C.mintD,2);},{sel:true});
+      // volumen: luz arriba a la izquierda, sombra a la derecha y abajo
+      R(c,TX+26,84,8,30,C.mintD);dith(c,TX+22,84,4,30,C.mintD);R(c,TX-30,116,60,3,C.mintD);
+      R(c,TX-33,82,2,16,C.mintL);R(c,TX-28,78,14,1,C.white);R(c,TX-31,79,4,1,C.white);px(c,TX-33,81,C.white);
+      // ranura de arriba con el resplandor de las resistencias
+      rr(c,TX-20,74,40,5,C.metal,2);rr(c,TX-18,75,36,3,C.out,1);
+      if(st==='toast'){c.save();c.globalAlpha=0.5+0.4*glow;R(c,TX-17,76,34,1,'#ff9d6e');c.restore();}
+      // franja cromada con brillo
+      R(c,TX-38,99,76,5,C.metal);R(c,TX-38,99,76,1,C.metalL);R(c,TX-38,103,76,1,C.metalD);R(c,TX-30,100,10,1,C.white);
+      // mirilla redonda: se ve la tostada dentro y las resistencias
+      obj(c,l=>{ell(l,TX-14,88,11,8,C.metal);},{sel:true});ell(c,TX-14,88,9,6,'#6f5f92');
+      if(st==='toast'&&b){c.save();c.beginPath();c.ellipse(TX-14,88,9,6,0,0,Math.PI*2);c.clip();
+        R(c,TX-24,82,20,12,'rgba(255,140,90,'+(0.25+0.25*glow).toFixed(2)+')');
+        rr(c,TX-22,84+Math.round((1-lever)*6),16,12,toastCol(b.p,2),2);rr(c,TX-21,85+Math.round((1-lever)*6),14,10,toastCol(b.p),2);
+        for(let k=0;k<3;k++)R(c,TX-23,84+k*4,18,1,'rgba(255,157,110,'+(0.5+0.4*glow).toFixed(2)+')');c.restore();}
+      else{R(c,TX-21,86,14,1,'#8f80b5');R(c,TX-21,90,14,1,'#8f80b5');}
+      R(c,TX-19,84,4,1,'rgba(255,255,255,0.7)');px(c,TX-20,85,'rgba(255,255,255,0.7)');
+      // corazoncito y ruedecita de potencia
+      R(c,TX+3,86,2,1,C.pinkD);R(c,TX+6,86,2,1,C.pinkD);R(c,TX+2,87,7,2,C.pinkD);R(c,TX+3,89,5,1,C.pinkD);px(c,TX+5,90,C.pinkD);px(c,TX+3,87,C.pinkL);
+      obj(c,l=>{ell(l,TX+20,89,5,5,C.cream);},{sel:true});for(let k=0;k<5;k++){const a=-2.4+k*0.6;px(c,TX+20+Math.round(Math.cos(a)*7),89+Math.round(Math.sin(a)*7),C.mintDD);}
+      const da=-2.4+(st==='toast'?Math.min(1,lever)*2.4:0);R(c,TX+20,89,1,1,C.pinkDD);px(c,TX+20+Math.round(Math.cos(da)*3),89+Math.round(Math.sin(da)*3),C.pinkDD);
+      // placa crema con el indicador: 8 cuadrados, cada uno una tostada
+      const gx=TX-27,gy=108,sq=6;
+      obj(c,l=>{rr(l,gx-3,gy-3,8*(sq+1)+5,sq+6,C.cream,2);},{sel:true});
+      for(let i=0;i<TLV;i++){R(c,gx+i*(sq+1),gy,sq,sq,TOAST[TLI[i]]);R(c,gx+i*(sq+1),gy,sq,1,'rgba(255,255,255,0.35)');}
       if(b){
-        const tx=gx+Math.round(b.target*gw);
-        // marca rosa del punto justo: solo en la primera tostada; luego se desvanece y queda la muestra del pedido
+        const tx=gx+b.tl*(sq+1);
+        // marco rosa en el cuadrado del pedido: solo en la primera tostada; luego se desvanece y queda la muestra del pedido
         if(H1.a>0){const a=H1.a,ly=Math.round((1-a)*-5);c.save();c.globalAlpha=a;
-          R(c,tx-1,gy-5+ly,3,1,C.pinkDD);px(c,tx,gy-4+ly,C.pinkDD);R(c,tx-1,gy+7-ly,3,1,C.pinkDD);px(c,tx,gy+6-ly,C.pinkDD);
-          R(c,tx-2,gy-1,1,7,C.white);R(c,tx+2,gy-1,1,7,C.white);
-          if(a<1)for(let k=0;k<5;k++)px(c,tx-3+((k*5+Math.floor(Core.time*24))%7),gy-6-Math.round((1-a)*(8+k*3)),k%2?C.white:C.pinkL);c.restore();}
+          R(c,tx-1,gy-2+ly,sq+2,1,C.pinkDD);R(c,tx-1,gy+sq+1-ly,sq+2,1,C.pinkDD);R(c,tx-2,gy-1,1,sq+2,C.pinkDD);R(c,tx+sq+1,gy-1,1,sq+2,C.pinkDD);
+          if(a<1)for(let k=0;k<5;k++)px(c,tx-2+((k*5+Math.floor(Core.time*24))%9),gy-6-Math.round((1-a)*(8+k*3)),k%2?C.white:C.pinkL);c.restore();}
         if(H1.a<1&&st!=='pop'&&st!=='serve'){// sin marca: un ojito avisa de que hay que fiarse del color del pedido
-          c.save();c.globalAlpha=1-H1.a;obj(c,l=>{ell(l,gx+gw+9,gy+2,5,3,C.white);},{sel:true});ell(c,gx+gw+9,gy+2,1,1,C.lavDD);px(c,gx+gw+9,gy+1,C.out);px(c,gx+gw+10,gy+1,C.white);R(c,gx+gw+5,gy-2,1,1,C.out);R(c,gx+gw+9,gy-3,1,1,C.out);R(c,gx+gw+13,gy-2,1,1,C.out);c.restore();}
-        if(b.turbo&&st==='toast'){const f=Math.floor(Core.time*16)%2;for(let k=0;k<4;k++)px(c,TX-30+k*20+f,78-((k+f)%2),k%2?C.butter:'#ff9d6e');R(c,TX-31,100,62,1,f?'#ffb38a':C.metalL);}
-        b.np=b.np==null?b.p:b.np+(b.p-b.np)*0.35;const nx=gx+Math.min(gw-1,Math.round(Math.min(1.06,b.np)*gw/1.0));
-        if(st==='toast'||st==='pop'){R(c,nx,gy-2,1,9,C.out);px(c,nx,gy-3,C.out);}
+          const ex=gx+8*(sq+1)+8;c.save();c.globalAlpha=1-H1.a;obj(c,l=>{ell(l,ex,gy+3,5,3,C.white);},{sel:true});ell(c,ex,gy+3,1,1,C.lavDD);px(c,ex,gy+2,C.out);px(c,ex+1,gy+2,C.white);c.restore();}
+        if(b.turbo&&st==='toast'){const f=Math.floor(Core.time*16)%2;for(let k=0;k<4;k++)px(c,TX-30+k*20+f,74-((k+f)%2),k%2?C.butter:'#ff9d6e');R(c,TX-38,99,76,1,f?'#ffb38a':C.metalL);}
+        // el cuadrado en el que está ahora la tostada se ilumina con un marco blanco que late
+        if(st==='toast'||st==='pop'){const k=tlev(b.p),x=gx+k*(sq+1),on=Math.floor(Core.time*6)%2;R(c,x-1,gy-1,sq+2,1,on?C.white:C.out);R(c,x-1,gy+sq,sq+2,1,on?C.white:C.out);R(c,x-1,gy,1,sq,on?C.white:C.out);R(c,x+sq,gy,1,sq,on?C.white:C.out);
+          obj(c,l=>{l.fillStyle=C.lavDD;for(let q=0;q<3;q++)l.fillRect(x+sq/2-2+q,gy+sq+2+q,5-2*q,1);},{sel:true});}
       }
-      // palanca
-      const ly=90+Math.round(Math.max(-0.25,Math.min(1.1,lv.x))*22);
-      R(c,TX+32,90,2,26,C.mintDD);
-      obj(c,l=>{rr(l,TX+30,ly,12,6,C.pink,2);});R(c,TX+32,ly+1,8,1,C.pinkL);
-      // rueda
-      obj(c,l=>{ell(l,TX+22,90,4,4,C.cream);});px(c,TX+22,87,C.pinkDD);px(c,TX+22,88,C.pinkDD);
+      // palanca lateral
+      const ly=88+Math.round(Math.max(-0.25,Math.min(1.1,lv.x))*22);
+      R(c,TX+39,88,2,26,C.mintDD);
+      obj(c,l=>{rr(l,TX+37,ly,12,6,C.pink,3);},{sel:true});R(c,TX+39,ly+1,8,1,C.pinkL);
       // tostada volando al plato
       if(fly){const B=fly.b.B,f=Math.min(1,fly.t/0.55),x0=TX-B.w/2,x1=260-B.w/2,y0=76-28,y1=TOP-8-stack.length*3-B.h;
         if(fly.t<0.55){const g=inout(f),x=Math.round(x0+(x1-x0)*g),y=Math.round(y0+(y1-y0)*f*f-Math.sin(f*Math.PI)*12);
@@ -282,10 +294,10 @@ function Toaster(rng,preview){
         else{const k=(fly.t-0.55)/0.2,h=Math.max(3,Math.round(7-backOut(k)*4)),y=TOP-8-stack.length*3+3-h;obj(c,l=>{rr(l,246,y,28,h,toastCol(fly.b.p),1);});}}
       for(const s of smoke){const a=Math.max(0,0.7-s.t*0.5);dith(c,s.x,s.y,4,3,'rgba(120,110,130,'+a+')',Math.floor(s.t*8));}
       // pedido
-      if(b){obj(c,l=>{rr(l,196,72,30,40,C.paper,2);});
+      if(b){const ox=16,oy=-14;c.save();c.translate(ox,oy);R(c,210,69,1,3,C.out);obj(c,l=>{rr(l,196,72,30,40,C.paper,2);ell(l,211,71,2,2,C.pinkD);});
         R(c,200,76,22,2,C.pinkD);const B=b.B;
         c.save();c.translate(199,82);c.scale(0.9,0.9);const BB2={...B,w:Math.min(24,B.w),h:Math.min(22,B.h)};breadShape(c,0,0,BB2,toastCol(b.target),toastCol(b.target,2));breadDots(c,0,0,BB2,b.target);c.restore();
-        R(c,200,107,22,1,C.lavD);}
+        R(c,200,107,22,1,C.lavD);c.restore();}
       if(phase===2)draw2(c);
     }
   };

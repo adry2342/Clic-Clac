@@ -9,7 +9,7 @@ const URL='file://'+path.resolve(__dirname,'..','index.html');
 fs.mkdirSync(out,{recursive:true});
 const BOT=(id,delay)=>{const G=__cc.GAMES[id],D={dt:0.002};let held=false,busy=false;window.__log=[];
   const J=__cc.Core.judge.bind(__cc.Core);__cc.Core.judge=(j,x,y,p,d)=>{__log.push([j,d||'']);return J(j,x,y,p,d);};
-  setInterval(()=>{const C=__cc.Core;if(C.scene!=='play'||C.ready>0||busy)return;const a=G.bot(C.game,D);if(!a)return;
+  setInterval(()=>{const C=__cc.Core;if(C.scene!=='play'||C.ready>0||busy)return;if(C.card){__cc.press();return;}if(C.cardWait>0)return;const a=G.bot(C.game,D);if(!a)return;
     if(a==='down'){if(!held){__cc.press();held=true;}return;}
     const go=()=>{if(a==='tap'){__cc.press();__cc.release();}else{__cc.release();held=false;}};
     if(delay){busy=true;setTimeout(()=>{go();setTimeout(()=>busy=false,250);},delay);}else go();},2);};

@@ -43,6 +43,7 @@ syncToggles();
 function show(id,on){$(id).hidden=!on;}
 function wipe(){if(!reduce)Core.wipe=0.55;}
 function setScene(s){
+  if(s!=='play'){Core.card=false;Core.cardWait=0;}
   Core.scene=s;stage.classList.toggle('menubg',s==='menu');show('menu',s==='menu');show('intro',s==='intro');show('hud',s==='play');show('results',s==='results');show('pause',false);Core.paused=false;
 }
 function openGame(id){
@@ -50,10 +51,14 @@ function openGame(id){
   const seed=(Math.random()*1e9)>>>0;Core.gameId=id;Core.parts=[];TDEMO=null;
   Core.run={id,seed,counts:{P:0,B:0,R:0,F:0},n:0,pts:0,streak:0,best:0};
   Core.game=GAMES[id].make(mulberry32(seed));Snd.setMood(Core.game.mood);
-  $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;$('hName').textContent=GAMES[id].name;
+  $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;document.querySelector('#intro .go').textContent='Pulsa para empezar';$('hName').textContent=GAMES[id].name;
   lastHud='';setScene('intro');wipe();
 }
-function startPlay(){Demo=null;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
+function openCard(){const I=Core.cardInfo;Core.card=true;release();
+  $('inName').textContent=I.tag+' · '+I.title;$('inHint').textContent=I.sub;document.querySelector('#intro .go').textContent='Pulsa para continuar';
+  demoStart(Core.gameId,'bien',I.demo);show('intro',true);}
+function closeCard(){Core.card=false;Demo=null;show('intro',false);Core.ready=1.2;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';Snd.ui();}
+function startPlay(){Demo=null;Core.card=false;Core.cardWait=0;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
 function toMenu(){Feel.reset();$('ready').hidden=true;$('phase').hidden=true;Core.bannerT=0;Core.ready=0;Snd.waterStop();Snd.sizzle(false);$('hCue').hidden=true;lastCue='';Snd.setMood('menu');Core.game=null;buildMenu();setScene('menu');wipe();const f=document.querySelector('.card:not(:disabled)');f&&f.focus({preventScroll:true});}
 function rankOf(r){if(r.n===0)return 'D';if(r.counts.P===r.n)return 'S+';const p=r.pts/(100*r.n)*100;return p>=95?'S':p>=85?'A':p>=70?'B':p>=50?'C':'D';}
 function showResults(){
@@ -84,7 +89,7 @@ $('pauseBtn').addEventListener('click',e=>{e.stopPropagation();pause(true);});
 
 /* ---------- un solo botón ---------- */
 function release(){if(Core.scene==='play'&&!Core.paused&&Core.game.release)Core.game.release();}
-function press(){Snd.init();if(Core.scene==='intro'){startPlay();return;}if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
+function press(){Snd.init();if(Core.scene==='intro'){startPlay();return;}if(Core.card){closeCard();return;}if(Core.cardWait>0)return;if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
 stage.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();press();});
 addEventListener('pointerup',release);addEventListener('pointercancel',release);
 addEventListener('keyup',e=>{if(e.key==='Escape'||e.key==='Tab')return;release();});

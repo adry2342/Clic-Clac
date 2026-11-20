@@ -412,7 +412,7 @@ function Stapler(rng,preview){
         if(q.x>W+4&&!q.gone){q.gone=true;if(q.marks.some(m=>m.j&&m.j!=='F')){tray.push(q);Snd.tone(520,.06,'sine',.04);}}}
       for(let i=leaving.length-1;i>=0;i--){if(leaving[i].x>W+20)leaving.splice(i,1);}
       belt+=bv*dt;bvNow=bv;
-      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Tu compañero cruza en su silla con el montón en la cabeza. Toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',2.4);}}
+      if(si>=N1&&!cur&&!leaving.length){endT+=dt;if(endT>0.6){endT=0;goPhase2();Core.banner('Fase 2','¡A apilar!','Tu compañero cruza en su silla con el montón en la cabeza. Toca para soltarlo encima de la torre. Si se inclina demasiado, se cae entera.',2.4,'apilar');}}
     },
     press(){
       if(phase===2){

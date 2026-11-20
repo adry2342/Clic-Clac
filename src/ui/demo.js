@@ -3,10 +3,10 @@ let Demo=null;const demoFull=mk(W,H),demoCv=$('demo'),demoCx=demoCv.getContext('
 // La intro es un vídeo corto que se juega solo: primero un intento perfecto ("Así") y luego uno con
 // error ("Si te retrasas…"), con el resultado a la vista. Así no hacen falta rondas de práctica.
 const TSEQ=[['bien','pelar'],['bien','cortar'],['bien','huevo'],['bien','batir'],['bien','vuelta'],['mal','huevo']];
-function demoStart(id,phase){
+function demoStart(id,phase,only){
   // la tortilla enseña sus gestos, uno por vuelta del vídeo
-  const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
-  Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
+  const SQ=id==='tortilla'?TSEQ:GAMES[id].seq;if(only){TDEMO=only;}else if(SQ){const q=SQ[demoN%SQ.length];phase=q[0];TDEMO=q[1];}demoN++;
+  Demo={id,phase:phase||'bien',g:GAMES[id].make(mulberry32(7+Math.floor(Math.random()*4))),only,t:0,down:false,flash:0,word:'',dt:0,pend:[],last:null,doneT:0};
   DEMO=true;try{for(let w=GAMES[id].warm||0;w>0;w-=1/30)Demo.g.update(1/30);}finally{DEMO=false;}Demo.last=null;
   $('demoTag').textContent=Demo.phase==='bien'?'✓ Así sí':'✕ Así no: con retraso';$('demoTag').className='demo-tag '+Demo.phase;demoWord('','');
 }
@@ -18,7 +18,7 @@ function demoAct(D,a){
 }
 function demoStep(dt){
   const D=Demo,G=GAMES[D.id];D.t+=dt;D.dt=dt;
-  if(D.t>G.loopT+2||(D.last&&D.last.t>1.6)){demoStart(D.id,D.phase==='bien'?'mal':'bien');return;}
+  if(D.t>G.loopT+2||(D.last&&D.last.t>1.6)){demoStart(D.id,D.phase==='bien'?'mal':'bien',D.only);return;}
   DEMO=true;
   try{
     // al acertar o fallar, la imagen se congela un momento para que se vea bien el resultado

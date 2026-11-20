@@ -3,11 +3,12 @@ function frame(now){
   const dt=Math.min(0.05,(now-last)/1000);last=now;Core.time+=dt;pollPads();
   if(Core.scene==='play'&&!Core.paused&&Core.ready>0){Core.ready-=dt;const el=$('ready');
     if(Core.ready<=0.55&&el.className!=='r2'){el.textContent='¡Ya!';el.className='r2';}if(Core.ready<=0)el.hidden=true;}
-  const running=Core.scene==='play'&&!Core.paused&&!(Core.ready>0);
+  if(Core.scene==='play'&&!Core.paused&&Core.cardWait>0){Core.cardWait-=dt;if(Core.cardWait<=0)openCard();}
+  const running=Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!Core.card&&!(Core.cardWait>0);
   // parada de impacto: el mundo se congela un instante tras un Perfecto
   if(running){if(Feel.stopT>0)Feel.stopT-=dt;else{Core.game.update(dt);Anim.update(dt);}Feel.update(dt);}
   if(Core.bannerT>0&&!Core.paused){Core.bannerT-=dt;const el=$('phase');if(Core.bannerT<=0.3&&el.className!=='out')el.className='out';if(Core.bannerT<=0||Core.scene!=='play')el.hidden=true;}
-  if(Core.scene==='intro'&&Demo)demoStep(dt);
+  if((Core.scene==='intro'||Core.card)&&Demo&&!Core.paused)demoStep(dt);
   ctx.setTransform(1,0,0,1,0,0);let sx=0;if(Core.shake>0&&running){Core.shake-=dt;sx=(Math.floor(Core.time*60)%2)?1:-1;}
   ctx.translate(sx,0);
   if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);
