@@ -16,7 +16,7 @@ const BOT=(id,delay)=>{const G=__cc.GAMES[id],D={dt:0.002};let held=false,busy=f
 async function run(id,delay,film){
   const b=await chromium.launch();const p=await b.newPage({viewport:{width:700,height:400}});const errs=[];
   p.on('pageerror',e=>errs.push(String(e)));
-  await p.goto(URL);await p.waitForTimeout(300);await p.evaluate(g=>__cc.openGame(g),id);await p.waitForTimeout(150);await p.keyboard.press('Space');
+  await p.goto(URL);await p.waitForFunction(()=>!__cc.Trans.on);await p.evaluate(g=>__cc.openGame(g),id);await p.waitForFunction(()=>!__cc.Trans.on);await p.keyboard.press('Space');
   await p.evaluate(`(${BOT.toString()})(${JSON.stringify(id)},${delay})`);
   // tiempos de fotograma
   await p.evaluate(()=>{window.__ft=[];let l=performance.now();const f=t=>{__ft.push(t-l);l=t;requestAnimationFrame(f);};requestAnimationFrame(f);});

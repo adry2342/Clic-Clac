@@ -14,9 +14,7 @@ function frame(now){
   if(Core.scene==='intro')drawIntroBg(ctx);else if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);
   Feel.draw(ctx);
   drawParts(ctx,running?dt:0);
-  if(Core.wipe>0){Core.wipe-=dt;const p=1-Math.max(0,Core.wipe)/(Core.wipeD||0.55);ctx.setTransform(1,0,0,1,0,0);
-    for(let y=0;y<H;y+=16)for(let x=0;x<W;x+=16){const d=(x/W)*0.5+(y/H)*0.2;const t=Math.min(1,Math.max(0,(p-d)/0.3));const sz=Math.round(18*(1-smooth(t)));
-      if(sz>0){rr(ctx,x+8-sz/2,y+8-sz/2,sz,sz,(x/16+y/16)%2?C.lav:C.pink,Math.min(3,sz>>1));}}}
+  Trans.step(dt);
   if(Core.scene==='play'){
     const g=Core.game,txt=g.unit+' '+Math.min(g.total,g.progress()+1)+' / '+g.total+(Core.run.streak>=3?'  ·  Racha '+Core.run.streak:'');
     const prac=g.inPractice();const key=txt+prac;
@@ -26,5 +24,7 @@ function frame(now){
   }
   requestAnimationFrame(frame);
 }
-buildMenu();setScene('menu');requestAnimationFrame(frame);
-window.__cc={Snd,Core,openGame,press,release,showResults,GAMES,CONTAINERS};
+buildMenu();setScene('menu');scenePre();
+// al cargar la página se empieza tapado y los cuadraditos se retiran para descubrir el menú
+Trans.run(null,{covered:true,hold:0.45,outD:1.1,reveal:sceneEnter});requestAnimationFrame(frame);
+window.__cc={Snd,Core,Trans,openGame,press,release,showResults,GAMES,CONTAINERS};
