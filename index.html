@@ -41,7 +41,7 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .logo{display:flex; align-items:baseline; gap:calc(var(--u)*6px)}
 .logo h1{margin:0; font-weight:400; font-size:calc(var(--u)*30px); letter-spacing:calc(var(--u)*1px); color:var(--cream);
   text-shadow: calc(var(--u)*-1px) 0 var(--ink), calc(var(--u)*1px) 0 var(--ink), 0 calc(var(--u)*-1px) var(--ink), 0 calc(var(--u)*1px) var(--ink), calc(var(--u)*2px) calc(var(--u)*2px) 0 var(--pinkD), calc(var(--u)*3px) calc(var(--u)*3px) 0 var(--ink)}
-.logo span{font-size:max(10px,calc(var(--u)*7px)); background:var(--ink); color:var(--butter); padding:calc(var(--u)*1px) calc(var(--u)*4px); border-radius:calc(var(--u)*2px)}
+.logo>span{font-size:max(10px,calc(var(--u)*7px)); background:var(--ink); color:var(--butter); padding:calc(var(--u)*1px) calc(var(--u)*4px); border-radius:calc(var(--u)*2px)}
 .cards{display:grid; grid-template-columns:repeat(5, calc(var(--u)*86px)); gap:calc(var(--u)*6px)}
 .tag.cue{position:absolute; left:50%; bottom:calc(var(--u)*5px); transform:translateX(-50%); background:var(--pinkL,#ffe2ee); font-size:max(11px,calc(var(--u)*7.5px)); white-space:nowrap; max-width:92%; overflow:hidden; text-overflow:ellipsis; box-shadow:0 calc(var(--u)*2px) 0 var(--ink); transition:opacity .5s, transform .5s; animation:cuein .35s cubic-bezier(.2,1.5,.4,1) backwards}
 .tag.cue.dim{opacity:.55; transform:translateX(-50%) scale(.92)}
@@ -51,16 +51,45 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 .card .nm{font-size:max(10px,calc(var(--u)*7px)); line-height:1.15; min-height:2.3em}
 .card .best{font-size:max(9px,calc(var(--u)*5.5px)); color:#6b5c80}
 .card:not(:disabled):hover{transform:translateY(calc(var(--u)*-1px))}
-/* menú con calma: las fichas entran una a una y luego flotan suavemente, cada una a su compás; el logo se mece */
-@keyframes cardin{from{opacity:0; scale:.9}60%{opacity:1}to{opacity:1; scale:1}}
+/* Entradas con calma: nada se anima hasta que los cuadraditos empiezan a destapar (clase .enter);
+   mientras la pantalla está tapada (.pre) el contenido espera escondido.
+   Las letras del título caen una a una y se aplastan al aterrizar, el sello del prototipo se estampa,
+   las fichas suben en ola con un leve giro y un rebote, su foto se revela y el pie llega al final.
+   Después todo flota suavemente, cada cosa a su compás. */
+.ov.pre{visibility:hidden}
+.logo h1 .ch{display:inline-block; transform-origin:50% 100%}
+@keyframes letterin{0%{opacity:0; transform:translateY(calc(var(--u)*-46px)) scale(.7,1.35)}
+  45%{opacity:1; transform:translateY(calc(var(--u)*3px)) scale(1.25,.72)}
+  62%{transform:translateY(calc(var(--u)*-6px)) scale(.92,1.12)}
+  78%{transform:translateY(0) scale(1.06,.94)}
+  90%{transform:translateY(calc(var(--u)*-1px)) scale(.99,1.02)}
+  to{opacity:1; transform:none}}
+@keyframes tagin{0%{opacity:0; transform:scale(2.2) rotate(-24deg)}55%{opacity:1; transform:scale(.88) rotate(6deg)}75%{transform:scale(1.06) rotate(-3deg)}to{opacity:1; transform:none}}
+@keyframes cardin{0%{opacity:0; translate:0 calc(var(--u)*60px); rotate:var(--r0); scale:.78}
+  30%{opacity:1}
+  55%{translate:0 calc(var(--u)*-6px); rotate:calc(var(--r0) * -0.35); scale:1.03}
+  76%{translate:0 calc(var(--u)*2px); rotate:calc(var(--r0) * 0.12); scale:.99}
+  to{opacity:1; translate:0 0; rotate:0deg; scale:1}}
+@keyframes thumbin{from{clip-path:inset(100% 0 0 0); filter:brightness(1.6) saturate(.4)}to{clip-path:inset(0 0 0 0); filter:none}}
+@keyframes txtin{from{opacity:0; translate:calc(var(--u)*-5px) 0}}
+@keyframes stampin{0%{opacity:0; scale:2.6; rotate:-30deg}55%{opacity:1; scale:.85; rotate:8deg}78%{scale:1.08; rotate:-2deg}to{opacity:1; scale:1; rotate:0deg}}
+@keyframes footin{0%{opacity:0; translate:0 calc(var(--u)*14px); scale:.9}60%{opacity:1; translate:0 calc(var(--u)*-2px); scale:1.02}to{opacity:1; translate:0 0; scale:1}}
 @keyframes floaty{0%,100%{translate:0 0}50%{translate:0 calc(var(--u)*-2px)}}
 @keyframes logobob{0%,100%{translate:0 0; rotate:0deg}50%{translate:0 calc(var(--u)*-2px); rotate:-1deg}}
-@keyframes footin{from{opacity:0}}
-.card{animation:cardin 1s cubic-bezier(.2,.8,.2,1) both, floaty 5.5s ease-in-out infinite}
-.card:nth-child(1){animation-delay:.15s,1.2s}.card:nth-child(2){animation-delay:.35s,2.1s}.card:nth-child(3){animation-delay:.55s,1.6s}.card:nth-child(4){animation-delay:.75s,2.6s}.card:nth-child(5){animation-delay:.95s,1.9s}
-.logo{animation:footin 1.2s ease both, logobob 7s ease-in-out 1.2s infinite}
-.menu-foot{animation:footin 1.4s ease 1.2s both}
-@media (prefers-reduced-motion: reduce){.card,.logo,.menu-foot{animation:none}}
+.card{--r0:-7deg; --d:calc(.55s + var(--i,0) * .16s)}
+.card:nth-child(even){--r0:6deg}
+#menu.enter .logo h1 .ch{animation:letterin 1.15s cubic-bezier(.3,.7,.4,1) calc(.1s + var(--i,0) * .07s) both}
+#menu.enter .logo>span{animation:tagin .9s cubic-bezier(.3,.8,.4,1) 1.05s both}
+#menu.enter .logo{animation:logobob 7s ease-in-out 2.4s infinite}
+#menu.enter .card{animation:cardin 1.35s cubic-bezier(.25,.8,.3,1) var(--d) backwards, floaty 5.5s ease-in-out calc(var(--d) + 1.4s + var(--i,0) * .37s) infinite}
+#menu.enter .card canvas{animation:thumbin .9s cubic-bezier(.4,0,.2,1) calc(var(--d) + .45s) backwards}
+#menu.enter .card .nm,#menu.enter .card .best{animation:txtin .7s ease-out calc(var(--d) + .6s) backwards}
+#menu.enter .card .best{animation-delay:calc(var(--d) + .75s)}
+#menu.enter .stamp{animation:stampin .75s cubic-bezier(.3,.8,.4,1) calc(var(--d) + 1s) backwards}
+#menu.enter .soon{animation:txtin .7s ease-out calc(var(--d) + .9s) backwards}
+#menu.enter .menu-foot>*{animation:footin .9s cubic-bezier(.3,.8,.4,1) backwards}
+#menu.enter .menu-foot>:nth-child(1){animation-delay:1.7s}#menu.enter .menu-foot>:nth-child(2){animation-delay:1.82s}#menu.enter .menu-foot>:nth-child(3){animation-delay:1.96s}
+@media (prefers-reduced-motion: reduce){#menu.enter *, #menu.enter .logo{animation:none !important}}
 .card:disabled{cursor:default; background:#e9e4f2}
 .card:disabled canvas{filter:grayscale(.6) brightness(.95)}
 .stamp{position:absolute; top:calc(var(--u)*2px); right:calc(var(--u)*2px); min-width:calc(var(--u)*18px); height:calc(var(--u)*18px); border-radius:50%; display:grid; place-items:center; font-size:max(10px,calc(var(--u)*8px)); background:var(--butter); border:calc(var(--u)*1px) solid var(--ink); transform:rotate(-12deg); padding:0 calc(var(--u)*2px)}
@@ -75,6 +104,14 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 #intro{background:transparent}
 #intro .panel{animation:inpop .5s cubic-bezier(.2,1.2,.4,1) .6s both}
 @keyframes inpop{from{transform:translateY(calc(var(--u)*14px)) scale(.9); opacity:0}to{transform:none; opacity:1}}
+/* ficha de la precarga: entra cuando se destapa la pantalla, sube con un leve giro y se asienta */
+@keyframes panelin{0%{opacity:0; transform:translateY(calc(var(--u)*40px)) rotate(-3deg) scale(.85)}55%{opacity:1; transform:translateY(calc(var(--u)*-4px)) rotate(1deg) scale(1.02)}78%{transform:translateY(calc(var(--u)*1px)) rotate(-.3deg)}to{opacity:1; transform:none}}
+#intro.enter .panel{animation:panelin 1.1s cubic-bezier(.25,.8,.3,1) .25s both}
+#intro.enter .panel>*{animation:txtin .6s ease-out backwards}
+#intro.enter .panel>:nth-child(1){animation-delay:.7s}#intro.enter .panel>:nth-child(2){animation-delay:.8s}#intro.enter .panel>:nth-child(3){animation-delay:.95s}#intro.enter .panel>:nth-child(4){animation-delay:1.05s}#intro.enter .panel>:nth-child(5){animation:txtin .6s ease-out 1.2s backwards, blink 1.2s steps(2) 1.8s infinite}
+/* lienzo de la transición: encima de todo; en modo low, solo encima de la escena */
+#wipe{position:absolute; inset:0; width:100%; height:100%; image-rendering:pixelated; image-rendering:crisp-edges; display:block; z-index:60; pointer-events:auto}
+#wipe.low{z-index:auto; pointer-events:none}
 .panel{background:var(--cream); border:calc(var(--u)*1px) solid var(--ink); border-radius:calc(var(--u)*5px); box-shadow:0 calc(var(--u)*3px) 0 var(--ink); padding:calc(var(--u)*8px) calc(var(--u)*14px); display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*5px); text-align:center; max-width:calc(var(--u)*300px)}
 .panel h2{margin:0; font-weight:400; font-size:calc(var(--u)*14px)}
 .hint{font-size:max(11px,calc(var(--u)*7.5px)); text-wrap:balance}
@@ -162,11 +199,12 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
 @media (max-width:520px){ .card .nm,.card .best,.menu-foot span,.toggle,.soon{font-size:calc(var(--u)*6px)} .card .nm{min-height:0} }
 @media (max-height:520px){ .demo-box{width:calc(var(--u)*208px); height:calc(var(--u)*117px)} .panel{padding:calc(var(--u)*5px) calc(var(--u)*12px); gap:calc(var(--u)*3px)} }
 .panel.res,.burst{}
-@media (prefers-reduced-motion: reduce){ .burst{display:none} #intro .panel{animation:none} .panel.res,.pop,.go,#hand,.rank,.tally li,.pop.P::after{animation-duration:0s !important; animation-iteration-count:1 !important} }
+@media (prefers-reduced-motion: reduce){ .burst{display:none} #intro .panel,#intro.enter .panel,#intro.enter .panel>*{animation:none} .panel.res,.pop,.go,#hand,.rank,.tally li,.pop.P::after{animation-duration:0s !important; animation-iteration-count:1 !important} }
 </style>
 
 <div id="stage">
   <canvas id="c" width="320" height="180" aria-label="Escena del minijuego"></canvas>
+  <canvas id="wipe" width="320" height="180" aria-hidden="true" hidden></canvas>
 
   <div id="menu" class="ov">
     <div class="logo"><h1>Clic Clac</h1><span>prototipo 1.4</span></div>
@@ -568,7 +606,13 @@ const Core={scene:'menu',game:null,run:null,paused:false,parts:[],shake:0,time:0
   bannerT:0,
   // con demo: en vez de un cartel que se va solo, se abre una ficha con el vídeo de la fase nueva y esperas a pulsar
   banner(tag,title,sub,dur,demo,quiet){if(DEMO)return false;// cambio de fase: sin ficha (el tutorial va en la precarga); los cuadraditos tapan el cambio de escena y queda solo el título
-    if(demo&&this.scene==='play'){if(!reduce){this.wipe=this.wipeD=1.0;}sub='';quiet=true;dur=1.7;}dur=dur||1.9;this.bannerT=dur;const el=$('phase');el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.querySelector('small').hidden=!sub;el.className='';el.hidden=false;void el.offsetWidth;if(!quiet)Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();return false;},
+    const el=$('phase');
+    const show=()=>{el.querySelector('span').textContent=tag;el.querySelector('b').textContent=title;el.querySelector('small').textContent=sub||'';el.querySelector('small').hidden=!sub;el.className='';el.hidden=false;void el.offsetWidth;if(!quiet)Feel.irisOpen(W/2,H/2,0.9);Snd.cap&&Snd.cap();};
+    if(demo&&this.scene==='play'){sub='';quiet=true;dur=1.7;
+      // cambio de fase: la última imagen de la fase anterior se queda quieta mientras los cuadraditos la tapan;
+      // el cartel aparece cuando empiezan a destaparse y ya se ve la fase nueva
+      if(!reduce){const o={inD:0.5,hold:0.14,outD:0.75,low:true,snap:true};this.bannerT=dur+o.inD+o.hold;el.hidden=true;Trans.run(show,o);return false;}}
+    dur=dur||1.9;this.bannerT=dur;show();return false;},
   card:false,cardWait:0,cardInfo:null,
   // aviso suave que no puntúa (p. ej. cuando las pistas rosas se desvanecen)
   note(x,y,txt){if(DEMO)return;const el=document.createElement('div');el.className='pop N';const px_=Math.max(40,Math.min(W-40,x)),py_=Math.max(30,y);
@@ -2663,12 +2707,67 @@ function fit(){
 }
 addEventListener('resize',fit);fit();
 
+/* ---------- transición de cuadraditos ----------
+   Tres tiempos: entrada (los cuadraditos crecen en diagonal hasta tapar todo), un respiro con la pantalla
+   cubierta en el que se cambia la escena por debajo, y salida (se encogen en el mismo orden y destapan).
+   Va en su propio lienzo, encima de todo el HTML, para que nunca se vea el cambio. En modo "low" queda
+   justo encima del lienzo del juego y por debajo del HUD (cambios de fase en mitad de la partida). */
+const wcv=$('wipe'),wctx=wcv.getContext('2d');wctx.imageSmoothingEnabled=false;
+const inBack=t=>{t=Math.max(0,Math.min(1,t));const k=1.4;return (k+1)*t*t*t-k*t*t;};
+const Trans={on:false,ph:'',t:0,o:null,swap:null,snap:null,
+  run(swap,o){
+    o=Object.assign({inD:0.8,hold:0.25,outD:1.0,low:false,snap:false,covered:false,reveal:null},o||{});
+    if(reduce){swap&&swap();o.reveal&&o.reveal();return;}
+    if(this.on&&this.swap){const f=this.swap;this.swap=null;f();} // nunca se pierde un cambio pendiente
+    if(o.snap){if(!this.snap)this.snap=mk(W,H);const s=this.snap.getContext('2d');s.clearRect(0,0,W,H);s.drawImage(cv,0,0);}
+    this.o=o;this.swap=swap;this.on=true;this.ph=o.covered?'hold':'in';this.t=0;
+    wcv.classList.toggle('low',!!o.low);wcv.hidden=false;this.draw();
+  },
+  step(dt){
+    if(!this.on)return;const o=this.o;this.t+=dt;
+    if(this.ph==='in'&&this.t>=o.inD){this.ph='hold';this.t=0;}
+    if(this.ph==='hold'&&this.t>=o.hold){if(this.swap){const f=this.swap;this.swap=null;f();}this.ph='out';this.t=0;o.reveal&&o.reveal();}
+    if(this.ph==='out'&&this.t>=o.outD){this.on=false;this.ph='';wcv.hidden=true;wctx.clearRect(0,0,W,H);return;}
+    this.draw();
+  },
+  draw(){
+    const c=wctx,o=this.o,ph=this.ph;c.clearRect(0,0,W,H);
+    if(ph==='in'&&o.snap&&this.snap)c.drawImage(this.snap,0,0);
+    const p=ph==='in'?this.t/o.inD:ph==='out'?this.t/o.outD:1,w=0.42,T=Core.time;
+    for(let y=0;y<H;y+=16)for(let x=0;x<W;x+=16){
+      const i=x/16,j=y/16,n=((i*37+j*91+i*j*13)%17)/17;
+      // orden diagonal con un poco de azar para que la ola no sea una regla
+      const d=(x/W)*0.6+(y/H)*0.3+n*0.1,lt=Math.min(1,Math.max(0,(p-d*(1-w))/w));
+      let sz;
+      if(ph==='in')sz=18*backOut(lt);            // crece con un rebote suave
+      else if(ph==='out')sz=18*(1-inBack(lt));   // se hincha un pelín y se encoge
+      else sz=18+Math.sin(T*6+i*0.7+j*0.9)*0.8;   // cubierto: respira
+      sz=Math.round(sz);if(sz<=0)continue;
+      const col=(i+j)%2?C.lav:C.pink;
+      rr(c,x+8-sz/2,y+8-sz/2,sz,sz,col,sz>=17?1:Math.min(3,sz>>1));
+      if(sz>=10&&sz<=19){px(c,x+8-(sz>>1)+2,y+8-(sz>>1)+2,(i+j)%2?C.lavL:C.pinkL);}
+    }
+  }
+};
+// cada pantalla entra con su animación justo cuando empiezan a irse los cuadraditos, no antes
+function sceneEnter(){
+  const id=Core.scene==='menu'?'menu':Core.scene==='intro'?'intro':null;
+  for(const k of ['menu','intro']){const el=$(k);if(k!==id)el.classList.remove('enter','pre');}
+  if(!id)return;const el=$(id);el.classList.remove('pre','enter');void el.offsetWidth;el.classList.add('enter');
+  if(id==='menu')MenuFx.enter=0;
+}
+function scenePre(){for(const k of ['menu','intro']){const el=$(k);el.classList.remove('enter');el.classList.add('pre');}if(Core.scene==='menu'){MenuFx.enter=-1;MenuFx.a=null;MenuFx.wait=1.6;}}
+
 /* ---------- menú ---------- */
+// el título se parte en letras para que caigan una a una
+(function(){const h=document.querySelector('.logo h1');const txt=h.textContent;h.setAttribute('aria-label',txt);h.textContent='';
+  [...txt].forEach((ch,i)=>{const s=document.createElement('span');s.className='ch';s.setAttribute('aria-hidden','true');s.style.setProperty('--i',i);s.textContent=ch===' '?'\u00a0':ch;h.appendChild(s);});})();
 function bestOf(id){return Save.data.games[id]||null;}
 function buildMenu(){
   const wrap=$('cards');wrap.innerHTML='';
+  let n=0;
   for(const id of Object.keys(GAMES)){
-    const g=GAMES[id],b=document.createElement('button');b.className='card';b.dataset.id=id;
+    const g=GAMES[id],b=document.createElement('button');b.className='card';b.dataset.id=id;b.style.setProperty('--i',n++);
     const th=mk(W*2,H*2);const full=mk(W,H);const inst=g.make(mulberry32(5),true);inst.draw(full.getContext('2d'));
     th.getContext('2d').drawImage(full,0,0,W,H,0,0,W*2,H*2); // escena entera (se reduce suave en la tarjeta)
     const bs=bestOf(id);
@@ -2678,7 +2777,7 @@ function buildMenu(){
     b.addEventListener('click',()=>openGame(id));wrap.appendChild(b);
   }
   for(const s of SOON){
-    const b=document.createElement('button');b.className='card';b.disabled=true;
+    const b=document.createElement('button');b.className='card';b.disabled=true;b.style.setProperty('--i',n++);
     const th=mk(128,72);const t=th.getContext('2d');const full=mk(W,H);const f=full.getContext('2d');R(f,0,0,64,36,C.lavL);for(let y=0;y<36;y+=6)for(let x=((y/6)%2)*6;x<64;x+=12)rr(f,x,y,6,6,C.lav,1);dith(f,22,28,20,2,C.lavD);obj(f,l=>s.icon(l,32,18));t.drawImage(full,0,0,64,36,0,0,128,72);
     b.appendChild(th);b.insertAdjacentHTML('beforeend','<span class="nm">'+s.name+'</span><span class="best">En preparación</span><span class="soon">Próximamente</span>');
     wrap.appendChild(b);
@@ -2694,25 +2793,29 @@ syncToggles();
 
 /* ---------- flujo ---------- */
 function show(id,on){$(id).hidden=!on;}
-function wipe(d){if(!reduce)Core.wipe=Core.wipeD=d||0.55;}
 function setScene(s){
   if(s!=='play'){Core.card=false;Core.cardWait=0;}
   Core.scene=s;stage.classList.toggle('menubg',s==='menu');show('menu',s==='menu');show('intro',s==='intro');show('hud',s==='play');show('results',s==='results');show('pause',false);Core.paused=false;
 }
 function openGame(id){
-  Snd.init();Snd.ui();Snd.waterStop();
+  if(Trans.on&&!Trans.o.low)return;Snd.init();Snd.ui();
+  Trans.run(()=>loadGame(id),{reveal:sceneEnter});
+}
+function loadGame(id){
+  Snd.waterStop();
   const seed=(Math.random()*1e9)>>>0;Core.gameId=id;Core.parts=[];TDEMO=null;
   Core.run={id,seed,counts:{P:0,B:0,R:0,F:0},n:0,pts:0,streak:0,best:0};
   Core.game=GAMES[id].make(mulberry32(seed));Snd.setMood(Core.game.mood);
   $('inName').textContent=GAMES[id].name;demoStart(id);$('inGest').innerHTML=GAMES[id].chips||(GAMES[id].gesture==='mix'?'<b style="background:var(--pink)">Toca</b> <b>Toca a ritmo</b> <b style="background:var(--mint)">Mantén y suelta</b>':GAMES[id].gesture==='hold'?'<b>Mantén pulsado</b> y <b>suelta</b>':'<b>Toca una vez</b> en el momento justo');$('inHint').textContent=GAMES[id].hint;document.querySelector('#intro .go').textContent='Pulsa para empezar';$('hName').textContent=GAMES[id].name;
-  lastHud='';setScene('intro');wipe(1.3);
+  lastHud='';setScene('intro');scenePre();
 }
 function openCard(){const I=Core.cardInfo;Core.card=true;release();
   $('inName').textContent=I.tag+' · '+I.title;$('inHint').textContent=I.sub;document.querySelector('#intro .go').textContent='Pulsa para continuar';
   demoStart(Core.gameId,'bien',I.demo);show('intro',true);}
 function closeCard(){Core.card=false;Demo=null;show('intro',false);Core.ready=1.2;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';Snd.ui();}
 function startPlay(){Demo=null;Core.card=false;Core.cardWait=0;Feel.reset();$('phase').hidden=true;Core.bannerT=0;setScene('play');Core.ready=1.5;$('ready').hidden=false;$('ready').textContent='¿Listo?';$('ready').className='r1';}
-function toMenu(){Feel.reset();$('ready').hidden=true;$('phase').hidden=true;Core.bannerT=0;Core.ready=0;Snd.waterStop();Snd.sizzle(false);$('hCue').hidden=true;lastCue='';Snd.setMood('menu');Core.game=null;buildMenu();setScene('menu');wipe();const f=document.querySelector('.card:not(:disabled)');f&&f.focus({preventScroll:true});}
+function toMenu(){if(Trans.on&&!Trans.o.low)return;Trans.run(loadMenu,{reveal:sceneEnter});}
+function loadMenu(){Feel.reset();$('ready').hidden=true;$('phase').hidden=true;Core.bannerT=0;Core.ready=0;Snd.waterStop();Snd.sizzle(false);$('hCue').hidden=true;lastCue='';Snd.setMood('menu');Core.game=null;buildMenu();setScene('menu');scenePre();const f=document.querySelector('.card:not(:disabled)');f&&f.focus({preventScroll:true});}
 // misma escala en todos los juegos, por porcentaje: S+ todo perfecto, S ≥ 90 %, A ≥ 80 %, B ≥ 65 %, C ≥ 50 %
 function rankOf(r){if(r.n===0)return 'D';if(r.counts.P===r.n)return 'S+';const p=r.pts/(100*r.n)*100;return p>=90?'S':p>=80?'A':p>=65?'B':p>=50?'C':'D';}
 function showResults(){
@@ -2746,13 +2849,14 @@ $('pauseBtn').addEventListener('click',e=>{e.stopPropagation();pause(true);});
 
 /* ---------- un solo botón ---------- */
 function release(){if(Core.scene==='play'&&!Core.paused&&Core.game.release)Core.game.release();}
-function press(){Snd.init();if(Core.scene==='intro'){startPlay();return;}if(Core.card){closeCard();return;}if(Core.cardWait>0)return;if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
+function press(){Snd.init();if(Trans.on&&!Trans.o.low)return;if(Core.scene==='intro'){startPlay();return;}if(Core.card){closeCard();return;}if(Core.cardWait>0)return;if(Core.scene==='play'&&!Core.paused&&!(Core.ready>0)&&!(Core.bannerT>0))Core.game.press();}
 stage.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();press();});
 addEventListener('pointerup',release);addEventListener('pointercancel',release);
 addEventListener('keyup',e=>{if(e.key==='Escape'||e.key==='Tab')return;release();});
 addEventListener('blur',release);
 addEventListener('keydown',e=>{
   if(e.repeat)return;
+  if(Trans.on&&!Trans.o.low){if(e.key!=='Tab')e.preventDefault();return;}
   if(e.key==='Escape'){if(Core.scene==='play')pause(!Core.paused);else if(Core.scene==='intro')toMenu();return;}
   if(e.key==='Tab'||e.metaKey||e.ctrlKey||e.altKey)return;
   if(Core.scene==='intro'||(Core.scene==='play'&&!Core.paused)){e.preventDefault();press();}
@@ -2780,24 +2884,31 @@ function iconPan(l,x,y){rr(l,x-12,y-3,20,7,'#a194c8',3);rr(l,x+7,y-2,10,3,C.wood
 function iconCamera(l,x,y){rr(l,x-11,y-6,22,15,C.mint,3);rr(l,x-6,y-9,8,4,C.mintD,1);ell(l,x,y+1,5,5,C.metal);ell(l,x,y+1,3,3,C.lavDD);rr(l,x+6,y-4,3,2,C.butter,0);}
 /* Menú: el fondo es un patrón CSS que se desliza muy suave (subpíxel); en el lienzo solo aparece,
    de vez en cuando y al azar, un objeto de los niveles que hace algo y se va. */
-const MenuFx={a:null,wait:1.2,last:'',bg:null,T:0,clouds:null,pet:null};
-// fondo del menú: cielo pastel en bandas, sol suave, colinas y una repisa de madera donde salen los objetos
-function menuBg(){const cv=mk(W,H),c=cv.getContext('2d');
+const MenuFx={a:null,wait:2.6,last:'',bg:null,T:0,clouds:null,pet:null,enter:-1};
+// fondo del menú por capas (cielo, colinas lejanas, colinas cercanas con arbolitos, repisa) para que al entrar
+// cada una suba a su ritmo; el sol se dibuja aparte y sale despacio
+function menuBg(){
+  const sky=mk(W,H),c=sky.getContext('2d');
   const band=['#f0ebff','#f3eaff','#f7e9fb','#fbe8f4','#ffe7ee','#ffe8e6','#ffeadf','#ffecda'];
   for(let i=0;i<band.length;i++){const y0=Math.round(i*150/band.length),y1=Math.round((i+1)*150/band.length);R(c,0,y0,W,y1-y0,band[i]);
     if(i>0)for(let x=(i%2)*2;x<W;x+=4)px(c,x,y0,band[i-1]);}
-  // sol grande y difuso
-  for(const [r,a] of [[30,0.18],[22,0.3],[15,0.9]]){c.save();c.globalAlpha=a;ell(c,262,46,r,r,'#fff3c4');c.restore();}
-  ell(c,262,46,12,12,'#fff7d8');
-  // colinas lejanas y cercanas
-  c.fillStyle='#e3dafb';for(let x=0;x<W;x++){const h=Math.round(16+7*Math.sin(x*0.021+1)+4*Math.sin(x*0.057));c.fillRect(x,158-h,1,h+2);}
-  c.fillStyle=C.mintD;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,163-h,1,h+2);}
-  c.fillStyle=C.mint;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,164-h,1,2);}
-  // arbolitos redondos en la colina
-  for(const x of [22,58,104,214,248,296]){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11)),gy=163-h;R(c,x,gy-4,1,4,C.woodD);ell(c,x,gy-7,4,4,C.greenD);ell(c,x-1,gy-8,2,2,C.green);}
-  // repisa de madera
-  R(c,0,164,W,16,C.wood);R(c,0,164,W,1,C.woodL);R(c,0,165,W,1,'#fff3e2');R(c,0,170,W,1,C.woodD);for(let x=7;x<W;x+=29)R(c,x,171,1,9,C.woodD);dith(c,0,176,W,4,C.woodDD);
-  return cv;}
+  R(c,0,150,W,H-150,band[band.length-1]);
+  const far=mk(W,H),f=far.getContext('2d');
+  f.fillStyle='#e3dafb';for(let x=0;x<W;x++){const h=Math.round(16+7*Math.sin(x*0.021+1)+4*Math.sin(x*0.057));f.fillRect(x,158-h,1,h+30);}
+  const near=mk(W,H),n=near.getContext('2d');
+  n.fillStyle=C.mintD;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));n.fillRect(x,163-h,1,h+30);}
+  n.fillStyle=C.mint;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));n.fillRect(x,164-h,1,2);}
+  const trees=[];
+  for(const x of [22,58,104,214,248,296]){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));trees.push({x,gy:163-h});}
+  const shelf=mk(W,H),s=shelf.getContext('2d');
+  R(s,0,164,W,16,C.wood);R(s,0,164,W,1,C.woodL);R(s,0,165,W,1,'#fff3e2');R(s,0,170,W,1,C.woodD);for(let x=7;x<W;x+=29)R(s,x,171,1,9,C.woodD);dith(s,0,176,W,4,C.woodDD);
+  return {sky,far,near,trees,shelf};}
+// un arbolito que brota: el tronco sube y la copa se hincha con un pequeño rebote
+function drawTree(c,x,gy,k){if(k<=0)return;const tk=Math.min(1,k/0.4),ck=backOut(Math.max(0,(k-0.25)/0.75));
+  const th=Math.round(4*tk);R(c,x,gy-th,1,th,C.woodD);if(ck>0){const r=Math.max(1,Math.round(4*ck));ell(c,x,gy-3-r,r,r,C.greenD);if(ck>0.6)ell(c,x-1,gy-4-r,2,2,C.green);}}
+// paso de la entrada (0..1) para algo que empieza en a y dura d segundos
+function ent(a,d){const e=MenuFx.enter;if(e<0)return 0;return Math.min(1,Math.max(0,(e-a)/d));}
+function sun(c,y){for(const [r,a] of [[30,0.18],[22,0.3],[15,0.9]]){c.save();c.globalAlpha=a;ell(c,262,y,r,r,'#fff3c4');c.restore();}ell(c,262,y,12,12,'#fff7d8');}
 function drawCloud(c,x,y,s,col){ell(c,x,y,9*s,4*s,col);ell(c,x+7*s,y-2*s,7*s,5*s,col);ell(c,x-7*s,y+1*s,6*s,3*s,col);R(c,x-12*s,y+2*s,26*s,2,col);}
 function menuSpawn(){
   const kinds=['tostada','coche','botella','grapadora','tortilla','foto'].filter(k=>k!==MenuFx.last);
@@ -2809,17 +2920,27 @@ function menuSpawn(){
   MenuFx.a=a;
 }
 function drawMenuFx(c,dt){
-  const M=MenuFx;if(!M.bg)M.bg=menuBg();c.drawImage(M.bg,0,0);
-  if(reduce)return;
-  M.T+=dt;const T=M.T;
-  // nubes que se mueven muy despacio (dos capas)
+  const M=MenuFx;if(!M.bg)M.bg=menuBg();const B=M.bg;
+  if(reduce){c.drawImage(B.sky,0,0);sun(c,46);c.drawImage(B.far,0,0);c.drawImage(B.near,0,0);for(const t of B.trees)drawTree(c,t.x,t.gy,1);c.drawImage(B.shelf,0,0);return;}
+  M.T+=dt;const T=M.T;if(M.enter>=0)M.enter+=dt;
+  // entrada con calma: el sol sale, las colinas suben una detrás de otra, los árboles brotan y la repisa se asienta
+  c.drawImage(B.sky,0,0);
+  sun(c,Math.round(46+(1-ease(ent(0.1,1.8)))*70));
+  c.drawImage(B.far,0,Math.round((1-ease(ent(0.15,1.3)))*34));
+  const ny=Math.round((1-ease(ent(0.35,1.2)))*30);c.drawImage(B.near,0,ny);
+  B.trees.forEach((t,i)=>drawTree(c,t.x,t.gy+ny,ent(0.9+((i*3)%6)*0.12,0.7)));
+  const sk=ent(0.25,1.0);c.drawImage(B.shelf,0,Math.round((1-backOut(sk))*20));
+  // nubes que se mueven muy despacio (dos capas); al entrar llegan desde los lados
   if(!M.clouds)M.clouds=[[20,22,1,3],[140,14,0.8,3],[230,30,1.1,3],[80,64,0.7,6],[200,74,0.9,6],[300,58,0.6,6]];
-  for(const [x0,y,s,v] of M.clouds){const x=((x0+T*v)%(W+60))-30;drawCloud(c,Math.round(x),y+Math.round(Math.sin(T*0.4+x0)*1),s,v>4?'#fffaff':'#fbf6ff');}
-  // pétalos que caen meciéndose y destellos que parpadean
+  M.clouds.forEach(([x0,y,s,v],i)=>{let x=((x0+T*v)%(W+60))-30;const k=ease(ent(0.2+i*0.12,1.6));x+=(1-k)*(x<W/2?-90:90);
+    drawCloud(c,Math.round(x),y+Math.round(Math.sin(T*0.4+x0)*1),s,v>4?'#fffaff':'#fbf6ff');});
+  // pétalos que caen meciéndose y destellos que parpadean (aparecen poco a poco)
   if(!M.pet){M.pet=[];for(let i=0;i<16;i++)M.pet.push({x:Math.random()*W,y:Math.random()*H,v:5+Math.random()*7,ph:Math.random()*6,sw:4+Math.random()*6,c:i%3});}
-  for(const p of M.pet){p.y+=p.v*dt;if(p.y>166){p.y=-4;p.x=Math.random()*W;}const x=Math.round(p.x+Math.sin(T*0.8+p.ph)*p.sw),y=Math.round(p.y),fl=Math.sin(T*2+p.ph)>0;
-    const col=p.c===0?C.pink:p.c===1?C.pinkD:'#ffd6e6';if(fl){R(c,x,y,3,2,col);px(c,x,y,C.pinkL);px(c,x+3,y+1,col);}else{R(c,x,y,2,3,col);px(c,x+1,y,C.pinkL);px(c,x+2,y+1,col);}}
-  for(let i=0;i<7;i++){const k=(T*0.35+i*0.37)%1;if(k<0.25){const x=(i*47+13)%W,y=12+(i*29)%60,a=Math.sin(k/0.25*Math.PI);c.save();c.globalAlpha=a;R(c,x-1,y,3,1,C.white);R(c,x,y-1,1,3,C.white);c.restore();}}
+  const pn=Math.round(16*ent(1.0,1.6));
+  M.pet.forEach((p,i)=>{p.y+=p.v*dt;if(p.y>166){p.y=-4;p.x=Math.random()*W;}if(i>=pn)return;const x=Math.round(p.x+Math.sin(T*0.8+p.ph)*p.sw),y=Math.round(p.y),fl=Math.sin(T*2+p.ph)>0;
+    const col=p.c===0?C.pink:p.c===1?C.pinkD:'#ffd6e6';if(fl){R(c,x,y,3,2,col);px(c,x,y,C.pinkL);px(c,x+3,y+1,col);}else{R(c,x,y,2,3,col);px(c,x+1,y,C.pinkL);px(c,x+2,y+1,col);}});
+  if(ent(1.4,0.1)>=1)for(let i=0;i<7;i++){const k=(T*0.35+i*0.37)%1;if(k<0.25){const x=(i*47+13)%W,y=12+(i*29)%60,a=Math.sin(k/0.25*Math.PI);c.save();c.globalAlpha=a;R(c,x-1,y,3,1,C.white);R(c,x,y-1,1,3,C.white);c.restore();}}
+  if(M.enter<2.4)return; // los objetos de los niveles esperan a que el menú haya terminado de entrar
   if(!M.a){M.wait-=dt;if(M.wait<=0)menuSpawn();return;}
   const a=M.a;a.t+=dt*0.75;const t=a.t,u=t/a.dur;
   if(t>=a.dur){M.a=null;M.wait=2.2+Math.random()*2.4;return;}
@@ -2916,9 +3037,7 @@ function frame(now){
   if(Core.scene==='intro')drawIntroBg(ctx);else if(Core.game&&Core.scene!=='menu')Core.game.draw(ctx);else drawMenuFx(ctx,dt);
   Feel.draw(ctx);
   drawParts(ctx,running?dt:0);
-  if(Core.wipe>0){Core.wipe-=dt;const p=1-Math.max(0,Core.wipe)/(Core.wipeD||0.55);ctx.setTransform(1,0,0,1,0,0);
-    for(let y=0;y<H;y+=16)for(let x=0;x<W;x+=16){const d=(x/W)*0.5+(y/H)*0.2;const t=Math.min(1,Math.max(0,(p-d)/0.3));const sz=Math.round(18*(1-smooth(t)));
-      if(sz>0){rr(ctx,x+8-sz/2,y+8-sz/2,sz,sz,(x/16+y/16)%2?C.lav:C.pink,Math.min(3,sz>>1));}}}
+  Trans.step(dt);
   if(Core.scene==='play'){
     const g=Core.game,txt=g.unit+' '+Math.min(g.total,g.progress()+1)+' / '+g.total+(Core.run.streak>=3?'  ·  Racha '+Core.run.streak:'');
     const prac=g.inPractice();const key=txt+prac;
@@ -2928,7 +3047,9 @@ function frame(now){
   }
   requestAnimationFrame(frame);
 }
-buildMenu();setScene('menu');requestAnimationFrame(frame);
-window.__cc={Snd,Core,openGame,press,release,showResults,GAMES,CONTAINERS};
+buildMenu();setScene('menu');scenePre();
+// al cargar la página se empieza tapado y los cuadraditos se retiran para descubrir el menú
+Trans.run(null,{covered:true,hold:0.45,outD:1.1,reveal:sceneEnter});requestAnimationFrame(frame);
+window.__cc={Snd,Core,Trans,openGame,press,release,showResults,GAMES,CONTAINERS};
 })();
 </script>

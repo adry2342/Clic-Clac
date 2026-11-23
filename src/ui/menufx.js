@@ -5,24 +5,31 @@ function iconPan(l,x,y){rr(l,x-12,y-3,20,7,'#a194c8',3);rr(l,x+7,y-2,10,3,C.wood
 function iconCamera(l,x,y){rr(l,x-11,y-6,22,15,C.mint,3);rr(l,x-6,y-9,8,4,C.mintD,1);ell(l,x,y+1,5,5,C.metal);ell(l,x,y+1,3,3,C.lavDD);rr(l,x+6,y-4,3,2,C.butter,0);}
 /* Menú: el fondo es un patrón CSS que se desliza muy suave (subpíxel); en el lienzo solo aparece,
    de vez en cuando y al azar, un objeto de los niveles que hace algo y se va. */
-const MenuFx={a:null,wait:1.2,last:'',bg:null,T:0,clouds:null,pet:null};
-// fondo del menú: cielo pastel en bandas, sol suave, colinas y una repisa de madera donde salen los objetos
-function menuBg(){const cv=mk(W,H),c=cv.getContext('2d');
+const MenuFx={a:null,wait:2.6,last:'',bg:null,T:0,clouds:null,pet:null,enter:-1};
+// fondo del menú por capas (cielo, colinas lejanas, colinas cercanas con arbolitos, repisa) para que al entrar
+// cada una suba a su ritmo; el sol se dibuja aparte y sale despacio
+function menuBg(){
+  const sky=mk(W,H),c=sky.getContext('2d');
   const band=['#f0ebff','#f3eaff','#f7e9fb','#fbe8f4','#ffe7ee','#ffe8e6','#ffeadf','#ffecda'];
   for(let i=0;i<band.length;i++){const y0=Math.round(i*150/band.length),y1=Math.round((i+1)*150/band.length);R(c,0,y0,W,y1-y0,band[i]);
     if(i>0)for(let x=(i%2)*2;x<W;x+=4)px(c,x,y0,band[i-1]);}
-  // sol grande y difuso
-  for(const [r,a] of [[30,0.18],[22,0.3],[15,0.9]]){c.save();c.globalAlpha=a;ell(c,262,46,r,r,'#fff3c4');c.restore();}
-  ell(c,262,46,12,12,'#fff7d8');
-  // colinas lejanas y cercanas
-  c.fillStyle='#e3dafb';for(let x=0;x<W;x++){const h=Math.round(16+7*Math.sin(x*0.021+1)+4*Math.sin(x*0.057));c.fillRect(x,158-h,1,h+2);}
-  c.fillStyle=C.mintD;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,163-h,1,h+2);}
-  c.fillStyle=C.mint;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));c.fillRect(x,164-h,1,2);}
-  // arbolitos redondos en la colina
-  for(const x of [22,58,104,214,248,296]){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11)),gy=163-h;R(c,x,gy-4,1,4,C.woodD);ell(c,x,gy-7,4,4,C.greenD);ell(c,x-1,gy-8,2,2,C.green);}
-  // repisa de madera
-  R(c,0,164,W,16,C.wood);R(c,0,164,W,1,C.woodL);R(c,0,165,W,1,'#fff3e2');R(c,0,170,W,1,C.woodD);for(let x=7;x<W;x+=29)R(c,x,171,1,9,C.woodD);dith(c,0,176,W,4,C.woodDD);
-  return cv;}
+  R(c,0,150,W,H-150,band[band.length-1]);
+  const far=mk(W,H),f=far.getContext('2d');
+  f.fillStyle='#e3dafb';for(let x=0;x<W;x++){const h=Math.round(16+7*Math.sin(x*0.021+1)+4*Math.sin(x*0.057));f.fillRect(x,158-h,1,h+30);}
+  const near=mk(W,H),n=near.getContext('2d');
+  n.fillStyle=C.mintD;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));n.fillRect(x,163-h,1,h+30);}
+  n.fillStyle=C.mint;for(let x=0;x<W;x++){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));n.fillRect(x,164-h,1,2);}
+  const trees=[];
+  for(const x of [22,58,104,214,248,296]){const h=Math.round(9+5*Math.sin(x*0.033+2.4)+2*Math.sin(x*0.11));trees.push({x,gy:163-h});}
+  const shelf=mk(W,H),s=shelf.getContext('2d');
+  R(s,0,164,W,16,C.wood);R(s,0,164,W,1,C.woodL);R(s,0,165,W,1,'#fff3e2');R(s,0,170,W,1,C.woodD);for(let x=7;x<W;x+=29)R(s,x,171,1,9,C.woodD);dith(s,0,176,W,4,C.woodDD);
+  return {sky,far,near,trees,shelf};}
+// un arbolito que brota: el tronco sube y la copa se hincha con un pequeño rebote
+function drawTree(c,x,gy,k){if(k<=0)return;const tk=Math.min(1,k/0.4),ck=backOut(Math.max(0,(k-0.25)/0.75));
+  const th=Math.round(4*tk);R(c,x,gy-th,1,th,C.woodD);if(ck>0){const r=Math.max(1,Math.round(4*ck));ell(c,x,gy-3-r,r,r,C.greenD);if(ck>0.6)ell(c,x-1,gy-4-r,2,2,C.green);}}
+// paso de la entrada (0..1) para algo que empieza en a y dura d segundos
+function ent(a,d){const e=MenuFx.enter;if(e<0)return 0;return Math.min(1,Math.max(0,(e-a)/d));}
+function sun(c,y){for(const [r,a] of [[30,0.18],[22,0.3],[15,0.9]]){c.save();c.globalAlpha=a;ell(c,262,y,r,r,'#fff3c4');c.restore();}ell(c,262,y,12,12,'#fff7d8');}
 function drawCloud(c,x,y,s,col){ell(c,x,y,9*s,4*s,col);ell(c,x+7*s,y-2*s,7*s,5*s,col);ell(c,x-7*s,y+1*s,6*s,3*s,col);R(c,x-12*s,y+2*s,26*s,2,col);}
 function menuSpawn(){
   const kinds=['tostada','coche','botella','grapadora','tortilla','foto'].filter(k=>k!==MenuFx.last);
@@ -34,17 +41,27 @@ function menuSpawn(){
   MenuFx.a=a;
 }
 function drawMenuFx(c,dt){
-  const M=MenuFx;if(!M.bg)M.bg=menuBg();c.drawImage(M.bg,0,0);
-  if(reduce)return;
-  M.T+=dt;const T=M.T;
-  // nubes que se mueven muy despacio (dos capas)
+  const M=MenuFx;if(!M.bg)M.bg=menuBg();const B=M.bg;
+  if(reduce){c.drawImage(B.sky,0,0);sun(c,46);c.drawImage(B.far,0,0);c.drawImage(B.near,0,0);for(const t of B.trees)drawTree(c,t.x,t.gy,1);c.drawImage(B.shelf,0,0);return;}
+  M.T+=dt;const T=M.T;if(M.enter>=0)M.enter+=dt;
+  // entrada con calma: el sol sale, las colinas suben una detrás de otra, los árboles brotan y la repisa se asienta
+  c.drawImage(B.sky,0,0);
+  sun(c,Math.round(46+(1-ease(ent(0.1,1.8)))*70));
+  c.drawImage(B.far,0,Math.round((1-ease(ent(0.15,1.3)))*34));
+  const ny=Math.round((1-ease(ent(0.35,1.2)))*30);c.drawImage(B.near,0,ny);
+  B.trees.forEach((t,i)=>drawTree(c,t.x,t.gy+ny,ent(0.9+((i*3)%6)*0.12,0.7)));
+  const sk=ent(0.25,1.0);c.drawImage(B.shelf,0,Math.round((1-backOut(sk))*20));
+  // nubes que se mueven muy despacio (dos capas); al entrar llegan desde los lados
   if(!M.clouds)M.clouds=[[20,22,1,3],[140,14,0.8,3],[230,30,1.1,3],[80,64,0.7,6],[200,74,0.9,6],[300,58,0.6,6]];
-  for(const [x0,y,s,v] of M.clouds){const x=((x0+T*v)%(W+60))-30;drawCloud(c,Math.round(x),y+Math.round(Math.sin(T*0.4+x0)*1),s,v>4?'#fffaff':'#fbf6ff');}
-  // pétalos que caen meciéndose y destellos que parpadean
+  M.clouds.forEach(([x0,y,s,v],i)=>{let x=((x0+T*v)%(W+60))-30;const k=ease(ent(0.2+i*0.12,1.6));x+=(1-k)*(x<W/2?-90:90);
+    drawCloud(c,Math.round(x),y+Math.round(Math.sin(T*0.4+x0)*1),s,v>4?'#fffaff':'#fbf6ff');});
+  // pétalos que caen meciéndose y destellos que parpadean (aparecen poco a poco)
   if(!M.pet){M.pet=[];for(let i=0;i<16;i++)M.pet.push({x:Math.random()*W,y:Math.random()*H,v:5+Math.random()*7,ph:Math.random()*6,sw:4+Math.random()*6,c:i%3});}
-  for(const p of M.pet){p.y+=p.v*dt;if(p.y>166){p.y=-4;p.x=Math.random()*W;}const x=Math.round(p.x+Math.sin(T*0.8+p.ph)*p.sw),y=Math.round(p.y),fl=Math.sin(T*2+p.ph)>0;
-    const col=p.c===0?C.pink:p.c===1?C.pinkD:'#ffd6e6';if(fl){R(c,x,y,3,2,col);px(c,x,y,C.pinkL);px(c,x+3,y+1,col);}else{R(c,x,y,2,3,col);px(c,x+1,y,C.pinkL);px(c,x+2,y+1,col);}}
-  for(let i=0;i<7;i++){const k=(T*0.35+i*0.37)%1;if(k<0.25){const x=(i*47+13)%W,y=12+(i*29)%60,a=Math.sin(k/0.25*Math.PI);c.save();c.globalAlpha=a;R(c,x-1,y,3,1,C.white);R(c,x,y-1,1,3,C.white);c.restore();}}
+  const pn=Math.round(16*ent(1.0,1.6));
+  M.pet.forEach((p,i)=>{p.y+=p.v*dt;if(p.y>166){p.y=-4;p.x=Math.random()*W;}if(i>=pn)return;const x=Math.round(p.x+Math.sin(T*0.8+p.ph)*p.sw),y=Math.round(p.y),fl=Math.sin(T*2+p.ph)>0;
+    const col=p.c===0?C.pink:p.c===1?C.pinkD:'#ffd6e6';if(fl){R(c,x,y,3,2,col);px(c,x,y,C.pinkL);px(c,x+3,y+1,col);}else{R(c,x,y,2,3,col);px(c,x+1,y,C.pinkL);px(c,x+2,y+1,col);}});
+  if(ent(1.4,0.1)>=1)for(let i=0;i<7;i++){const k=(T*0.35+i*0.37)%1;if(k<0.25){const x=(i*47+13)%W,y=12+(i*29)%60,a=Math.sin(k/0.25*Math.PI);c.save();c.globalAlpha=a;R(c,x-1,y,3,1,C.white);R(c,x,y-1,1,3,C.white);c.restore();}}
+  if(M.enter<2.4)return; // los objetos de los niveles esperan a que el menú haya terminado de entrar
   if(!M.a){M.wait-=dt;if(M.wait<=0)menuSpawn();return;}
   const a=M.a;a.t+=dt*0.75;const t=a.t,u=t/a.dur;
   if(t>=a.dur){M.a=null;M.wait=2.2+Math.random()*2.4;return;}
