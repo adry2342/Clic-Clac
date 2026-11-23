@@ -1,5 +1,17 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Clic Clac</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#b4a6e6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="media/icon-192.png">
+<link rel="apple-touch-icon" href="media/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clic Clac">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">
@@ -15,14 +27,35 @@
   color-scheme:dark;
 }
 [hidden]{display:none !important}
-html,body{height:100%}
+/* Pantalla: el escenario 16:9 ocupa todo lo posible (escala libre, no solo enteros) y deja un marco fino.
+   Lo que sobra alrededor (en pantallas que no son 16:9) es un fondo pastel de cuadraditos con destellos, no negro. */
+html{height:100%; background:var(--frameA)}
+:root{--frameA:#b4a6e6; --frameB:#e7b3d3; --gap:clamp(4px,1.1vmin,14px); --ring:clamp(2px,.3vmin,4px); --px:2}
 body{
-  margin:0; background:var(--night); color:var(--ink); font-family:var(--font);
-  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:0;
+  margin:0; height:100%; height:100dvh; color:var(--ink); font-family:var(--font);
+  background:radial-gradient(ellipse at 50% 45%, rgba(255,250,242,.35), transparent 70%), linear-gradient(160deg,var(--frameA),var(--frameB));
+  box-sizing:border-box; isolation:isolate;
+  padding:max(var(--gap),env(safe-area-inset-top,0px)) max(var(--gap),env(safe-area-inset-right,0px)) max(var(--gap),env(safe-area-inset-bottom,0px)) max(var(--gap),env(safe-area-inset-left,0px));
   display:flex; align-items:center; justify-content:center; overflow:hidden;
   -webkit-user-select:none; user-select:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent;
 }
-#stage{position:relative; flex:none; --u:2; width:960px; height:540px; overflow:hidden; border-radius:calc(var(--u)*3px); box-shadow:0 0 0 calc(var(--u)*1px) var(--ink), 0 calc(var(--u)*4px) 0 calc(var(--u)*1px) #1a1426}
+/* marco: cuadraditos que se deslizan despacio + destellos de píxel que titilan */
+body::before,body::after{content:""; position:fixed; inset:0; z-index:-1; pointer-events:none}
+body::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='12' height='12' rx='3' fill='%23fff' fill-opacity='.16'/%3E%3Crect x='12' y='12' width='12' height='12' rx='3' fill='%23fff' fill-opacity='.16'/%3E%3C/svg%3E");
+  background-size:calc(var(--px)*16px) calc(var(--px)*16px); animation:framedrift 14s linear infinite}
+@keyframes framedrift{to{background-position:calc(var(--px)*16px) calc(var(--px)*-16px)}}
+body::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='44' shape-rendering='crispEdges'%3E%3Cg fill='%23fffaf2'%3E%3Crect x='9' y='5' width='1' height='5'/%3E%3Crect x='7' y='7' width='5' height='1'/%3E%3Crect x='44' y='27' width='1' height='3'/%3E%3Crect x='43' y='28' width='3' height='1'/%3E%3C/g%3E%3Cg fill='%23fff1a8'%3E%3Crect x='31' y='15' width='1' height='3'/%3E%3Crect x='30' y='16' width='3' height='1'/%3E%3C/g%3E%3Cg fill='%23ffc4da'%3E%3Crect x='17' y='33' width='2' height='1'/%3E%3Crect x='20' y='33' width='2' height='1'/%3E%3Crect x='17' y='34' width='5' height='1'/%3E%3Crect x='18' y='35' width='3' height='1'/%3E%3Crect x='19' y='36' width='1' height='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:calc(var(--px)*60px) calc(var(--px)*44px); animation:twinkle 4.5s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.85}50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){body::before,body::after{animation:none}}
+#stage{position:relative; flex:none; --u:2; width:960px; height:540px; overflow:hidden; border-radius:calc(var(--u)*3px); box-shadow:0 0 0 var(--ring) var(--ink), 0 0 0 calc(var(--ring)*2.5) rgba(255,250,242,.45), 0 calc(var(--ring)*3) calc(var(--ring)*8) rgba(45,31,56,.35)}
+/* botón de pantalla completa (fuera de la partida) y aviso para iPhone */
+#fsBtn{position:fixed; z-index:5; top:max(6px,env(safe-area-inset-top,0px)); right:max(6px,env(safe-area-inset-right,0px)); width:34px; height:34px; padding:0; display:grid; place-items:center;
+  background:var(--cream); border:2px solid var(--ink); border-radius:7px; box-shadow:0 3px 0 var(--ink); opacity:.85; transition:opacity .2s, transform .1s}
+#fsBtn:hover{opacity:1} #fsBtn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink)}
+#fsBtn svg{width:18px; height:18px; display:block}
+#fsTip{position:fixed; z-index:6; left:50%; bottom:max(12px,env(safe-area-inset-bottom,0px)); transform:translateX(-50%); max-width:calc(100% - 32px); text-align:center; background:var(--butter); color:var(--ink); border:2px solid var(--ink); border-radius:8px; box-shadow:0 3px 0 var(--ink); padding:6px 10px; font-size:13px; animation:tipin .35s cubic-bezier(.2,1.5,.4,1) backwards}
+@keyframes tipin{from{opacity:0; transform:translateX(-50%) translateY(10px)}}
 #stage.menubg{background-color:#f0ebff; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect width='12' height='12' rx='3' fill='%23e4dcff'/%3E%3Crect x='12' y='12' width='12' height='12' rx='3' fill='%23e4dcff'/%3E%3C/svg%3E"); background-size:calc(var(--s)*24px) calc(var(--s)*24px); animation:drift 9s linear infinite}
 @keyframes drift{from{background-position:0 0}to{background-position:calc(var(--s)*24px) calc(var(--s)*24px)}}
 @media (max-height:520px){ .demo-box{width:calc(var(--u)*208px); height:calc(var(--u)*117px)} .panel{padding:calc(var(--u)*5px) calc(var(--u)*12px); gap:calc(var(--u)*3px)} }
@@ -226,6 +259,8 @@ button:focus-visible{outline:calc(var(--u)*1px) dashed var(--ink); outline-offse
   </div>
 </div>
 <div id="rotate" hidden>Gira el móvil para jugar en horizontal</div>
+<button id="fsBtn" hidden aria-label="Pantalla completa" title="Pantalla completa"><svg viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true"><path fill="#2d1f38" d="M0 0h3v1H1v2H0zM6 0h3v3H8V1H6zM0 6h1v2h2v1H0zM8 6h1v3H6V8h2z"/></svg></button>
+<div id="fsTip" hidden></div>
 
 <script>
 (()=>{
@@ -2653,15 +2688,18 @@ const SOON=[];
 
 /* ---------- escena y escalado ---------- */
 const stage=$('stage'),cv=$('c'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+// llena todo el hueco disponible menos un marco fino (escala libre: antes solo usaba enteros y dejaba bordes gruesos)
 function fit(){
-  const cs=getComputedStyle(document.body);
-  const aw=document.body.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-8;
-  const ah=document.body.clientHeight-8;
-  let s=Math.min(aw/W,ah/H);if(s>=2)s=Math.floor(s);s=Math.max(0.75,s);
+  const b=document.body,cs=getComputedStyle(b),ring=Math.min(4,Math.max(2,Math.min(innerWidth,innerHeight)*0.003)); // = --ring del CSS
+  const aw=b.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-ring*2;
+  const ah=b.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-ring*2;
+  let s=Math.max(0.75,Math.min(aw/W,ah/H));
   Core.s=s;stage.style.setProperty('--u',s*W/480);stage.style.setProperty('--s',s);stage.style.width=(W*s)+'px';stage.style.height=(H*s)+'px';
+  document.documentElement.style.setProperty('--px',Math.max(1.5,Math.round(s*2)/2));
   $('rotate').hidden=!(innerHeight>innerWidth&&innerWidth<760);
 }
-addEventListener('resize',fit);fit();
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,120));document.addEventListener('fullscreenchange',fit);document.addEventListener('webkitfullscreenchange',fit);
+if(window.visualViewport)visualViewport.addEventListener('resize',fit);fit();
 
 /* ---------- menú ---------- */
 function bestOf(id){return Save.data.games[id]||null;}
@@ -2930,5 +2968,38 @@ function frame(now){
 }
 buildMenu();setScene('menu');requestAnimationFrame(frame);
 window.__cc={Snd,Core,openGame,press,release,showResults,GAMES,CONTAINERS};
+/* ---------- pantalla completa ---------- */
+// Móvil: el primer toque pide pantalla completa y gira a horizontal (no hay F11). PC y móvil: botón en la esquina fuera de la partida.
+// iPhone no deja poner una web a pantalla completa: el botón explica cómo añadirla a la pantalla de inicio (allí se abre sin barras).
+(function(){
+  const de=document.documentElement,btn=$('fsBtn'),tip=$('fsTip');
+  const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const canFs=!!(de.requestFullscreen||de.webkitRequestFullscreen)&&document.fullscreenEnabled!==false;
+  const standalone=()=>matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches||navigator.standalone===true;
+  const touch=matchMedia('(pointer: coarse)').matches;
+  const ios=/iP(hone|od|ad)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  function enter(){
+    try{const r=de.requestFullscreen?de.requestFullscreen({navigationUI:'hide'}):de.webkitRequestFullscreen();
+      Promise.resolve(r).then(()=>{if(touch&&screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(()=>{});}).catch(()=>{});}catch(e){}
+  }
+  let tipT=0;
+  function showTip(t){tip.textContent=t;tip.hidden=false;clearTimeout(tipT);tipT=setTimeout(()=>tip.hidden=true,5000);}
+  btn.addEventListener('click',e=>{e.stopPropagation();
+    if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return;}
+    if(canFs)enter();
+    else showTip(ios?'En iPhone: pulsa Compartir y luego «Añadir a pantalla de inicio». Desde ahí se abre a pantalla completa.':'Tu navegador no deja ponerlo a pantalla completa. Prueba con F11.');
+  });
+  btn.addEventListener('pointerdown',e=>e.stopPropagation());
+  // primer toque en móvil: pantalla completa sin tener que buscar nada
+  if(touch&&canFs&&!standalone()){
+    const first=()=>{removeEventListener('pointerup',first,true);if(!fsEl())enter();};
+    addEventListener('pointerup',first,true);
+  }
+  // el botón solo se ve fuera de la partida (en juego la esquina es del botón de pausa) y si aún no estás en pantalla completa
+  function sync(){btn.hidden=!!fsEl()||standalone()||Core.scene==='play';
+    btn.setAttribute('aria-label',fsEl()?'Salir de pantalla completa':'Pantalla completa');}
+  document.addEventListener('fullscreenchange',sync);document.addEventListener('webkitfullscreenchange',sync);
+  setInterval(sync,300);sync();
+})();
 })();
 </script>

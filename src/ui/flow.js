@@ -1,14 +1,17 @@
 /* ---------- escena y escalado ---------- */
 const stage=$('stage'),cv=$('c'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+// llena todo el hueco disponible menos un marco fino (escala libre: antes solo usaba enteros y dejaba bordes gruesos)
 function fit(){
-  const cs=getComputedStyle(document.body);
-  const aw=document.body.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-8;
-  const ah=document.body.clientHeight-8;
-  let s=Math.min(aw/W,ah/H);if(s>=2)s=Math.floor(s);s=Math.max(0.75,s);
+  const b=document.body,cs=getComputedStyle(b),ring=Math.min(4,Math.max(2,Math.min(innerWidth,innerHeight)*0.003)); // = --ring del CSS
+  const aw=b.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight)-ring*2;
+  const ah=b.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-ring*2;
+  let s=Math.max(0.75,Math.min(aw/W,ah/H));
   Core.s=s;stage.style.setProperty('--u',s*W/480);stage.style.setProperty('--s',s);stage.style.width=(W*s)+'px';stage.style.height=(H*s)+'px';
+  document.documentElement.style.setProperty('--px',Math.max(1.5,Math.round(s*2)/2));
   $('rotate').hidden=!(innerHeight>innerWidth&&innerWidth<760);
 }
-addEventListener('resize',fit);fit();
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,120));document.addEventListener('fullscreenchange',fit);document.addEventListener('webkitfullscreenchange',fit);
+if(window.visualViewport)visualViewport.addEventListener('resize',fit);fit();
 
 /* ---------- menú ---------- */
 function bestOf(id){return Save.data.games[id]||null;}
